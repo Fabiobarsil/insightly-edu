@@ -1,3 +1,5 @@
+import { toast } from "sonner";
+
 const actions = [
   { icon: "ri-user-add-line", label: "Adicionar Aluno" },
   { icon: "ri-calendar-check-line", label: "Registrar Frequência" },
@@ -13,7 +15,8 @@ const QuickActions = () => (
       {actions.map((a) => (
         <button
           key={a.label}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-[12px] border border-border text-sm font-semibold text-primary hover:border-secondary hover:text-secondary transition-colors"
+          onClick={() => toast.info(`Ação: ${a.label}`)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-[12px] border border-border text-sm font-semibold text-primary hover:border-secondary hover:text-secondary hover:bg-secondary/5 transition-all duration-200 active:scale-[0.97] hover:shadow-sm"
         >
           <i className={`${a.icon} text-base`} />
           {a.label}
