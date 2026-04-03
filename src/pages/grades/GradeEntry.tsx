@@ -22,7 +22,8 @@ const bimestres = [
 ];
 
 const GradeEntry = () => {
-  const [turma, setTurma] = useState("5A");
+  const [serie, setSerie] = useState("5");
+  const [turma, setTurma] = useState("A");
   const [disciplina, setDisciplina] = useState("port");
   const [bimestre, setBimestre] = useState("1");
 
@@ -31,10 +32,20 @@ const GradeEntry = () => {
       <PageHeader title="Lançamento de Notas" description="Selecione a turma e disciplina para lançar as notas" />
 
       <div className="flex items-center gap-3 flex-wrap mb-6">
-        <select value={turma} onChange={(e) => setTurma(e.target.value)} className="text-sm font-semibold bg-card border border-border/60 rounded-[12px] px-3 py-2 text-primary focus:outline-none focus:border-secondary transition-colors">
-          <option value="5A">5º Ano A</option>
-          <option value="5B">5º Ano B</option>
-          <option value="3A">3º Ano A</option>
+       <span className="text-xs font-bold text-muted uppercase tracking-wider">Filtros:</span>
+        <select value={serie} onChange={(e) => setSerie(e.target.value)} className="text-sm font-semibold bg-card border border-border/60 rounded-[12px] px-3 py-2 text-primary focus:outline-none focus:border-secondary transition-colors cursor-pointer">
+          <option value="1">1º Ano</option>
+          <option value="2">2º Ano</option>
+          <option value="3">3º Ano</option>
+          <option value="4">4º Ano</option>
+          <option value="5">5º Ano</option>
+          <option value="6">6º Ano</option>
+        </select>
+        <select value={turma} onChange={(e) => setTurma(e.target.value)} className="text-sm font-semibold bg-card border border-border/60 rounded-[12px] px-3 py-2 text-primary focus:outline-none focus:border-secondary transition-colors cursor-pointer">
+          <option value="A">Turma A</option>
+          <option value="B">Turma B</option>
+          <option value="C">Turma C</option>
+          <option value="D">Turma D</option>
         </select>
         <select value={disciplina} onChange={(e) => setDisciplina(e.target.value)} className="text-sm font-semibold bg-card border border-border/60 rounded-[12px] px-3 py-2 text-primary focus:outline-none focus:border-secondary transition-colors">
           {subjects.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
