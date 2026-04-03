@@ -1,16 +1,40 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import Sidebar from "@/components/layout/Sidebar";
+import Topbar from "@/components/layout/Topbar";
+import KpiCards from "@/components/dashboard/KpiCards";
+import Priorities from "@/components/dashboard/Priorities";
+import Alerts from "@/components/dashboard/Alerts";
+import Charts from "@/components/dashboard/Charts";
+import QuickActions from "@/components/dashboard/QuickActions";
+import RecentActivity from "@/components/dashboard/RecentActivity";
+import HealthScore from "@/components/dashboard/HealthScore";
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
-  return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
-    </div>
-  );
-};
+const Index = () => (
+  <div className="flex min-h-screen max-[900px]:flex-col">
+    <Sidebar />
+    <main className="ml-60 w-[calc(100%-240px)] min-h-screen max-[900px]:ml-0 max-[900px]:w-full">
+      <Topbar />
+      <div className="max-w-[1200px] p-8 max-[900px]:p-5 flex flex-col gap-8">
+        <KpiCards />
 
-const Index = PlaceholderIndex;
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          <div className="lg:col-span-3">
+            <Priorities />
+          </div>
+          <div className="lg:col-span-2">
+            <Alerts />
+          </div>
+        </div>
+
+        <Charts />
+        <QuickActions />
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <RecentActivity />
+          <HealthScore />
+        </div>
+      </div>
+    </main>
+  </div>
+);
 
 export default Index;
