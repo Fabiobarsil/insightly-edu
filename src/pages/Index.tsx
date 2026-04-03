@@ -7,6 +7,7 @@ import Charts from "@/components/dashboard/Charts";
 import QuickActions from "@/components/dashboard/QuickActions";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 import HealthScore from "@/components/dashboard/HealthScore";
+import Agenda from "@/components/dashboard/Agenda";
 import FilterBar from "@/components/dashboard/FilterBar";
 import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
 import { DashboardFilterProvider, useDashboardFilter } from "@/contexts/DashboardFilterContext";
@@ -32,9 +33,10 @@ const DashboardContent = () => {
           </div>
           <Charts />
           <QuickActions />
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <RecentActivity />
             <HealthScore />
+            <Agenda />
           </div>
         </>
       )}
