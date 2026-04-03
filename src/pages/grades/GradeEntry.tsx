@@ -22,7 +22,8 @@ const bimestres = [
 ];
 
 const GradeEntry = () => {
-  const [turma, setTurma] = useState("5A");
+  const [serie, setSerie] = useState("5");
+  const [turma, setTurma] = useState("A");
   const [disciplina, setDisciplina] = useState("port");
   const [bimestre, setBimestre] = useState("1");
 
