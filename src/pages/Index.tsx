@@ -7,6 +7,7 @@ import Charts from "@/components/dashboard/Charts";
 import QuickActions from "@/components/dashboard/QuickActions";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 import HealthScore from "@/components/dashboard/HealthScore";
+import Agenda from "@/components/dashboard/Agenda";
 import FilterBar from "@/components/dashboard/FilterBar";
 import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
 import { DashboardFilterProvider, useDashboardFilter } from "@/contexts/DashboardFilterContext";
