@@ -1,31 +1,49 @@
+import { useQuery } from "@tanstack/react-query";
 import AppLayout from "@/components/layout/AppLayout";
 import PageHeader from "@/components/shared/PageHeader";
 import DataTable from "@/components/shared/DataTable";
-import StatusBadge from "@/components/shared/StatusBadge";
-
-const classes = [
-  { id: "1", nome: "5º Ano A", professor: "Profa. Maria Oliveira", alunos: "32", turno: "Matutino", status: "active" },
-  { id: "2", nome: "5º Ano B", professor: "Prof. João Santos", alunos: "28", turno: "Matutino", status: "active" },
-  { id: "3", nome: "3º Ano A", professor: "Prof. João Santos", alunos: "30", turno: "Vespertino", status: "active" },
-  { id: "4", nome: "6º Ano A", professor: "Profa. Ana Lima", alunos: "34", turno: "Matutino", status: "warning" },
-  { id: "5", nome: "1º Ano B", professor: "Profa. Julia Ferreira", alunos: "25", turno: "Vespertino", status: "active" },
-];
+import { supabase } from "@/lib/supabase";
 
 const columns = [
-  { key: "nome", label: "Turma" },
-  { key: "professor", label: "Professor(a)" },
-  { key: "alunos", label: "Alunos" },
-  { key: "turno", label: "Turno" },
-  { key: "status", label: "Status", render: (v: string) => <StatusBadge status={v} label={v === "active" ? "Ativa" : "Atenção"} /> },
+  { key: "name", label: "Turma" },
+  { key: "grade", label: "Série" },
+  { key: "shift", label: "Turno" },
+  { key: "academic_year", label: "Ano Letivo" },
 ];
 
-const ClassesList = () => (
-  <AppLayout title="Turmas" breadcrumbs={[{ label: "Turmas" }]}>
-    <PageHeader title="Turmas" description="Gerencie as turmas e atribuições" action={{ label: "Nova Turma", icon: "ri-add-line", to: "/turmas/novo" }} />
-    <DataTable columns={columns} data={classes} searchPlaceholder="Buscar turma..." actions={(row) => [
-      { label: "Editar", icon: "ri-pencil-line", to: `/turmas/${row.id}/editar` },
-    ]} />
-  </AppLayout>
-);
+const ClassesList = () => {
+  const { data: classes = [], isLoading } = useQuery({
+    queryKey: ["classes"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("classes")
+        .select("id, name, grade, shift, academic_year")
+        .order("name");
+      if (error) throw error;
+      return (data || []).map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        grade: c.grade || "—",
+        shift: c.shift || "—",
+        academic_year: c.academic_year || "—",
+      }));
+    },
+  });
+
+  return (
+    <AppLayout title="Turmas" breadcrumbs={[{ label: "Turmas" }]}>
+      <PageHeader title="Turmas" description="Gerencie as turmas e atribuições" action={{ label: "Nova Turma", icon: "ri-add-line", to: "/turmas/novo" }} />
+      {isLoading ? (
+        <div className="text-center py-12 text-muted">Carregando turmas...</div>
+      ) : classes.length === 0 ? (
+        <div className="text-center py-12 text-muted">Nenhuma turma cadastrada ainda.</div>
+      ) : (
+        <DataTable columns={columns} data={classes} searchPlaceholder="Buscar turma..." actions={(row) => [
+          { label: "Editar", icon: "ri-pencil-line", to: `/turmas/${row.id}/editar` },
+        ]} />
+      )}
+    </AppLayout>
+  );
+};
 
 export default ClassesList;
