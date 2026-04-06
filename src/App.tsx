@@ -3,6 +3,10 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
+
+import Login from "./pages/auth/Login.tsx";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -43,43 +47,47 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
+        <AuthProvider>
+          <Routes>
+            <Route path="/login" element={<Login />} />
 
-          <Route path="/alunos" element={<StudentsList />} />
-          <Route path="/alunos/novo" element={<StudentsCreate />} />
-          <Route path="/alunos/:id" element={<StudentsDetail />} />
-          <Route path="/alunos/:id/editar" element={<StudentsEdit />} />
+            <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
 
-          <Route path="/responsaveis" element={<GuardiansList />} />
-          <Route path="/responsaveis/novo" element={<GuardiansCreate />} />
-          <Route path="/responsaveis/:id" element={<GuardiansDetail />} />
-          <Route path="/responsaveis/:id/editar" element={<GuardiansCreate />} />
+            <Route path="/alunos" element={<ProtectedRoute><StudentsList /></ProtectedRoute>} />
+            <Route path="/alunos/novo" element={<ProtectedRoute><StudentsCreate /></ProtectedRoute>} />
+            <Route path="/alunos/:id" element={<ProtectedRoute><StudentsDetail /></ProtectedRoute>} />
+            <Route path="/alunos/:id/editar" element={<ProtectedRoute><StudentsEdit /></ProtectedRoute>} />
 
-          <Route path="/professores" element={<TeachersList />} />
-          <Route path="/professores/novo" element={<TeachersCreate />} />
-          <Route path="/professores/:id" element={<TeachersDetail />} />
-          <Route path="/professores/:id/editar" element={<TeachersCreate />} />
+            <Route path="/responsaveis" element={<ProtectedRoute><GuardiansList /></ProtectedRoute>} />
+            <Route path="/responsaveis/novo" element={<ProtectedRoute><GuardiansCreate /></ProtectedRoute>} />
+            <Route path="/responsaveis/:id" element={<ProtectedRoute><GuardiansDetail /></ProtectedRoute>} />
+            <Route path="/responsaveis/:id/editar" element={<ProtectedRoute><GuardiansCreate /></ProtectedRoute>} />
 
-          <Route path="/turmas" element={<ClassesList />} />
-          <Route path="/turmas/novo" element={<ClassesCreate />} />
-          <Route path="/turmas/:id/editar" element={<ClassesCreate />} />
+            <Route path="/professores" element={<ProtectedRoute><TeachersList /></ProtectedRoute>} />
+            <Route path="/professores/novo" element={<ProtectedRoute><TeachersCreate /></ProtectedRoute>} />
+            <Route path="/professores/:id" element={<ProtectedRoute><TeachersDetail /></ProtectedRoute>} />
+            <Route path="/professores/:id/editar" element={<ProtectedRoute><TeachersCreate /></ProtectedRoute>} />
 
-          <Route path="/notas" element={<GradeEntry />} />
-          <Route path="/notas/historico" element={<GradeHistory />} />
+            <Route path="/turmas" element={<ProtectedRoute><ClassesList /></ProtectedRoute>} />
+            <Route path="/turmas/novo" element={<ProtectedRoute><ClassesCreate /></ProtectedRoute>} />
+            <Route path="/turmas/:id/editar" element={<ProtectedRoute><ClassesCreate /></ProtectedRoute>} />
 
-          <Route path="/frequencia" element={<AttendanceRecord />} />
-          <Route path="/frequencia/consulta" element={<AttendanceView />} />
-          <Route path="/frequencia/relatorios" element={<AttendanceReports />} />
+            <Route path="/notas" element={<ProtectedRoute><GradeEntry /></ProtectedRoute>} />
+            <Route path="/notas/historico" element={<ProtectedRoute><GradeHistory /></ProtectedRoute>} />
 
-          <Route path="/documentos" element={<Documents />} />
-          <Route path="/documentos-oficiais" element={<OfficialDocuments />} />
+            <Route path="/frequencia" element={<ProtectedRoute><AttendanceRecord /></ProtectedRoute>} />
+            <Route path="/frequencia/consulta" element={<ProtectedRoute><AttendanceView /></ProtectedRoute>} />
+            <Route path="/frequencia/relatorios" element={<ProtectedRoute><AttendanceReports /></ProtectedRoute>} />
 
-          <Route path="/comunicacao" element={<Communication />} />
-          <Route path="/configuracoes" element={<Settings />} />
+            <Route path="/documentos" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
+            <Route path="/documentos-oficiais" element={<ProtectedRoute><OfficialDocuments /></ProtectedRoute>} />
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            <Route path="/comunicacao" element={<ProtectedRoute><Communication /></ProtectedRoute>} />
+            <Route path="/configuracoes" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
