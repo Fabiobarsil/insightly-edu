@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import Topbar from "@/components/layout/Topbar";
 import KpiCards from "@/components/dashboard/KpiCards";
@@ -11,9 +12,27 @@ import Agenda from "@/components/dashboard/Agenda";
 import FilterBar from "@/components/dashboard/FilterBar";
 import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
 import { DashboardFilterProvider, useDashboardFilter } from "@/contexts/DashboardFilterContext";
+import { supabase } from "@/lib/supabase";
+
+async function testSupabaseConnection() {
+  const { data, error } = await supabase
+    .from("teste_conexao")
+    .insert({ valor: "Fabio conectado" })
+    .select();
+
+  if (error) {
+    console.error("❌ Erro na conexão com Supabase:", error);
+  } else {
+    console.log("✅ Conexão com Supabase OK:", data);
+  }
+}
 
 const DashboardContent = () => {
   const { isLoading } = useDashboardFilter();
+
+  useEffect(() => {
+    testSupabaseConnection();
+  }, []);
 
   return (
     <div className="max-w-[1200px] p-8 max-[900px]:p-5 flex flex-col gap-8">
