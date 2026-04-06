@@ -14,7 +14,7 @@ import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
 import { DashboardFilterProvider, useDashboardFilter } from "@/contexts/DashboardFilterContext";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
-import { StatusBadge } from "@/components/shared/StatusBadge";
+
 
 interface Student {
   id: string;
