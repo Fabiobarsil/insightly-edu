@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import logoCertus from "@/assets/logo-certus.png";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -21,7 +22,6 @@ const Login = () => {
       return;
     }
 
-    // Test: buscar dados da tabela students
     const { data: students, error: studentsError } = await supabase
       .from("students")
       .select("*")
@@ -39,16 +39,21 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm">
-        <div className="bg-card border border-border/60 rounded-2xl shadow-lg p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-primary">Certus</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Acesse sua conta para continuar
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4">
+      <div className="w-full max-w-sm flex flex-col items-center">
+        <div className="bg-card border border-border/60 rounded-2xl shadow-lg p-8 w-full">
+          {/* Header: Logo + Nome */}
+          <div className="flex flex-col items-center mb-8">
+            <div className="flex items-center gap-2.5 mb-2">
+              <img src={logoCertus} alt="CertusEdu" className="h-10 w-auto" />
+              <span className="text-2xl font-bold text-primary">CertusEdu</span>
+            </div>
+            <p className="text-sm text-muted-foreground text-center">
+              Sistema de Gestão Escolar Inteligente
             </p>
           </div>
 
+          {/* Formulário */}
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-muted-foreground mb-1.5">
@@ -76,6 +81,14 @@ const Login = () => {
                 required
                 className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
               />
+              <div className="flex justify-end mt-1.5">
+                <Link
+                  to="/forgot-password"
+                  className="text-xs text-primary hover:underline"
+                >
+                  Esqueci minha senha
+                </Link>
+              </div>
             </div>
 
             <button
@@ -86,8 +99,23 @@ const Login = () => {
               {loading ? "Entrando..." : "Entrar"}
             </button>
           </form>
+
+          {/* CTA */}
+          <p className="text-center text-sm text-muted-foreground mt-5">
+            Ainda não tem uma conta?{" "}
+            <Link to="/landing" className="text-primary font-medium hover:underline">
+              Conheça o CertusEdu
+            </Link>
+          </p>
         </div>
       </div>
+
+      {/* Rodapé institucional */}
+      <footer className="mt-8 text-center text-xs text-muted-foreground/60 space-y-0.5">
+        <p>CertusEdu © 2026</p>
+        <p>Uma solução do ecossistema Certus</p>
+        <p>Desenvolvido por Innove Digital Service</p>
+      </footer>
     </div>
   );
 };
