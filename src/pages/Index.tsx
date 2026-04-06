@@ -17,7 +17,7 @@ import { supabase } from "@/lib/supabase";
 async function testSupabaseConnection() {
   const { data, error } = await supabase
     .from("teste_conexao")
-    .insert({ valor: "Fabio conectado" })
+    .insert({ name: "Fabio conectado ao Supabase real" })
     .select();
 
   if (error) {
