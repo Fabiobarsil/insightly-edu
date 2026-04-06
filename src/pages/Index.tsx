@@ -15,15 +15,26 @@ import { DashboardFilterProvider, useDashboardFilter } from "@/contexts/Dashboar
 import { supabase } from "@/lib/supabase";
 
 async function testSupabaseConnection() {
-  const { data, error } = await supabase
+  // 1. Insert
+  const { error: insertError } = await supabase
     .from("teste_conexao")
-    .insert({ name: "Fabio conectado ao Supabase real" })
-    .select();
+    .insert({ name: "AGORA VAI FUNCIONAR" });
 
-  if (error) {
-    console.error("❌ Erro na conexão com Supabase:", error);
+  if (insertError) {
+    console.error("❌ Erro no insert:", insertError);
+    return;
+  }
+  console.log("✅ Insert realizado com sucesso!");
+
+  // 2. Select após insert
+  const { data, error: selectError } = await supabase
+    .from("teste_conexao")
+    .select("*");
+
+  if (selectError) {
+    console.error("❌ Erro no select:", selectError);
   } else {
-    console.log("✅ Conexão com Supabase OK:", data);
+    console.log("✅ Dados na tabela teste_conexao:", data);
   }
 }
 
