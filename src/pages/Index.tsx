@@ -47,6 +47,24 @@ const DashboardContent = () => {
 
   return (
     <div className="max-w-[1200px] p-8 max-[900px]:p-5 flex flex-col gap-8">
+      <button
+        onClick={async () => {
+          const { data, error } = await supabase
+            .from('students')
+            .insert([
+              {
+                full_name: 'Aluno Front',
+                school_id: '0cd6ed2b-75e0-4fb1-a7ae-ead1bec80d1e',
+                status: 'ativo'
+              }
+            ])
+            .select()
+          console.log('RESULT:', data, error)
+        }}
+        className="self-start px-4 py-2 bg-destructive text-destructive-foreground rounded-md text-sm font-medium hover:opacity-90"
+      >
+        🧪 Testar Insert Student
+      </button>
       <FilterBar />
       {isLoading ? (
         <DashboardSkeleton />
