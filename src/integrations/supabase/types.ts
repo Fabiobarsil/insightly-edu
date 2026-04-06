@@ -429,6 +429,7 @@ export type Database = {
     }
     Functions: {
       current_school_id: { Args: never; Returns: string }
+      is_member_of_school: { Args: { _school_id: string }; Returns: boolean }
     }
     Enums: {
       app_role:
