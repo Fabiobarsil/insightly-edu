@@ -35,6 +35,21 @@ const Login = () => {
     // Fetch role and redirect
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
+      // Check profiles.role for superadmin first
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (profile?.role === "superadmin") {
+        toast.success("Login realizado com sucesso!");
+        navigate("/superadmin/dashboard", { replace: true });
+        setLoading(false);
+        return;
+      }
+
+      // Fallback to school_memberships
       const { data: membership } = await supabase
         .from("school_memberships")
         .select("role")

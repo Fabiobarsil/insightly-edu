@@ -51,6 +51,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [role, setRole] = useState<AppRole | null>(null);
 
   const fetchRole = async (userId: string) => {
+    // 1. Check profiles.role for superadmin
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", userId)
+      .single();
+
+    if (profile?.role === "superadmin") {
+      setRole("owner"); // owner maps to superadmin dashboard
+      return;
+    }
+
+    // 2. Fallback to school_memberships
     const { data, error } = await supabase
       .from("school_memberships")
       .select("role")
