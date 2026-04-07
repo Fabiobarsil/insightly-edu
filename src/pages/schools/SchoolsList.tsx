@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import RoleLayout from "@/components/layout/RoleLayout";
-import PageHeader from "@/components/shared/PageHeader";
+
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import {
@@ -113,14 +113,11 @@ const SchoolsList = () => {
 
   return (
     <RoleLayout title="Superadmin">
-      <PageHeader
-        title="Escolas"
-        description="Gerencie as escolas cadastradas na plataforma."
-        action={{ label: "Nova Escola", icon: "ri-add-line", to: "#" }}
-      />
-
-      {/* Override PageHeader link with real button */}
-      <div className="-mt-14 mb-6 flex justify-end">
+      <div className="flex items-start justify-between mb-6 max-[640px]:flex-col max-[640px]:gap-3">
+        <div>
+          <h1 className="text-xl font-bold text-primary">Escolas</h1>
+          <p className="text-sm text-muted-foreground mt-1">Gerencie as escolas cadastradas na plataforma.</p>
+        </div>
         <button
           onClick={openCreate}
           className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2.5 rounded-[14px] font-bold text-sm hover:bg-secondary/90 transition-colors"
