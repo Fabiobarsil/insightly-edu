@@ -24,7 +24,7 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       toast.error(error.message);
@@ -32,8 +32,8 @@ const Login = () => {
       return;
     }
 
-    // Fetch role and redirect
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = authData.user ?? authData.session?.user ?? null;
+
     if (user) {
       // Check profiles.role for superadmin first
       const { data: profile, error: profileError } = await supabase
@@ -61,7 +61,7 @@ const Login = () => {
         .single();
 
       toast.success("Login realizado com sucesso!");
-      
+
       if (membership?.role) {
         const dashRole = roleToDashboard[membership.role as AppRole];
         navigate(getDashboardPath(dashRole), { replace: true });
