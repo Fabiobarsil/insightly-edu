@@ -27,11 +27,8 @@ const GuardiansCreate = () => {
     mutationFn: async () => {
       const { error } = await supabase.from("guardians").insert({
         full_name: form.full_name,
-        cpf: form.cpf || null,
         phone: form.phone || null,
         email: form.email || null,
-        relationship: form.relationship || null,
-        financial_responsible: form.financial_responsible,
       });
       if (error) throw error;
     },
