@@ -46,7 +46,7 @@ const menusByRole: Record<DashboardRole, NavItem[]> = {
 };
 
 const RoleSidebar = () => {
-  const { dashboardRole } = useAuth();
+  const { dashboardRole, signOut } = useAuth();
   const items = dashboardRole ? menusByRole[dashboardRole] : [];
 
   return (
@@ -76,8 +76,15 @@ const RoleSidebar = () => {
         ))}
       </nav>
 
-      <div className="p-4 border-t border-sidebar-border text-[13px] text-sidebar-foreground/45">
-        © 2026 CertusEdu
+      <div className="p-4 border-t border-sidebar-border flex flex-col gap-3">
+        <button
+          onClick={signOut}
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-[12px] text-sidebar-foreground/55 hover:bg-destructive/15 hover:text-destructive transition-colors text-sm font-medium"
+        >
+          <i className="ri-logout-box-r-line text-lg" />
+          Sair
+        </button>
+        <span className="text-[13px] text-sidebar-foreground/45">© 2026 CertusEdu</span>
       </div>
     </aside>
   );
