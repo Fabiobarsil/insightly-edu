@@ -1,59 +1,89 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
 import PageHeader from "@/components/shared/PageHeader";
 import DataTable from "@/components/shared/DataTable";
 import StatusBadge from "@/components/shared/StatusBadge";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
+import { useSchoolId } from "@/hooks/useSchoolId";
+import { toast } from "sonner";
 
 const statusMap: Record<string, { status: string; label: string }> = {
-  active: { status: "active", label: "Ativo" },
-  warning: { status: "warning", label: "Atenção" },
-  critical: { status: "critical", label: "Em Risco" },
-  inactive: { status: "inactive", label: "Inativo" },
+  ativo: { status: "active", label: "Ativo" },
+  incompleto: { status: "warning", label: "Incompleto" },
+  irregular: { status: "warning", label: "Irregular" },
+  transferido: { status: "inactive", label: "Transferido" },
+  inativo: { status: "inactive", label: "Inativo" },
 };
 
 const columns = [
-  { key: "enrollment_code", label: "Matrícula" },
   { key: "full_name", label: "Nome" },
   { key: "class_name", label: "Turma" },
-  { key: "turn", label: "Turno" },
+  { key: "birth_date", label: "Nascimento" },
   {
     key: "status", label: "Status",
-    render: (val: string) => <StatusBadge {...(statusMap[val] || statusMap.active)} />,
+    render: (val: string) => {
+      const mapped = statusMap[val] || statusMap.ativo;
+      return <StatusBadge {...mapped} />;
+    },
   },
 ];
 
 const StudentsList = () => {
+  const { schoolId, isLoading: loadingSchool } = useSchoolId();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
   const { data: students = [], isLoading } = useQuery({
-    queryKey: ["students"],
+    queryKey: ["students", schoolId],
     queryFn: async () => {
+      if (!schoolId) return [];
       const { data, error } = await supabase
         .from("students")
-        .select("id, enrollment_code, full_name, status, turn, class_id, classes(name)")
+        .select("id, full_name, status, birth_date, class_id, classes(name)")
+        .eq("school_id", schoolId)
         .order("full_name");
       if (error) throw error;
+      console.log("[Students] fetched:", data?.length);
       return (data || []).map((s: any) => ({
         id: s.id,
-        enrollment_code: s.enrollment_code || "—",
         full_name: s.full_name,
         class_name: s.classes?.name || "—",
-        turn: s.turn || "—",
-        status: s.status || "active",
+        birth_date: s.birth_date || "—",
+        status: s.status || "ativo",
       }));
     },
+    enabled: !!schoolId,
+  });
+
+  const deactivateMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("students")
+        .update({ status: "inativo" as const })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["students", schoolId] });
+      toast.success("Aluno inativado com sucesso!");
+    },
+    onError: (err: any) => toast.error(err.message || "Erro ao inativar aluno"),
   });
 
   const total = students.length;
-  const atRisk = students.filter((s: any) => s.status === "critical").length;
+  const ativos = students.filter((s: any) => s.status === "ativo").length;
+
+  const loading = loadingSchool || isLoading;
 
   return (
     <AppLayout title="Alunos" breadcrumbs={[{ label: "Alunos" }]}>
-      <PageHeader title="Alunos" description="Gerencie os alunos matriculados" action={{ label: "Novo Aluno", icon: "ri-add-line", to: "/alunos/novo" }} />
+      <PageHeader title="Alunos" description="Gerencie os alunos matriculados" action={{ label: "Novo Aluno", icon: "ri-add-line", to: "/admin/alunos/novo" }} />
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         {[
           { icon: "ri-group-line", label: "Total de Alunos", value: String(total), color: "text-primary" },
-          { icon: "ri-alert-line", label: "Em Risco", value: String(atRisk), color: "text-destructive" },
-          { icon: "ri-check-double-line", label: "Turno Mais Comum", value: "—", color: "text-secondary" },
+          { icon: "ri-check-double-line", label: "Ativos", value: String(ativos), color: "text-secondary" },
+          { icon: "ri-user-unfollow-line", label: "Inativos", value: String(total - ativos), color: "text-destructive" },
         ].map((s, i) => (
           <div key={i} className="bg-card border border-border/60 rounded-xl p-4 certus-shadow flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center">
@@ -66,8 +96,10 @@ const StudentsList = () => {
           </div>
         ))}
       </div>
-      {isLoading ? (
+      {loading ? (
         <div className="text-center py-12 text-muted">Carregando alunos...</div>
+      ) : !schoolId ? (
+        <div className="text-center py-12 text-muted">Nenhuma escola vinculada ao usuário.</div>
       ) : students.length === 0 ? (
         <div className="text-center py-12 text-muted">Nenhum aluno cadastrado ainda.</div>
       ) : (
@@ -76,8 +108,9 @@ const StudentsList = () => {
           data={students}
           searchPlaceholder="Buscar aluno..."
           actions={(row) => [
-            { label: "Ver", icon: "ri-eye-line", to: `/alunos/${row.id}` },
-            { label: "Editar", icon: "ri-pencil-line", to: `/alunos/${row.id}/editar` },
+            { label: "Ver", icon: "ri-eye-line", to: `/admin/alunos/${row.id}` },
+            { label: "Editar", icon: "ri-pencil-line", to: `/admin/alunos/${row.id}/editar` },
+            { label: "Inativar", icon: "ri-forbid-line", onClick: () => deactivateMutation.mutate(row.id) },
           ]}
         />
       )}

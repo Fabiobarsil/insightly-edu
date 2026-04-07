@@ -5,29 +5,28 @@ import AppLayout from "@/components/layout/AppLayout";
 import PageHeader from "@/components/shared/PageHeader";
 import FormCard from "@/components/shared/FormCard";
 import FormField from "@/components/shared/FormField";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
+import { useSchoolId } from "@/hooks/useSchoolId";
 import { toast } from "sonner";
 
 const StudentsCreate = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { schoolId } = useSchoolId();
   const [form, setForm] = useState({
     full_name: "",
     birth_date: "",
-    cpf: "",
-    enrollment_code: "",
     class_id: "",
-    turn: "",
-    status: "active",
-    notes: "",
   });
 
   const { data: classes = [] } = useQuery({
-    queryKey: ["classes"],
+    queryKey: ["classes", schoolId],
     queryFn: async () => {
-      const { data } = await supabase.from("classes").select("id, name").order("name");
+      if (!schoolId) return [];
+      const { data } = await supabase.from("classes").select("id, name").eq("school_id", schoolId).order("name");
       return data || [];
     },
+    enabled: !!schoolId,
   });
 
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
@@ -35,42 +34,34 @@ const StudentsCreate = () => {
 
   const mutation = useMutation({
     mutationFn: async () => {
+      if (!schoolId) throw new Error("Nenhuma escola vinculada");
+      if (!form.full_name.trim()) throw new Error("Nome é obrigatório");
       const { error } = await supabase.from("students").insert({
-        full_name: form.full_name,
+        full_name: form.full_name.trim(),
         birth_date: form.birth_date || null,
         class_id: form.class_id || null,
-        status: (form.status === "active" ? "ativo" : "inativo") as "ativo" | "inativo",
+        school_id: schoolId,
+        status: "ativo" as const,
       });
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["students"] });
+      queryClient.invalidateQueries({ queryKey: ["students", schoolId] });
       toast.success("Aluno cadastrado com sucesso!");
-      navigate("/alunos");
+      navigate("/admin/alunos");
     },
     onError: (err: any) => toast.error(err.message || "Erro ao cadastrar aluno"),
   });
 
   return (
-    <AppLayout title="Novo Aluno" breadcrumbs={[{ label: "Alunos", href: "/alunos" }, { label: "Novo Aluno" }]}>
+    <AppLayout title="Novo Aluno" breadcrumbs={[{ label: "Alunos", href: "/admin/alunos" }, { label: "Novo Aluno" }]}>
       <PageHeader title="Cadastrar Aluno" description="Preencha os dados do novo aluno" />
       <div className="space-y-6">
-        <FormCard title="Dados Pessoais" cancelTo="/alunos" onSubmit={() => mutation.mutate()}>
+        <FormCard title="Dados Pessoais" cancelTo="/admin/alunos" onSubmit={() => mutation.mutate()}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField label="Nome Completo" placeholder="Nome do aluno" value={form.full_name} onChange={set("full_name")} />
             <FormField label="Data de Nascimento" type="date" value={form.birth_date} onChange={set("birth_date")} />
-            <FormField label="CPF" placeholder="000.000.000-00" value={form.cpf} onChange={set("cpf")} />
-          </div>
-        </FormCard>
-        <FormCard title="Dados Escolares" cancelTo="/alunos" onSubmit={() => mutation.mutate()}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField label="Matrícula" placeholder="2024001" value={form.enrollment_code} onChange={set("enrollment_code")} />
             <FormField label="Turma" options={classes.map((c: any) => ({ value: c.id, label: c.name }))} value={form.class_id} onChange={set("class_id")} />
-            <FormField label="Turno" options={[
-              { value: "Matutino", label: "Matutino" },
-              { value: "Vespertino", label: "Vespertino" },
-              { value: "Integral", label: "Integral" },
-            ]} value={form.turn} onChange={set("turn")} />
           </div>
         </FormCard>
       </div>
