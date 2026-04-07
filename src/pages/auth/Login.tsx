@@ -3,6 +3,16 @@ import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import logoCertus from "@/assets/logo-certus.png";
+import { AppRole, getDashboardPath } from "@/contexts/AuthContext";
+
+const roleToDashboard: Record<AppRole, "superadmin" | "admin" | "secretaria" | "professor"> = {
+  owner: "superadmin",
+  admin: "admin",
+  coordenador: "admin",
+  secretaria: "secretaria",
+  auxiliar: "secretaria",
+  professor: "professor",
+};
 
 const Login = () => {
   const navigate = useNavigate();
@@ -22,19 +32,27 @@ const Login = () => {
       return;
     }
 
-    const { data: students, error: studentsError } = await supabase
-      .from("students")
-      .select("*")
-      .limit(5);
+    // Fetch role and redirect
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: membership } = await supabase
+        .from("school_memberships")
+        .select("role")
+        .eq("user_id", user.id)
+        .limit(1)
+        .single();
 
-    if (studentsError) {
-      console.error("❌ Erro ao buscar students:", studentsError);
+      toast.success("Login realizado com sucesso!");
+      
+      if (membership?.role) {
+        const dashRole = roleToDashboard[membership.role as AppRole];
+        navigate(getDashboardPath(dashRole), { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
     } else {
-      console.log("✅ Students após login:", students);
+      navigate("/", { replace: true });
     }
-
-    toast.success("Login realizado com sucesso!");
-    navigate("/", { replace: true });
     setLoading(false);
   };
 
