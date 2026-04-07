@@ -27,7 +27,7 @@ const Login = () => {
           .from("profiles")
           .select("*")
           .eq("id", data.session.user.id)
-          .single();
+          .maybeSingle();
         info.profile = profile;
         info.profile_error = profErr?.message ?? null;
 
@@ -36,7 +36,7 @@ const Login = () => {
           .select("*")
           .eq("user_id", data.session.user.id)
           .limit(1)
-          .single();
+          .maybeSingle();
         info.membership = membership;
         info.membership_error = memErr?.message ?? null;
       }

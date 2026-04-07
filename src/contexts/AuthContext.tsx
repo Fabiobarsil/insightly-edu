@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .from("profiles")
         .select("role")
         .eq("id", userId)
-        .single();
+        .maybeSingle();
 
       console.log("[Auth] profile for", userId, ":", profile);
 
@@ -74,7 +74,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .select("role")
         .eq("user_id", userId)
         .limit(1)
-        .single();
+        .maybeSingle();
 
       console.log("[Auth] membership for", userId, ":", membership);
 
