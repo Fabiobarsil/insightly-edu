@@ -4,6 +4,7 @@ import PageHeader from "@/components/shared/PageHeader";
 import DataTable from "@/components/shared/DataTable";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
+import { useAuth } from "@/contexts/AuthContext";
 
 const columns = [
   { key: "name", label: "Turma" },
@@ -14,6 +15,8 @@ const columns = [
 
 const ClassesList = () => {
   const { schoolId, isLoading: loadingSchool } = useSchoolId();
+  const { dashboardRole } = useAuth();
+  const basePath = `/${dashboardRole || "admin"}/turmas`;
 
   const { data: classes = [], isLoading } = useQuery({
     queryKey: ["classes", schoolId],
@@ -39,14 +42,14 @@ const ClassesList = () => {
 
   return (
     <AppLayout title="Turmas" breadcrumbs={[{ label: "Turmas" }]}>
-      <PageHeader title="Turmas" description="Gerencie as turmas e atribuições" action={{ label: "Nova Turma", icon: "ri-add-line", to: "/turmas/novo" }} />
+      <PageHeader title="Turmas" description="Gerencie as turmas e atribuições" action={{ label: "Nova Turma", icon: "ri-add-line", to: `${basePath}/novo` }} />
       {loading ? (
         <div className="text-center py-12 text-muted">Carregando turmas...</div>
       ) : classes.length === 0 ? (
         <div className="text-center py-12 text-muted">Nenhuma turma cadastrada ainda.</div>
       ) : (
         <DataTable columns={columns} data={classes} searchPlaceholder="Buscar turma..." actions={(row) => [
-          { label: "Editar", icon: "ri-pencil-line", to: `/turmas/${row.id}/editar` },
+          { label: "Editar", icon: "ri-pencil-line", to: `${basePath}/${row.id}/editar` },
         ]} />
       )}
     </AppLayout>
