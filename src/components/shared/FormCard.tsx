@@ -19,7 +19,6 @@ const FormCard = ({ title, children, onSubmit, submitLabel = "Salvar", cancelTo 
       <button
         onClick={() => {
           onSubmit?.();
-          toast.success("Registro salvo com sucesso!");
         }}
         className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground px-5 py-2.5 rounded-[14px] font-bold text-sm hover:bg-secondary/90 transition-colors"
       >

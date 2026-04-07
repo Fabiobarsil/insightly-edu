@@ -6,13 +6,11 @@ import PageHeader from "@/components/shared/PageHeader";
 import FormCard from "@/components/shared/FormCard";
 import FormField from "@/components/shared/FormField";
 import { supabase } from "@/integrations/supabase/client";
-import { useSchoolId } from "@/hooks/useSchoolId";
 import { toast } from "sonner";
 
 const ClassesCreate = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { schoolId } = useSchoolId();
   const [form, setForm] = useState({
     name: "",
     grade: "",
@@ -25,13 +23,24 @@ const ClassesCreate = () => {
 
   const mutation = useMutation({
     mutationFn: async () => {
-      if (!schoolId) throw new Error("Escola não encontrada");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
+      const { data: membership } = await supabase
+        .from("school_memberships")
+        .select("school_id")
+        .eq("user_id", user.id)
+        .eq("status", "ativo")
+        .maybeSingle();
+
+      if (!membership?.school_id) throw new Error("Escola não encontrada");
+
       const { error } = await supabase.from("classes").insert({
         name: form.name,
         grade: form.grade || null,
         shift: form.shift || null,
         academic_year: Number(form.academic_year) || null,
-        school_id: schoolId,
+        school_id: membership.school_id,
       });
       if (error) throw error;
     },
