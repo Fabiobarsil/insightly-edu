@@ -1,14 +1,19 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth, getDashboardPath } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import RoleRoute from "@/components/auth/RoleRoute";
 
 import Login from "./pages/auth/Login.tsx";
-import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
+
+import SuperadminDashboard from "./pages/dashboards/SuperadminDashboard.tsx";
+import AdminDashboard from "./pages/dashboards/AdminDashboard.tsx";
+import SecretariaDashboard from "./pages/dashboards/SecretariaDashboard.tsx";
+import ProfessorDashboard from "./pages/dashboards/ProfessorDashboard.tsx";
 
 import StudentsList from "./pages/students/StudentsList.tsx";
 import StudentsCreate from "./pages/students/StudentsCreate.tsx";
@@ -41,6 +46,22 @@ import Settings from "./pages/settings/Settings.tsx";
 
 const queryClient = new QueryClient();
 
+const RootRedirect = () => {
+  const { session, loading, dashboardRole } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  if (!session) return <Navigate to="/login" replace />;
+  if (dashboardRole) return <Navigate to={getDashboardPath(dashboardRole)} replace />;
+  return <Navigate to="/login" replace />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -50,40 +71,46 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/" element={<RootRedirect />} />
 
-            <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            {/* Superadmin routes */}
+            <Route path="/superadmin/dashboard" element={<RoleRoute allowedRoles={["superadmin"]}><SuperadminDashboard /></RoleRoute>} />
 
+            {/* Admin routes */}
+            <Route path="/admin/dashboard" element={<RoleRoute allowedRoles={["admin"]}><AdminDashboard /></RoleRoute>} />
+            <Route path="/admin/alunos" element={<RoleRoute allowedRoles={["admin"]}><StudentsList /></RoleRoute>} />
+            <Route path="/admin/alunos/novo" element={<RoleRoute allowedRoles={["admin"]}><StudentsCreate /></RoleRoute>} />
+            <Route path="/admin/alunos/:id" element={<RoleRoute allowedRoles={["admin"]}><StudentsDetail /></RoleRoute>} />
+            <Route path="/admin/alunos/:id/editar" element={<RoleRoute allowedRoles={["admin"]}><StudentsEdit /></RoleRoute>} />
+            <Route path="/admin/responsaveis" element={<RoleRoute allowedRoles={["admin"]}><GuardiansList /></RoleRoute>} />
+            <Route path="/admin/responsaveis/novo" element={<RoleRoute allowedRoles={["admin"]}><GuardiansCreate /></RoleRoute>} />
+            <Route path="/admin/responsaveis/:id" element={<RoleRoute allowedRoles={["admin"]}><GuardiansDetail /></RoleRoute>} />
+            <Route path="/admin/turmas" element={<RoleRoute allowedRoles={["admin"]}><ClassesList /></RoleRoute>} />
+            <Route path="/admin/turmas/novo" element={<RoleRoute allowedRoles={["admin"]}><ClassesCreate /></RoleRoute>} />
+            <Route path="/admin/professores" element={<RoleRoute allowedRoles={["admin"]}><TeachersList /></RoleRoute>} />
+            <Route path="/admin/professores/novo" element={<RoleRoute allowedRoles={["admin"]}><TeachersCreate /></RoleRoute>} />
+            <Route path="/admin/professores/:id" element={<RoleRoute allowedRoles={["admin"]}><TeachersDetail /></RoleRoute>} />
+            <Route path="/admin/configuracoes" element={<RoleRoute allowedRoles={["admin"]}><Settings /></RoleRoute>} />
+
+            {/* Secretaria routes */}
+            <Route path="/secretaria/dashboard" element={<RoleRoute allowedRoles={["secretaria"]}><SecretariaDashboard /></RoleRoute>} />
+            <Route path="/secretaria/alunos" element={<RoleRoute allowedRoles={["secretaria"]}><StudentsList /></RoleRoute>} />
+            <Route path="/secretaria/responsaveis" element={<RoleRoute allowedRoles={["secretaria"]}><GuardiansList /></RoleRoute>} />
+            <Route path="/secretaria/turmas" element={<RoleRoute allowedRoles={["secretaria"]}><ClassesList /></RoleRoute>} />
+            <Route path="/secretaria/professores" element={<RoleRoute allowedRoles={["secretaria"]}><TeachersList /></RoleRoute>} />
+            <Route path="/secretaria/documentos" element={<RoleRoute allowedRoles={["secretaria"]}><Documents /></RoleRoute>} />
+
+            {/* Professor routes */}
+            <Route path="/professor/dashboard" element={<RoleRoute allowedRoles={["professor"]}><ProfessorDashboard /></RoleRoute>} />
+            <Route path="/professor/turmas" element={<RoleRoute allowedRoles={["professor"]}><ClassesList /></RoleRoute>} />
+            <Route path="/professor/disciplinas" element={<RoleRoute allowedRoles={["professor"]}><ClassesList /></RoleRoute>} />
+            <Route path="/professor/notas" element={<RoleRoute allowedRoles={["professor"]}><GradeEntry /></RoleRoute>} />
+
+            {/* Legacy routes redirect */}
             <Route path="/alunos" element={<ProtectedRoute><StudentsList /></ProtectedRoute>} />
             <Route path="/alunos/novo" element={<ProtectedRoute><StudentsCreate /></ProtectedRoute>} />
             <Route path="/alunos/:id" element={<ProtectedRoute><StudentsDetail /></ProtectedRoute>} />
             <Route path="/alunos/:id/editar" element={<ProtectedRoute><StudentsEdit /></ProtectedRoute>} />
-
-            <Route path="/responsaveis" element={<ProtectedRoute><GuardiansList /></ProtectedRoute>} />
-            <Route path="/responsaveis/novo" element={<ProtectedRoute><GuardiansCreate /></ProtectedRoute>} />
-            <Route path="/responsaveis/:id" element={<ProtectedRoute><GuardiansDetail /></ProtectedRoute>} />
-            <Route path="/responsaveis/:id/editar" element={<ProtectedRoute><GuardiansCreate /></ProtectedRoute>} />
-
-            <Route path="/professores" element={<ProtectedRoute><TeachersList /></ProtectedRoute>} />
-            <Route path="/professores/novo" element={<ProtectedRoute><TeachersCreate /></ProtectedRoute>} />
-            <Route path="/professores/:id" element={<ProtectedRoute><TeachersDetail /></ProtectedRoute>} />
-            <Route path="/professores/:id/editar" element={<ProtectedRoute><TeachersCreate /></ProtectedRoute>} />
-
-            <Route path="/turmas" element={<ProtectedRoute><ClassesList /></ProtectedRoute>} />
-            <Route path="/turmas/novo" element={<ProtectedRoute><ClassesCreate /></ProtectedRoute>} />
-            <Route path="/turmas/:id/editar" element={<ProtectedRoute><ClassesCreate /></ProtectedRoute>} />
-
-            <Route path="/notas" element={<ProtectedRoute><GradeEntry /></ProtectedRoute>} />
-            <Route path="/notas/historico" element={<ProtectedRoute><GradeHistory /></ProtectedRoute>} />
-
-            <Route path="/frequencia" element={<ProtectedRoute><AttendanceRecord /></ProtectedRoute>} />
-            <Route path="/frequencia/consulta" element={<ProtectedRoute><AttendanceView /></ProtectedRoute>} />
-            <Route path="/frequencia/relatorios" element={<ProtectedRoute><AttendanceReports /></ProtectedRoute>} />
-
-            <Route path="/documentos" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
-            <Route path="/documentos-oficiais" element={<ProtectedRoute><OfficialDocuments /></ProtectedRoute>} />
-
-            <Route path="/comunicacao" element={<ProtectedRoute><Communication /></ProtectedRoute>} />
-            <Route path="/configuracoes" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
