@@ -5,12 +5,14 @@ import AppLayout from "@/components/layout/AppLayout";
 import PageHeader from "@/components/shared/PageHeader";
 import FormCard from "@/components/shared/FormCard";
 import FormField from "@/components/shared/FormField";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
+import { useSchoolId } from "@/hooks/useSchoolId";
 import { toast } from "sonner";
 
 const ClassesCreate = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { schoolId } = useSchoolId();
   const [form, setForm] = useState({
     name: "",
     grade: "",
@@ -23,26 +25,28 @@ const ClassesCreate = () => {
 
   const mutation = useMutation({
     mutationFn: async () => {
+      if (!schoolId) throw new Error("Escola não encontrada");
       const { error } = await supabase.from("classes").insert({
         name: form.name,
         grade: form.grade || null,
         shift: form.shift || null,
         academic_year: Number(form.academic_year) || null,
+        school_id: schoolId,
       });
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["classes"] });
       toast.success("Turma criada com sucesso!");
-      navigate("/turmas");
+      navigate("/admin/turmas");
     },
     onError: (err: any) => toast.error(err.message || "Erro ao criar turma"),
   });
 
   return (
-    <AppLayout title="Nova Turma" breadcrumbs={[{ label: "Turmas", href: "/turmas" }, { label: "Nova" }]}>
+    <AppLayout title="Nova Turma" breadcrumbs={[{ label: "Turmas", href: "/admin/turmas" }, { label: "Nova" }]}>
       <PageHeader title="Criar Turma" description="Configure a nova turma" />
-      <FormCard title="Dados da Turma" cancelTo="/turmas" onSubmit={() => mutation.mutate()}>
+      <FormCard title="Dados da Turma" cancelTo="/admin/turmas" onSubmit={() => mutation.mutate()}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField label="Nome da Turma" placeholder="5º Ano A" value={form.name} onChange={set("name")} />
           <FormField label="Série" options={[
