@@ -1,89 +1,60 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import logoCertus from "@/assets/logo-certus.png";
-import { AppRole, getDashboardPath } from "@/contexts/AuthContext";
-
-const roleToDashboard: Record<AppRole, "superadmin" | "admin" | "secretaria" | "professor"> = {
-  owner: "superadmin",
-  admin: "admin",
-  coordenador: "admin",
-  secretaria: "secretaria",
-  auxiliar: "secretaria",
-  professor: "professor",
-};
+import { useAuth, getDashboardPath } from "@/contexts/AuthContext";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { session, loading: authLoading, dashboardRole } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // If user already has a session and role, redirect away from login
+  useEffect(() => {
+    if (!authLoading && session && dashboardRole) {
+      console.log("[Login] already authenticated, redirecting to", getDashboardPath(dashboardRole));
+      navigate(getDashboardPath(dashboardRole), { replace: true });
+    }
+  }, [authLoading, session, dashboardRole, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    try {
-      const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-      if (error) {
-        toast.error(error.message);
-        setLoading(false);
-        return;
-      }
-
-      const userId = authData.user?.id ?? authData.session?.user?.id;
-
-      if (!userId) {
-        toast.error("Erro ao obter dados do usuário");
-        navigate("/", { replace: true });
-        setLoading(false);
-        return;
-      }
-
-      // Small delay to let onAuthStateChange release the navigator lock
-      await new Promise((r) => setTimeout(r, 100));
-
-      // Check profiles.role for superadmin
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", userId)
-        .single();
-
-      console.log("[Login] profile for", userId, ":", profile);
-
-      if (profile?.role === "superadmin") {
-        toast.success("Login realizado com sucesso!");
-        navigate("/superadmin/dashboard", { replace: true });
-        setLoading(false);
-        return;
-      }
-
-      // Fallback to school_memberships
-      const { data: membership } = await supabase
-        .from("school_memberships")
-        .select("role")
-        .eq("user_id", userId)
-        .limit(1)
-        .single();
-
-      toast.success("Login realizado com sucesso!");
-
-      if (membership?.role) {
-        const dashRole = roleToDashboard[membership.role as AppRole];
-        navigate(getDashboardPath(dashRole), { replace: true });
-      } else {
-        navigate("/", { replace: true });
-      }
-    } catch (err) {
-      console.error("[Login] unexpected error:", err);
-      toast.error("Erro inesperado no login");
+    if (error) {
+      toast.error(error.message);
+      setLoading(false);
+      return;
     }
 
-    setLoading(false);
+    toast.success("Login realizado com sucesso!");
+    // AuthContext's onAuthStateChange will detect the new session,
+    // fetch the role, and the useEffect above will redirect.
+    // We keep the button disabled until that happens.
   };
+
+  // Show spinner while auth is initializing
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  // If already logged in but waiting for role
+  if (session && !dashboardRole) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4">
@@ -101,9 +72,7 @@ const Login = () => {
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-muted-foreground mb-1.5">
-                Email
-              </label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1.5">Email</label>
               <input
                 type="email"
                 value={email}
@@ -115,9 +84,7 @@ const Login = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-muted-foreground mb-1.5">
-                Senha
-              </label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1.5">Senha</label>
               <input
                 type="password"
                 value={password}
@@ -127,10 +94,7 @@ const Login = () => {
                 className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
               />
               <div className="flex justify-end mt-1.5">
-                <Link
-                  to="/forgot-password"
-                  className="text-xs text-primary hover:underline"
-                >
+                <Link to="/forgot-password" className="text-xs text-primary hover:underline">
                   Esqueci minha senha
                 </Link>
               </div>

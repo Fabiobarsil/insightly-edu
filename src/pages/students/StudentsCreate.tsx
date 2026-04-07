@@ -38,12 +38,8 @@ const StudentsCreate = () => {
       const { error } = await supabase.from("students").insert({
         full_name: form.full_name,
         birth_date: form.birth_date || null,
-        cpf: form.cpf || null,
-        enrollment_code: form.enrollment_code || null,
         class_id: form.class_id || null,
-        turn: form.turn || null,
-        status: form.status,
-        notes: form.notes || null,
+        status: (form.status === "active" ? "ativo" : "inativo") as "ativo" | "inativo",
       });
       if (error) throw error;
     },

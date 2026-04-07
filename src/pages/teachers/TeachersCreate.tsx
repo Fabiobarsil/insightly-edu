@@ -24,10 +24,8 @@ const TeachersCreate = () => {
   const mutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("teachers").insert({
-        full_name: form.full_name,
-        email: form.email || null,
-        phone: form.phone || null,
-        status: form.status,
+        profile_id: null,
+        school_id: null,
       });
       if (error) throw error;
     },

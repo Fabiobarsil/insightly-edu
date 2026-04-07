@@ -49,82 +49,90 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<AppRole | null>(null);
-  const isMounted = useRef(true);
+  const mountedRef = useRef(true);
 
+  // Standalone function that fetches role - called OUTSIDE of auth lock
   const fetchRole = async (userId: string) => {
     try {
-      // 1. Check profiles.role for superadmin
-      const { data: profile, error: profileError } = await supabase
+      const { data: profile } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", userId)
         .single();
 
-      console.log("[AuthContext] profile lookup:", userId, profile, profileError);
+      console.log("[Auth] profile for", userId, ":", profile);
+
+      if (!mountedRef.current) return;
 
       if (profile?.role === "superadmin") {
-        if (isMounted.current) setRole("owner");
+        setRole("owner");
         return;
       }
 
-      // 2. Fallback to school_memberships
-      const { data, error } = await supabase
+      const { data: membership } = await supabase
         .from("school_memberships")
         .select("role")
         .eq("user_id", userId)
         .limit(1)
         .single();
 
-      if (error) {
-        console.error("Erro ao buscar role:", error);
-        if (isMounted.current) setRole(null);
-      } else {
-        if (isMounted.current) setRole(data.role as AppRole);
-      }
+      console.log("[Auth] membership for", userId, ":", membership);
+
+      if (!mountedRef.current) return;
+      setRole(membership?.role ? (membership.role as AppRole) : null);
     } catch (err) {
-      console.error("fetchRole exception:", err);
-      if (isMounted.current) setRole(null);
+      console.error("[Auth] fetchRole error:", err);
+      if (mountedRef.current) setRole(null);
     }
   };
 
   useEffect(() => {
-    isMounted.current = true;
+    mountedRef.current = true;
 
-    // Initial session check
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      if (!isMounted.current) return;
-      setSession(currentSession);
+    // 1. Restore session from storage
+    supabase.auth.getSession().then(({ data: { session: s } }) => {
+      if (!mountedRef.current) return;
+      console.log("[Auth] getSession:", s?.user?.id ?? "no session");
+      setSession(s);
 
-      if (currentSession?.user) {
-        fetchRole(currentSession.user.id).then(() => {
-          if (isMounted.current) setLoading(false);
+      if (s?.user) {
+        fetchRole(s.user.id).finally(() => {
+          if (mountedRef.current) setLoading(false);
         });
       } else {
         setLoading(false);
       }
     });
 
-    // Listen to auth changes - DO NOT await inside the callback to avoid lock deadlocks
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      if (!isMounted.current) return;
-      setSession(nextSession);
+    // 2. Listen for auth changes
+    // IMPORTANT: Do NOT await anything inside this callback - it holds an internal lock.
+    // Use .then() to defer DB queries outside the lock.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, nextSession) => {
+        console.log("[Auth] onAuthStateChange:", _event, nextSession?.user?.id);
 
-      if (nextSession?.user) {
-        // Use setTimeout to break out of the auth lock before making DB queries
-        setTimeout(() => {
-          if (!isMounted.current) return;
-          fetchRole(nextSession.user.id).then(() => {
-            if (isMounted.current) setLoading(false);
+        if (!mountedRef.current) return;
+        setSession(nextSession);
+
+        if (nextSession?.user) {
+          const userId = nextSession.user.id;
+          // Use .then() - this returns immediately, releasing the auth lock
+          // The fetchRole promise runs after the callback returns
+          Promise.resolve().then(() => {
+            if (!mountedRef.current) return;
+            fetchRole(userId).finally(() => {
+              if (mountedRef.current) setLoading(false);
+            });
           });
-        }, 0);
-      } else {
-        setRole(null);
-        setLoading(false);
+        } else {
+          setRole(null);
+          setLoading(false);
+        }
       }
-    });
+    );
 
     return () => {
-      isMounted.current = false;
+      mountedRef.current = false;
       subscription.unsubscribe();
     };
   }, []);
