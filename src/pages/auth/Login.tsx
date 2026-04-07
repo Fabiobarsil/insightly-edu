@@ -7,15 +7,48 @@ import { useAuth, getDashboardPath } from "@/contexts/AuthContext";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { session, loading: authLoading, dashboardRole } = useAuth();
+  const { session, loading: authLoading, dashboardRole, role } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<string>("Carregando...");
 
-  // If user already has a session and role, redirect away from login
+  // Debug: fetch raw session on mount
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data, error }) => {
+      const info: Record<string, unknown> = {
+        session_exists: !!data.session,
+        user_id: data.session?.user?.id ?? null,
+        error: error?.message ?? null,
+      };
+
+      if (data.session?.user?.id) {
+        const { data: profile, error: profErr } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", data.session.user.id)
+          .single();
+        info.profile = profile;
+        info.profile_error = profErr?.message ?? null;
+
+        const { data: membership, error: memErr } = await supabase
+          .from("school_memberships")
+          .select("*")
+          .eq("user_id", data.session.user.id)
+          .limit(1)
+          .single();
+        info.membership = membership;
+        info.membership_error = memErr?.message ?? null;
+      }
+
+      console.log("[DEBUG LOGIN]", info);
+      setDebugInfo(JSON.stringify(info, null, 2));
+    });
+  }, []);
+
   useEffect(() => {
     if (!authLoading && session && dashboardRole) {
-      console.log("[Login] already authenticated, redirecting to", getDashboardPath(dashboardRole));
+      console.log("[Login] redirecting to", getDashboardPath(dashboardRole));
       navigate(getDashboardPath(dashboardRole), { replace: true });
     }
   }, [authLoading, session, dashboardRole, navigate]);
@@ -33,12 +66,8 @@ const Login = () => {
     }
 
     toast.success("Login realizado com sucesso!");
-    // AuthContext's onAuthStateChange will detect the new session,
-    // fetch the role, and the useEffect above will redirect.
-    // We keep the button disabled until that happens.
   };
 
-  // Show spinner while auth is initializing
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -47,11 +76,15 @@ const Login = () => {
     );
   }
 
-  // If already logged in but waiting for role
   if (session && !dashboardRole) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+        <p className="text-foreground mb-2">Sessão ativa mas sem role definida.</p>
+        <p className="text-sm text-muted-foreground mb-4">AuthContext role: {role ?? "null"} | dashboardRole: {dashboardRole ?? "null"}</p>
+        <pre className="bg-muted text-xs p-4 rounded-xl max-w-lg overflow-auto max-h-64 w-full">{debugInfo}</pre>
+        <button onClick={() => supabase.auth.signOut()} className="mt-4 text-sm text-destructive hover:underline">
+          Fazer logout
+        </button>
       </div>
     );
   }
@@ -108,6 +141,12 @@ const Login = () => {
               {loading ? "Entrando..." : "Entrar"}
             </button>
           </form>
+
+          {/* DEBUG temporário */}
+          <details className="mt-4">
+            <summary className="text-xs text-muted-foreground cursor-pointer">Debug info</summary>
+            <pre className="bg-muted text-xs p-2 rounded mt-1 overflow-auto max-h-40">{debugInfo}</pre>
+          </details>
 
           <p className="text-center text-sm text-muted-foreground mt-5">
             Ainda não tem uma conta?{" "}
