@@ -11,6 +11,7 @@ import Login from "./pages/auth/Login.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 import SuperadminDashboard from "./pages/dashboards/SuperadminDashboard.tsx";
+import SchoolsList from "./pages/schools/SchoolsList.tsx";
 import AdminDashboard from "./pages/dashboards/AdminDashboard.tsx";
 import SecretariaDashboard from "./pages/dashboards/SecretariaDashboard.tsx";
 import ProfessorDashboard from "./pages/dashboards/ProfessorDashboard.tsx";
@@ -75,6 +76,7 @@ const App = () => (
 
             {/* Superadmin routes */}
             <Route path="/superadmin/dashboard" element={<RoleRoute allowedRoles={["superadmin"]}><SuperadminDashboard /></RoleRoute>} />
+            <Route path="/superadmin/escolas" element={<RoleRoute allowedRoles={["superadmin"]}><SchoolsList /></RoleRoute>} />
 
             {/* Admin routes */}
             <Route path="/admin/dashboard" element={<RoleRoute allowedRoles={["admin"]}><AdminDashboard /></RoleRoute>} />
