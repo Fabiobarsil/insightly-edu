@@ -89,18 +89,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     mountedRef.current = true;
 
-    // 1. Restore session from storage
+    // 1. Restore session from storage - ALWAYS call setLoading(false)
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       if (!mountedRef.current) return;
-      console.log("[Auth] getSession:", s?.user?.id ?? "no session");
+
+      console.log("[Auth] SESSION:", s);
+      console.log("[Auth] USER:", s?.user ?? null);
       setSession(s);
 
       if (s?.user) {
         fetchRole(s.user.id).finally(() => {
-          if (mountedRef.current) setLoading(false);
+          if (mountedRef.current) {
+            console.log("[Auth] LOADING FINALIZADO (com sessão)");
+            setLoading(false);
+          }
         });
       } else {
+        console.log("[Auth] LOADING FINALIZADO (sem sessão)");
         setLoading(false);
+      }
+    }).catch((err) => {
+      console.error("[Auth] getSession error:", err);
+      if (mountedRef.current) {
+        setSession(null);
+        setLoading(false);
+        console.log("[Auth] LOADING FINALIZADO (erro getSession)");
       }
     });
 
