@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -49,72 +49,82 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<AppRole | null>(null);
+  const isMounted = useRef(true);
 
   const fetchRole = async (userId: string) => {
-    // 1. Check profiles.role for superadmin
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", userId)
-      .single();
+    try {
+      // 1. Check profiles.role for superadmin
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .single();
 
-    console.log("[AuthContext] profile lookup for userId:", userId, "result:", profile, "error:", profileError);
+      console.log("[AuthContext] profile lookup:", userId, profile, profileError);
 
-    if (profile?.role === "superadmin") {
-      console.log("[AuthContext] superadmin detected, setting role to owner");
-      setRole("owner");
-      return;
-    }
-
-    // 2. Fallback to school_memberships
-    const { data, error } = await supabase
-      .from("school_memberships")
-      .select("role")
-      .eq("user_id", userId)
-      .limit(1)
-      .single();
-
-    if (error) {
-      console.error("Erro ao buscar role:", error);
-      setRole(null);
-      return;
-    }
-
-    setRole(data.role as AppRole);
-  };
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const syncAuthState = async (nextSession: Session | null) => {
-      if (!isMounted) return;
-
-      setSession(nextSession);
-
-      if (!nextSession?.user) {
-        setRole(null);
-        setLoading(false);
+      if (profile?.role === "superadmin") {
+        if (isMounted.current) setRole("owner");
         return;
       }
 
-      setLoading(true);
-      await fetchRole(nextSession.user.id);
+      // 2. Fallback to school_memberships
+      const { data, error } = await supabase
+        .from("school_memberships")
+        .select("role")
+        .eq("user_id", userId)
+        .limit(1)
+        .single();
 
-      if (isMounted) {
+      if (error) {
+        console.error("Erro ao buscar role:", error);
+        if (isMounted.current) setRole(null);
+      } else {
+        if (isMounted.current) setRole(data.role as AppRole);
+      }
+    } catch (err) {
+      console.error("fetchRole exception:", err);
+      if (isMounted.current) setRole(null);
+    }
+  };
+
+  useEffect(() => {
+    isMounted.current = true;
+
+    // Initial session check
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      if (!isMounted.current) return;
+      setSession(currentSession);
+
+      if (currentSession?.user) {
+        fetchRole(currentSession.user.id).then(() => {
+          if (isMounted.current) setLoading(false);
+        });
+      } else {
         setLoading(false);
       }
-    };
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      void syncAuthState(nextSession);
     });
 
-    void supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      void syncAuthState(currentSession);
+    // Listen to auth changes - DO NOT await inside the callback to avoid lock deadlocks
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (!isMounted.current) return;
+      setSession(nextSession);
+
+      if (nextSession?.user) {
+        // Use setTimeout to break out of the auth lock before making DB queries
+        setTimeout(() => {
+          if (!isMounted.current) return;
+          fetchRole(nextSession.user.id).then(() => {
+            if (isMounted.current) setLoading(false);
+          });
+        }, 0);
+      } else {
+        setRole(null);
+        setLoading(false);
+      }
     });
 
     return () => {
-      isMounted = false;
+      isMounted.current = false;
       subscription.unsubscribe();
     };
   }, []);

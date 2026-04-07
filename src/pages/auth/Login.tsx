@@ -24,28 +24,37 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
 
-    const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
+    try {
+      const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (error) {
-      toast.error(error.message);
-      setLoading(false);
-      return;
-    }
+      if (error) {
+        toast.error(error.message);
+        setLoading(false);
+        return;
+      }
 
-    const user = authData.user ?? authData.session?.user ?? null;
+      const userId = authData.user?.id ?? authData.session?.user?.id;
 
-    if (user) {
-      // Check profiles.role for superadmin first
-      const { data: profile, error: profileError } = await supabase
+      if (!userId) {
+        toast.error("Erro ao obter dados do usuário");
+        navigate("/", { replace: true });
+        setLoading(false);
+        return;
+      }
+
+      // Small delay to let onAuthStateChange release the navigator lock
+      await new Promise((r) => setTimeout(r, 100));
+
+      // Check profiles.role for superadmin
+      const { data: profile } = await supabase
         .from("profiles")
         .select("role")
-        .eq("id", user.id)
+        .eq("id", userId)
         .single();
 
-      console.log("[Login] profile lookup for user.id:", user.id, "result:", profile, "error:", profileError);
+      console.log("[Login] profile for", userId, ":", profile);
 
       if (profile?.role === "superadmin") {
-        console.log("[Login] superadmin detected, redirecting");
         toast.success("Login realizado com sucesso!");
         navigate("/superadmin/dashboard", { replace: true });
         setLoading(false);
@@ -56,7 +65,7 @@ const Login = () => {
       const { data: membership } = await supabase
         .from("school_memberships")
         .select("role")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .limit(1)
         .single();
 
@@ -68,9 +77,11 @@ const Login = () => {
       } else {
         navigate("/", { replace: true });
       }
-    } else {
-      navigate("/", { replace: true });
+    } catch (err) {
+      console.error("[Login] unexpected error:", err);
+      toast.error("Erro inesperado no login");
     }
+
     setLoading(false);
   };
 
@@ -78,7 +89,6 @@ const Login = () => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm flex flex-col items-center">
         <div className="bg-card border border-border/60 rounded-2xl shadow-lg p-8 w-full">
-          {/* Header: Logo + Nome */}
           <div className="flex flex-col items-center mb-8">
             <div className="flex items-center gap-2.5 mb-2">
               <img src={logoCertus} alt="CertusEdu" className="h-10 w-auto" />
@@ -89,7 +99,6 @@ const Login = () => {
             </p>
           </div>
 
-          {/* Formulário */}
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-muted-foreground mb-1.5">
@@ -136,7 +145,6 @@ const Login = () => {
             </button>
           </form>
 
-          {/* CTA */}
           <p className="text-center text-sm text-muted-foreground mt-5">
             Ainda não tem uma conta?{" "}
             <Link to="/landing" className="text-primary font-medium hover:underline">
@@ -146,7 +154,6 @@ const Login = () => {
         </div>
       </div>
 
-      {/* Rodapé institucional */}
       <footer className="mt-8 text-center text-xs text-muted-foreground/60 space-y-0.5">
         <p>CertusEdu © 2026</p>
         <p>Uma solução do ecossistema Certus</p>
