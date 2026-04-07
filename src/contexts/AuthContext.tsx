@@ -52,14 +52,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchRole = async (userId: string) => {
     // 1. Check profiles.role for superadmin
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", userId)
       .single();
 
+    console.log("[AuthContext] profile lookup for userId:", userId, "result:", profile, "error:", profileError);
+
     if (profile?.role === "superadmin") {
-      setRole("owner"); // owner maps to superadmin dashboard
+      console.log("[AuthContext] superadmin detected, setting role to owner");
+      setRole("owner");
       return;
     }
 

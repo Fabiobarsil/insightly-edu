@@ -36,13 +36,16 @@ const Login = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       // Check profiles.role for superadmin first
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", user.id)
         .single();
 
+      console.log("[Login] profile lookup for user.id:", user.id, "result:", profile, "error:", profileError);
+
       if (profile?.role === "superadmin") {
+        console.log("[Login] superadmin detected, redirecting");
         toast.success("Login realizado com sucesso!");
         navigate("/superadmin/dashboard", { replace: true });
         setLoading(false);
