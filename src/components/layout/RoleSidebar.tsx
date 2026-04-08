@@ -25,8 +25,9 @@ const menusByRole: Record<DashboardRole, NavItem[]> = {
     { icon: "ri-book-open-line", label: "Turmas", to: "/admin/turmas" },
     { icon: "ri-booklet-line", label: "Disciplinas", to: "/admin/disciplinas" },
     { icon: "ri-user-star-line", label: "Professores", to: "/admin/professores" },
-    { icon: "ri-team-line", label: "Usuários", to: "/admin/usuarios" },
-    { icon: "ri-bar-chart-box-line", label: "Relatórios", to: "/admin/relatorios" },
+    { icon: "ri-bar-chart-box-line", label: "Notas", to: "/admin/notas" },
+    { icon: "ri-calendar-check-line", label: "Frequência", to: "/admin/frequencia" },
+    { icon: "ri-chat-3-line", label: "Comunicação", to: "/admin/comunicacao" },
     { icon: "ri-settings-3-line", label: "Configurações", to: "/admin/configuracoes" },
   ],
   secretaria: [
@@ -39,9 +40,11 @@ const menusByRole: Record<DashboardRole, NavItem[]> = {
     { icon: "ri-file-text-line", label: "Documentos", to: "/secretaria/documentos" },
   ],
   professor: [
+    { icon: "ri-dashboard-3-line", label: "Dashboard", to: "/professor/dashboard" },
     { icon: "ri-book-open-line", label: "Minhas Turmas", to: "/professor/turmas" },
-    { icon: "ri-booklet-line", label: "Minhas Disciplinas", to: "/professor/disciplinas" },
+    { icon: "ri-booklet-line", label: "Disciplinas", to: "/professor/disciplinas" },
     { icon: "ri-bar-chart-box-line", label: "Lançar Notas", to: "/professor/notas" },
+    { icon: "ri-calendar-check-line", label: "Frequência", to: "/professor/frequencia" },
   ],
 };
 

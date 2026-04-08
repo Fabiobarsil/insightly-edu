@@ -23,6 +23,7 @@ import StudentsDetail from "./pages/students/StudentsDetail.tsx";
 
 import GuardiansList from "./pages/guardians/GuardiansList.tsx";
 import GuardiansCreate from "./pages/guardians/GuardiansCreate.tsx";
+import GuardiansEdit from "./pages/guardians/GuardiansEdit.tsx";
 import GuardiansDetail from "./pages/guardians/GuardiansDetail.tsx";
 
 import TeachersList from "./pages/teachers/TeachersList.tsx";
@@ -32,6 +33,8 @@ import TeachersEdit from "./pages/teachers/TeachersEdit.tsx";
 
 import ClassesList from "./pages/classes/ClassesList.tsx";
 import ClassesCreate from "./pages/classes/ClassesCreate.tsx";
+
+import SubjectsList from "./pages/subjects/SubjectsList.tsx";
 
 import GradeEntry from "./pages/grades/GradeEntry.tsx";
 import GradeHistory from "./pages/grades/GradeHistory.tsx";
@@ -88,12 +91,19 @@ const App = () => (
             <Route path="/admin/responsaveis" element={<RoleRoute allowedRoles={["admin"]}><GuardiansList /></RoleRoute>} />
             <Route path="/admin/responsaveis/novo" element={<RoleRoute allowedRoles={["admin"]}><GuardiansCreate /></RoleRoute>} />
             <Route path="/admin/responsaveis/:id" element={<RoleRoute allowedRoles={["admin"]}><GuardiansDetail /></RoleRoute>} />
+            <Route path="/admin/responsaveis/:id/editar" element={<RoleRoute allowedRoles={["admin"]}><GuardiansEdit /></RoleRoute>} />
             <Route path="/admin/turmas" element={<RoleRoute allowedRoles={["admin"]}><ClassesList /></RoleRoute>} />
             <Route path="/admin/turmas/novo" element={<RoleRoute allowedRoles={["admin"]}><ClassesCreate /></RoleRoute>} />
             <Route path="/admin/professores" element={<RoleRoute allowedRoles={["admin"]}><TeachersList /></RoleRoute>} />
             <Route path="/admin/professores/novo" element={<RoleRoute allowedRoles={["admin"]}><TeachersCreate /></RoleRoute>} />
             <Route path="/admin/professores/:id" element={<RoleRoute allowedRoles={["admin"]}><TeachersDetail /></RoleRoute>} />
             <Route path="/admin/professores/:id/editar" element={<RoleRoute allowedRoles={["admin"]}><TeachersEdit /></RoleRoute>} />
+            <Route path="/admin/disciplinas" element={<RoleRoute allowedRoles={["admin"]}><SubjectsList /></RoleRoute>} />
+            <Route path="/admin/notas" element={<RoleRoute allowedRoles={["admin"]}><GradeEntry /></RoleRoute>} />
+            <Route path="/admin/notas/historico" element={<RoleRoute allowedRoles={["admin"]}><GradeHistory /></RoleRoute>} />
+            <Route path="/admin/frequencia" element={<RoleRoute allowedRoles={["admin"]}><AttendanceRecord /></RoleRoute>} />
+            <Route path="/admin/documentos" element={<RoleRoute allowedRoles={["admin"]}><Documents /></RoleRoute>} />
+            <Route path="/admin/comunicacao" element={<RoleRoute allowedRoles={["admin"]}><Communication /></RoleRoute>} />
             <Route path="/admin/configuracoes" element={<RoleRoute allowedRoles={["admin"]}><Settings /></RoleRoute>} />
 
             {/* Secretaria routes */}
@@ -107,14 +117,19 @@ const App = () => (
             {/* Professor routes */}
             <Route path="/professor/dashboard" element={<RoleRoute allowedRoles={["professor"]}><ProfessorDashboard /></RoleRoute>} />
             <Route path="/professor/turmas" element={<RoleRoute allowedRoles={["professor"]}><ClassesList /></RoleRoute>} />
-            <Route path="/professor/disciplinas" element={<RoleRoute allowedRoles={["professor"]}><ClassesList /></RoleRoute>} />
+            <Route path="/professor/disciplinas" element={<RoleRoute allowedRoles={["professor"]}><SubjectsList /></RoleRoute>} />
             <Route path="/professor/notas" element={<RoleRoute allowedRoles={["professor"]}><GradeEntry /></RoleRoute>} />
+            <Route path="/professor/frequencia" element={<RoleRoute allowedRoles={["professor"]}><AttendanceRecord /></RoleRoute>} />
 
-            {/* Legacy routes redirect */}
+            {/* Legacy routes */}
             <Route path="/alunos" element={<ProtectedRoute><StudentsList /></ProtectedRoute>} />
             <Route path="/alunos/novo" element={<ProtectedRoute><StudentsCreate /></ProtectedRoute>} />
             <Route path="/alunos/:id" element={<ProtectedRoute><StudentsDetail /></ProtectedRoute>} />
             <Route path="/alunos/:id/editar" element={<ProtectedRoute><StudentsEdit /></ProtectedRoute>} />
+            <Route path="/responsaveis" element={<ProtectedRoute><GuardiansList /></ProtectedRoute>} />
+            <Route path="/responsaveis/novo" element={<ProtectedRoute><GuardiansCreate /></ProtectedRoute>} />
+            <Route path="/responsaveis/:id" element={<ProtectedRoute><GuardiansDetail /></ProtectedRoute>} />
+            <Route path="/responsaveis/:id/editar" element={<ProtectedRoute><GuardiansEdit /></ProtectedRoute>} />
             <Route path="/professores" element={<ProtectedRoute><TeachersList /></ProtectedRoute>} />
             <Route path="/professores/novo" element={<ProtectedRoute><TeachersCreate /></ProtectedRoute>} />
             <Route path="/professores/:id" element={<ProtectedRoute><TeachersDetail /></ProtectedRoute>} />
