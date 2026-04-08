@@ -16,7 +16,7 @@ const menusByRole: Record<DashboardRole, NavItem[]> = {
     { icon: "ri-vip-crown-line", label: "Assinaturas", to: "/superadmin/assinaturas" },
     { icon: "ri-group-line", label: "Usuários", to: "/superadmin/usuarios" },
     { icon: "ri-file-list-3-line", label: "Logs", to: "/superadmin/logs" },
-    { icon: "ri-settings-3-line", label: "Configurações", to: "/superadmin/configuracoes" },
+    { icon: "ri-settings-3-line", label: "Administração", to: "/superadmin/configuracoes" },
   ],
   admin: [
     { icon: "ri-dashboard-3-line", label: "Dashboard", to: "/admin/dashboard" },
@@ -29,7 +29,7 @@ const menusByRole: Record<DashboardRole, NavItem[]> = {
     { icon: "ri-calendar-check-line", label: "Frequência", to: "/admin/frequencia" },
     { icon: "ri-file-text-line", label: "Documentos", to: "/admin/documentos" },
     { icon: "ri-chat-3-line", label: "Comunicação", to: "/admin/comunicacao" },
-    { icon: "ri-settings-3-line", label: "Configurações", to: "/admin/configuracoes" },
+    { icon: "ri-settings-3-line", label: "Administração", to: "/admin/configuracoes" },
   ],
   secretaria: [
     { icon: "ri-dashboard-3-line", label: "Dashboard", to: "/secretaria/dashboard" },

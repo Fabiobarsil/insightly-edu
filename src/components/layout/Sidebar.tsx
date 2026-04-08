@@ -12,7 +12,7 @@ const navItems = [
   { icon: "ri-file-text-line", label: "Documentos", to: "/documentos" },
   { icon: "ri-draft-line", label: "Docs Oficiais", to: "/documentos-oficiais" },
   { icon: "ri-notification-3-line", label: "Comunicação", to: "/comunicacao" },
-  { icon: "ri-settings-3-line", label: "Configurações", to: "/configuracoes" },
+  { icon: "ri-settings-3-line", label: "Administração", to: "/configuracoes" },
 ];
 
 const Sidebar = () => (
