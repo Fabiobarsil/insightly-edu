@@ -7,23 +7,31 @@ interface KpiData {
   avgAttendance: number;
   studentsAtRisk: number;
   pendingDocs: number;
+  emittedDocs: number;
+  deliveredDocs: number;
+  overdueDocs: number;
 }
 
 const KpiCards = () => {
-  const [data, setData] = useState<KpiData>({ totalStudents: 0, avgAttendance: 0, studentsAtRisk: 0, pendingDocs: 0 });
+  const [data, setData] = useState<KpiData>({ totalStudents: 0, avgAttendance: 0, studentsAtRisk: 0, pendingDocs: 0, emittedDocs: 0, deliveredDocs: 0, overdueDocs: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetch = async () => {
-      const [studentsRes, perfRes, docsRes, attendanceRes] = await Promise.all([
+      const today = new Date().toISOString().split("T")[0];
+      const [studentsRes, perfRes, docsAllRes, attendanceRes] = await Promise.all([
         supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "ativo"),
         supabase.from("vw_student_performance").select("*"),
-        supabase.from("documents").select("id", { count: "exact", head: true }).eq("status", "pendente"),
+        supabase.from("documents").select("status, due_date"),
         supabase.from("attendance").select("status"),
       ]);
 
       const totalStudents = studentsRes.count ?? 0;
-      const pendingDocs = docsRes.count ?? 0;
+      const allDocs = docsAllRes.data ?? [];
+      const pendingDocs = allDocs.filter((d) => d.status === "pendente").length;
+      const emittedDocs = allDocs.filter((d) => d.status === "emitido").length;
+      const deliveredDocs = allDocs.filter((d) => d.status === "entregue").length;
+      const overdueDocs = allDocs.filter((d) => d.status === "pendente" && d.due_date && d.due_date < today).length;
 
       const perf = perfRes.data ?? [];
       const studentsAtRisk = perf.filter(
@@ -34,7 +42,7 @@ const KpiCards = () => {
       const present = attData.filter((a) => a.status === "presente").length;
       const avgAttendance = attData.length > 0 ? (present / attData.length) * 100 : 0;
 
-      setData({ totalStudents, avgAttendance, studentsAtRisk, pendingDocs });
+      setData({ totalStudents, avgAttendance, studentsAtRisk, pendingDocs, emittedDocs, deliveredDocs, overdueDocs });
       setLoading(false);
     };
     fetch();
@@ -69,13 +77,40 @@ const KpiCards = () => {
       accent: data.studentsAtRisk > 5 ? "bg-red-50 text-red-500" : data.studentsAtRisk > 0 ? "bg-amber-50 text-amber-600" : "bg-secondary/10 text-secondary",
     },
     {
-      label: "Documentos Pendentes",
+      label: "Docs Pendentes",
       value: loading ? "..." : String(data.pendingDocs),
       trend: loading ? "" : data.pendingDocs > 0 ? `${data.pendingDocs} pendentes` : "✓ Em dia",
-      trendLabel: "aguardando",
+      trendLabel: "aguardando envio",
       icon: "ri-file-warning-line",
       trendUp: data.pendingDocs === 0,
       accent: data.pendingDocs > 10 ? "bg-red-50 text-red-500" : data.pendingDocs > 0 ? "bg-amber-50 text-amber-600" : "bg-secondary/10 text-secondary",
+    },
+    {
+      label: "Docs Emitidos",
+      value: loading ? "..." : String(data.emittedDocs),
+      trend: loading ? "" : data.emittedDocs > 0 ? `${data.emittedDocs} emitidos` : "—",
+      trendLabel: "documentos gerados",
+      icon: "ri-file-check-line",
+      trendUp: true,
+      accent: "bg-secondary/10 text-secondary",
+    },
+    {
+      label: "Docs Entregues",
+      value: loading ? "..." : String(data.deliveredDocs),
+      trend: loading ? "" : data.deliveredDocs > 0 ? `✓ ${data.deliveredDocs}` : "—",
+      trendLabel: "finalizados",
+      icon: "ri-file-download-line",
+      trendUp: true,
+      accent: "bg-secondary/10 text-secondary",
+    },
+    {
+      label: "Docs Atrasados",
+      value: loading ? "..." : String(data.overdueDocs),
+      trend: loading ? "" : data.overdueDocs > 0 ? `⚠ ${data.overdueDocs} vencidos` : "✓ Nenhum",
+      trendLabel: "prazo expirado",
+      icon: "ri-file-damage-line",
+      trendUp: data.overdueDocs === 0,
+      accent: data.overdueDocs > 0 ? "bg-red-50 text-red-500" : "bg-secondary/10 text-secondary",
     },
   ];
 
