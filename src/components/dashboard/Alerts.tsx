@@ -5,31 +5,38 @@ interface AlertData {
   criticalCount: number;
   criticalStudents: Array<{ full_name: string | null; id: string | null }>;
   pendingDocsCount: number;
+  overdueDocsCount: number;
   lowPerfCount: number;
 }
 
 const Alerts = () => {
-  const [data, setData] = useState<AlertData>({ criticalCount: 0, criticalStudents: [], pendingDocsCount: 0, lowPerfCount: 0 });
+  const [data, setData] = useState<AlertData>({ criticalCount: 0, criticalStudents: [], pendingDocsCount: 0, overdueDocsCount: 0, lowPerfCount: 0 });
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchData = async () => {
+      const today = new Date().toISOString().split("T")[0];
       const [perfRes, docsRes] = await Promise.all([
         supabase.from("vw_student_performance").select("*"),
-        supabase.from("documents").select("id", { count: "exact", head: true }).eq("status", "pendente"),
+        supabase.from("documents").select("status, due_date"),
       ]);
 
       const perf = perfRes.data ?? [];
       const critical = perf.filter((s) => s.status_frequencia === "CRITICO");
       const lowPerf = perf.filter((s) => s.status_nota === "BAIXO DESEMPENHO");
 
+      const allDocs = docsRes.data ?? [];
+      const pendingDocsCount = allDocs.filter((d) => d.status === "pendente").length;
+      const overdueDocsCount = allDocs.filter((d) => d.status === "pendente" && d.due_date && d.due_date < today).length;
+
       setData({
         criticalCount: critical.length,
         criticalStudents: critical.slice(0, 3),
-        pendingDocsCount: docsRes.count ?? 0,
+        pendingDocsCount,
+        overdueDocsCount,
         lowPerfCount: lowPerf.length,
       });
     };
-    fetch();
+    fetchData();
   }, []);
 
   const alerts = [
@@ -48,10 +55,20 @@ const Alerts = () => {
       iconClass: "bg-amber-50 text-amber-600",
       title: "Documentos Pendentes",
       desc: `${data.pendingDocsCount} documento(s) aguardando envio ou aprovação.`,
-      severity: "Atenção",
-      severityClass: "bg-amber-50 text-amber-700",
+      severity: data.pendingDocsCount > 0 ? "Atenção" : "OK",
+      severityClass: data.pendingDocsCount > 0 ? "bg-amber-50 text-amber-700" : "bg-secondary/10 text-secondary",
       details: "",
       whatsappMsg: "documentos pendentes",
+    },
+    {
+      icon: "ri-calendar-close-line",
+      iconClass: data.overdueDocsCount > 0 ? "bg-red-50 text-red-500" : "bg-secondary/10 text-secondary",
+      title: "Documentos Vencidos",
+      desc: `${data.overdueDocsCount} documento(s) com prazo expirado.`,
+      severity: data.overdueDocsCount > 0 ? "Crítico" : "OK",
+      severityClass: data.overdueDocsCount > 0 ? "bg-red-50 text-red-600 animate-pulse" : "bg-secondary/10 text-secondary",
+      details: "",
+      whatsappMsg: "documentos vencidos",
     },
     {
       icon: "ri-line-chart-line",
