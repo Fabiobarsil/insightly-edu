@@ -67,6 +67,29 @@ const RootRedirect = () => {
   return <Navigate to="/login" replace />;
 };
 
+/** Redirects legacy paths to the user's role-prefixed equivalent */
+const LegacyRedirect = ({ path }: { path: string }) => {
+  const { dashboardRole, loading, session } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  if (!session) return <Navigate to="/login" replace />;
+
+  const prefix = dashboardRole === "superadmin" ? "/superadmin"
+    : dashboardRole === "admin" ? "/admin"
+    : dashboardRole === "secretaria" ? "/secretaria"
+    : dashboardRole === "professor" ? "/professor"
+    : "";
+
+  return <Navigate to={`${prefix}${path}`} replace />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -112,6 +135,7 @@ const App = () => (
             <Route path="/secretaria/responsaveis" element={<RoleRoute allowedRoles={["secretaria"]}><GuardiansList /></RoleRoute>} />
             <Route path="/secretaria/turmas" element={<RoleRoute allowedRoles={["secretaria"]}><ClassesList /></RoleRoute>} />
             <Route path="/secretaria/professores" element={<RoleRoute allowedRoles={["secretaria"]}><TeachersList /></RoleRoute>} />
+            <Route path="/secretaria/disciplinas" element={<RoleRoute allowedRoles={["secretaria"]}><SubjectsList /></RoleRoute>} />
             <Route path="/secretaria/documentos" element={<RoleRoute allowedRoles={["secretaria"]}><Documents /></RoleRoute>} />
 
             {/* Professor routes */}
@@ -121,19 +145,26 @@ const App = () => (
             <Route path="/professor/notas" element={<RoleRoute allowedRoles={["professor"]}><GradeEntry /></RoleRoute>} />
             <Route path="/professor/frequencia" element={<RoleRoute allowedRoles={["professor"]}><AttendanceRecord /></RoleRoute>} />
 
-            {/* Legacy routes */}
-            <Route path="/alunos" element={<ProtectedRoute><StudentsList /></ProtectedRoute>} />
-            <Route path="/alunos/novo" element={<ProtectedRoute><StudentsCreate /></ProtectedRoute>} />
-            <Route path="/alunos/:id" element={<ProtectedRoute><StudentsDetail /></ProtectedRoute>} />
-            <Route path="/alunos/:id/editar" element={<ProtectedRoute><StudentsEdit /></ProtectedRoute>} />
-            <Route path="/responsaveis" element={<ProtectedRoute><GuardiansList /></ProtectedRoute>} />
-            <Route path="/responsaveis/novo" element={<ProtectedRoute><GuardiansCreate /></ProtectedRoute>} />
-            <Route path="/responsaveis/:id" element={<ProtectedRoute><GuardiansDetail /></ProtectedRoute>} />
-            <Route path="/responsaveis/:id/editar" element={<ProtectedRoute><GuardiansEdit /></ProtectedRoute>} />
-            <Route path="/professores" element={<ProtectedRoute><TeachersList /></ProtectedRoute>} />
-            <Route path="/professores/novo" element={<ProtectedRoute><TeachersCreate /></ProtectedRoute>} />
-            <Route path="/professores/:id" element={<ProtectedRoute><TeachersDetail /></ProtectedRoute>} />
-            <Route path="/professores/:id/editar" element={<ProtectedRoute><TeachersEdit /></ProtectedRoute>} />
+            {/* Legacy route redirects - redirect to role-prefixed paths */}
+            <Route path="/alunos" element={<LegacyRedirect path="/alunos" />} />
+            <Route path="/alunos/novo" element={<LegacyRedirect path="/alunos/novo" />} />
+            <Route path="/alunos/:id" element={<LegacyRedirect path="/alunos" />} />
+            <Route path="/alunos/:id/editar" element={<LegacyRedirect path="/alunos" />} />
+            <Route path="/responsaveis" element={<LegacyRedirect path="/responsaveis" />} />
+            <Route path="/responsaveis/*" element={<LegacyRedirect path="/responsaveis" />} />
+            <Route path="/professores" element={<LegacyRedirect path="/professores" />} />
+            <Route path="/professores/*" element={<LegacyRedirect path="/professores" />} />
+            <Route path="/turmas" element={<LegacyRedirect path="/turmas" />} />
+            <Route path="/turmas/*" element={<LegacyRedirect path="/turmas" />} />
+            <Route path="/disciplinas" element={<LegacyRedirect path="/disciplinas" />} />
+            <Route path="/notas" element={<LegacyRedirect path="/notas" />} />
+            <Route path="/notas/*" element={<LegacyRedirect path="/notas" />} />
+            <Route path="/frequencia" element={<LegacyRedirect path="/frequencia" />} />
+            <Route path="/frequencia/*" element={<LegacyRedirect path="/frequencia" />} />
+            <Route path="/documentos" element={<LegacyRedirect path="/documentos" />} />
+            <Route path="/documentos/*" element={<LegacyRedirect path="/documentos" />} />
+            <Route path="/comunicacao" element={<LegacyRedirect path="/comunicacao" />} />
+            <Route path="/configuracoes" element={<LegacyRedirect path="/configuracoes" />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
