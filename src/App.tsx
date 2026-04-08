@@ -28,6 +28,7 @@ import GuardiansDetail from "./pages/guardians/GuardiansDetail.tsx";
 import TeachersList from "./pages/teachers/TeachersList.tsx";
 import TeachersCreate from "./pages/teachers/TeachersCreate.tsx";
 import TeachersDetail from "./pages/teachers/TeachersDetail.tsx";
+import TeachersEdit from "./pages/teachers/TeachersEdit.tsx";
 
 import ClassesList from "./pages/classes/ClassesList.tsx";
 import ClassesCreate from "./pages/classes/ClassesCreate.tsx";
@@ -92,6 +93,7 @@ const App = () => (
             <Route path="/admin/professores" element={<RoleRoute allowedRoles={["admin"]}><TeachersList /></RoleRoute>} />
             <Route path="/admin/professores/novo" element={<RoleRoute allowedRoles={["admin"]}><TeachersCreate /></RoleRoute>} />
             <Route path="/admin/professores/:id" element={<RoleRoute allowedRoles={["admin"]}><TeachersDetail /></RoleRoute>} />
+            <Route path="/admin/professores/:id/editar" element={<RoleRoute allowedRoles={["admin"]}><TeachersEdit /></RoleRoute>} />
             <Route path="/admin/configuracoes" element={<RoleRoute allowedRoles={["admin"]}><Settings /></RoleRoute>} />
 
             {/* Secretaria routes */}
@@ -116,6 +118,7 @@ const App = () => (
             <Route path="/professores" element={<ProtectedRoute><TeachersList /></ProtectedRoute>} />
             <Route path="/professores/novo" element={<ProtectedRoute><TeachersCreate /></ProtectedRoute>} />
             <Route path="/professores/:id" element={<ProtectedRoute><TeachersDetail /></ProtectedRoute>} />
+            <Route path="/professores/:id/editar" element={<ProtectedRoute><TeachersEdit /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
