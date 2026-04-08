@@ -375,6 +375,27 @@ export type Database = {
           },
         ]
       }
+      teacher_classes: {
+        Row: {
+          class_id: string | null
+          id: string
+          subject_id: string | null
+          teacher_id: string | null
+        }
+        Insert: {
+          class_id?: string | null
+          id?: string
+          subject_id?: string | null
+          teacher_id?: string | null
+        }
+        Update: {
+          class_id?: string | null
+          id?: string
+          subject_id?: string | null
+          teacher_id?: string | null
+        }
+        Relationships: []
+      }
       teachers: {
         Row: {
           id: string
