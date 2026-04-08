@@ -8,6 +8,7 @@ import { useSchoolId } from "@/hooks/useSchoolId";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import CertificadoModal from "@/components/documents/CertificadoModal";
+import DocumentModal from "@/components/documents/DocumentModal";
 
 type Tab = "documentos" | "oficiais" | "declaracoes";
 
@@ -45,10 +46,9 @@ const Documents = () => {
   const [tab, setTab] = useState<Tab>("documentos");
   const { schoolId } = useSchoolId();
 
-  // For official doc generation
-  const [selectedDoc, setSelectedDoc] = useState("");
-  const [selectedStudent, setSelectedStudent] = useState("");
   const [certModalOpen, setCertModalOpen] = useState(false);
+  const [genericModalOpen, setGenericModalOpen] = useState(false);
+  const [activeDoc, setActiveDoc] = useState<{ id: string; nome: string } | null>(null);
 
   // For declarations
   const [declReason, setDeclReason] = useState("");
@@ -72,18 +72,13 @@ const Documents = () => {
     enabled: !!schoolId,
   });
 
-  const handleGenerateOfficial = () => {
-    if (!selectedStudent || !selectedDoc) {
-      toast.error("Selecione o aluno e o tipo de documento");
-      return;
-    }
-    if (selectedDoc === "certificado") {
+  const handleCardClick = (doc: typeof officialDocs[0]) => {
+    if (doc.id === "certificado") {
       setCertModalOpen(true);
-      return;
+    } else {
+      setActiveDoc(doc);
+      setGenericModalOpen(true);
     }
-    const doc = officialDocs.find((d) => d.id === selectedDoc);
-    const student = students.find((s: any) => s.id === selectedStudent);
-    toast.success(`${doc?.nome} gerado para ${(student as any)?.full_name}!`);
   };
 
   const handleGenerateDeclaration = () => {
@@ -165,66 +160,22 @@ const Documents = () => {
         </div>
       )}
 
-      {/* Tab: Documentos oficiais */}
+      {/* Tab: Documentos oficiais - apenas cards clicáveis */}
       {tab === "oficiais" && (
-        <div className="space-y-6">
-          <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow">
-            <h4 className="text-sm font-bold text-primary mb-4">Gerar Documento Oficial</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-xs font-bold text-muted-foreground mb-1.5">Aluno</label>
-                <select
-                  value={selectedStudent}
-                  onChange={(e) => setSelectedStudent(e.target.value)}
-                  className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
-                >
-                  <option value="">Selecionar aluno...</option>
-                  {students.map((s: any) => (
-                    <option key={s.id} value={s.id}>
-                      {s.full_name} {s.classes?.name ? `(${s.classes.name})` : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-muted-foreground mb-1.5">Tipo de Documento</label>
-                <select
-                  value={selectedDoc}
-                  onChange={(e) => setSelectedDoc(e.target.value)}
-                  className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
-                >
-                  <option value="">Selecionar tipo...</option>
-                  {officialDocs.map((d) => (
-                    <option key={d.id} value={d.id}>{d.nome}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {officialDocs.map((d) => (
             <button
-              onClick={handleGenerateOfficial}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[12px] bg-secondary text-secondary-foreground text-sm font-bold hover:bg-secondary/90 transition-colors"
+              key={d.id}
+              onClick={() => handleCardClick(d)}
+              className="bg-card border border-border/60 rounded-xl p-5 certus-shadow text-left hover:border-secondary/40 hover:shadow-md transition-all group"
             >
-              <i className="ri-file-download-line" /> Gerar Documento
+              <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center mb-3 group-hover:bg-secondary/15 transition-colors">
+                <i className={`${d.icon} text-lg text-primary group-hover:text-secondary transition-colors`} />
+              </div>
+              <div className="text-sm font-bold text-primary">{d.nome}</div>
+              <div className="text-xs text-muted-foreground mt-1">{d.desc}</div>
             </button>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {officialDocs.map((d) => (
-              <button
-                key={d.id}
-                onClick={() => {
-                  if (d.id === "certificado") setCertModalOpen(true);
-                }}
-                className="bg-card border border-border/60 rounded-xl p-5 certus-shadow text-left hover:border-secondary/40 transition-all"
-              >
-                <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center mb-3">
-                  <i className={`${d.icon} text-lg text-primary`} />
-                </div>
-                <div className="text-sm font-bold text-primary">{d.nome}</div>
-                <div className="text-xs text-muted-foreground mt-1">{d.desc}</div>
-              </button>
-            ))}
-          </div>
+          ))}
         </div>
       )}
 
@@ -319,7 +270,16 @@ const Documents = () => {
           </div>
         </div>
       )}
+
       <CertificadoModal open={certModalOpen} onOpenChange={setCertModalOpen} />
+      {activeDoc && (
+        <DocumentModal
+          open={genericModalOpen}
+          onOpenChange={(v) => { setGenericModalOpen(v); if (!v) setActiveDoc(null); }}
+          title={activeDoc.nome}
+          docId={activeDoc.id}
+        />
+      )}
     </AppLayout>
   );
 };
