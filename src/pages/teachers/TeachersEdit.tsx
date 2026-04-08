@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import AppLayout from "@/components/layout/AppLayout";
 import PageHeader from "@/components/shared/PageHeader";
@@ -12,20 +12,19 @@ interface Assignment {
   id: string;
   class_id: string;
   subject_id: string;
+  isNew?: boolean;
 }
 
 let tempId = 0;
-const newId = () => `temp-${++tempId}`;
+const newTempId = () => `temp-${++tempId}`;
 
-const TeachersCreate = () => {
+const TeachersEdit = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({
-    full_name: "",
-    email: "",
-    status: "active",
-  });
+  const [form, setForm] = useState({ full_name: "", email: "", status: "active" });
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [removedIds, setRemovedIds] = useState<string[]>([]);
 
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
@@ -36,15 +35,55 @@ const TeachersCreate = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
       const { data: membership } = await supabase
-        .from("school_memberships")
-        .select("school_id")
-        .eq("user_id", user.id)
-        .eq("status", "ativo")
-        .maybeSingle();
+        .from("school_memberships").select("school_id")
+        .eq("user_id", user.id).eq("status", "ativo").maybeSingle();
       return membership?.school_id ?? null;
     },
     staleTime: 1000 * 60 * 5,
   });
+
+  // Load teacher
+  const { data: teacher } = useQuery({
+    queryKey: ["teacher", id],
+    queryFn: async () => {
+      const { data } = await supabase.from("teachers").select("*").eq("id", id!).maybeSingle();
+      return data;
+    },
+    enabled: !!id,
+  });
+
+  // Load existing assignments
+  const { data: existingAssignments = [] } = useQuery({
+    queryKey: ["teacher-assignments", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("teacher_assignments")
+        .select("id, class_id, subject_id")
+        .eq("teacher_id", id!);
+      return data ?? [];
+    },
+    enabled: !!id,
+  });
+
+  useEffect(() => {
+    if (teacher) {
+      setForm({
+        full_name: (teacher as any).full_name || "",
+        email: (teacher as any).email || "",
+        status: (teacher as any).status || "active",
+      });
+    }
+  }, [teacher]);
+
+  useEffect(() => {
+    if (existingAssignments.length > 0) {
+      setAssignments(existingAssignments.map((a) => ({
+        id: a.id,
+        class_id: a.class_id || "",
+        subject_id: a.subject_id || "",
+      })));
+    }
+  }, [existingAssignments]);
 
   const { data: classes = [] } = useQuery({
     queryKey: ["classes-for-teacher", schoolId],
@@ -67,48 +106,59 @@ const TeachersCreate = () => {
   });
 
   const addAssignment = () =>
-    setAssignments((prev) => [...prev, { id: newId(), class_id: "", subject_id: "" }]);
+    setAssignments((prev) => [...prev, { id: newTempId(), class_id: "", subject_id: "", isNew: true }]);
 
-  const updateAssignment = (id: string, field: "class_id" | "subject_id", value: string) =>
-    setAssignments((prev) => prev.map((a) => (a.id === id ? { ...a, [field]: value } : a)));
+  const updateAssignment = (assignId: string, field: "class_id" | "subject_id", value: string) =>
+    setAssignments((prev) => prev.map((a) => (a.id === assignId ? { ...a, [field]: value } : a)));
 
-  const removeAssignment = (id: string) =>
-    setAssignments((prev) => prev.filter((a) => a.id !== id));
+  const removeAssignment = (assignId: string) => {
+    const item = assignments.find((a) => a.id === assignId);
+    if (item && !item.isNew) {
+      setRemovedIds((prev) => [...prev, assignId]);
+    }
+    setAssignments((prev) => prev.filter((a) => a.id !== assignId));
+  };
 
   const mutation = useMutation({
     mutationFn: async () => {
       if (!form.full_name.trim()) throw new Error("Nome é obrigatório");
+      if (!id) throw new Error("ID inválido");
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
       const { data: membership } = await supabase
-        .from("school_memberships")
-        .select("school_id")
-        .eq("user_id", user.id)
-        .eq("status", "ativo")
-        .maybeSingle();
+        .from("school_memberships").select("school_id")
+        .eq("user_id", user.id).eq("status", "ativo").maybeSingle();
 
       if (!membership?.school_id) throw new Error("Escola não encontrada");
 
-      const { data: teacher, error: teacherError } = await supabase
+      // Update teacher
+      const { error: updateErr } = await supabase
         .from("teachers")
-        .insert({
-          school_id: membership.school_id,
+        .update({
           full_name: form.full_name,
           email: form.email || null,
           status: form.status,
         } as any)
-        .select()
-        .maybeSingle();
+        .eq("id", id);
 
-      if (teacherError) throw teacherError;
-      if (!teacher) throw new Error("Erro ao criar professor");
+      if (updateErr) throw updateErr;
 
-      const validAssignments = assignments.filter((a) => a.class_id && a.subject_id);
-      if (validAssignments.length > 0) {
-        const rows = validAssignments.map((a) => ({
-          teacher_id: teacher.id,
+      // Delete removed assignments
+      if (removedIds.length > 0) {
+        const { error } = await supabase
+          .from("teacher_assignments")
+          .delete()
+          .in("id", removedIds);
+        if (error) throw error;
+      }
+
+      // Insert new assignments
+      const newOnes = assignments.filter((a) => a.isNew && a.class_id && a.subject_id);
+      if (newOnes.length > 0) {
+        const rows = newOnes.map((a) => ({
+          teacher_id: id,
           class_id: a.class_id,
           subject_id: a.subject_id,
           school_id: membership.school_id,
@@ -119,26 +169,23 @@ const TeachersCreate = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teachers"] });
-      toast.success("Professor cadastrado com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ["teacher", id] });
+      queryClient.invalidateQueries({ queryKey: ["teacher-assignments", id] });
+      toast.success("Professor atualizado com sucesso!");
       navigate("/admin/professores");
     },
-    onError: (err: any) => toast.error(err.message || "Erro ao cadastrar professor"),
+    onError: (err: any) => toast.error(err.message || "Erro ao atualizar professor"),
   });
-
-  const classLabel = (id: string) => {
-    const c = classes.find((x) => x.id === id);
-    return c ? `${c.name}${c.grade ? ` - ${c.grade}` : ""}${c.shift ? ` (${c.shift})` : ""}` : "";
-  };
 
   return (
     <AppLayout
-      title="Novo Professor"
-      breadcrumbs={[{ label: "Professores", href: "/admin/professores" }, { label: "Novo" }]}
+      title="Editar Professor"
+      breadcrumbs={[{ label: "Professores", href: "/admin/professores" }, { label: "Editar" }]}
     >
-      <PageHeader title="Cadastrar Professor" description="Preencha os dados e adicione vínculos com turmas e disciplinas" />
+      <PageHeader title="Editar Professor" description="Atualize os dados e vínculos do professor" />
 
       <div className="space-y-6">
-        <FormCard title="Dados do Professor" cancelTo="/admin/professores" onSubmit={() => mutation.mutate()}>
+        <FormCard title="Dados do Professor" cancelTo="/admin/professores" submitLabel="Atualizar" onSubmit={() => mutation.mutate()}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField label="Nome Completo" placeholder="Nome do professor" value={form.full_name} onChange={set("full_name")} />
             <FormField label="E-mail" type="email" placeholder="email@escola.edu.br" value={form.email} onChange={set("email")} />
@@ -153,13 +200,12 @@ const TeachersCreate = () => {
             />
           </div>
 
-          {/* Vínculos */}
           <div className="mt-8 pt-6 border-t border-border/40">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h4 className="text-sm font-bold text-primary">Vínculos (Turma × Disciplina)</h4>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Cada vínculo representa uma disciplina que o professor leciona em uma turma específica.
+                  Cada vínculo representa uma disciplina em uma turma específica.
                 </p>
               </div>
               <button
@@ -173,7 +219,7 @@ const TeachersCreate = () => {
 
             {assignments.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground text-sm border border-dashed border-border/60 rounded-xl">
-                Nenhum vínculo adicionado. Clique em "Adicionar" para vincular turmas e disciplinas.
+                Nenhum vínculo. Clique em "Adicionar" para vincular turmas e disciplinas.
               </div>
             ) : (
               <div className="space-y-3">
@@ -219,4 +265,4 @@ const TeachersCreate = () => {
   );
 };
 
-export default TeachersCreate;
+export default TeachersEdit;
