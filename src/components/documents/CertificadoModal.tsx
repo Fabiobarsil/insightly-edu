@@ -72,7 +72,7 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
 
   return (
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) { setShowPreview(false); setSelectedStudent(""); } }}>
-      <DialogContent className="max-w-[600px] rounded-xl p-6 shadow-lg max-h-[90vh] overflow-auto">
+      <DialogContent className="max-w-[1200px] w-[95vw] rounded-xl p-6 shadow-lg max-h-[90vh] overflow-auto">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold text-primary">
             Certificado de Conclusão
