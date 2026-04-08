@@ -28,6 +28,7 @@ import GuardiansDetail from "./pages/guardians/GuardiansDetail.tsx";
 import TeachersList from "./pages/teachers/TeachersList.tsx";
 import TeachersCreate from "./pages/teachers/TeachersCreate.tsx";
 import TeachersDetail from "./pages/teachers/TeachersDetail.tsx";
+import TeachersEdit from "./pages/teachers/TeachersEdit.tsx";
 
 import ClassesList from "./pages/classes/ClassesList.tsx";
 import ClassesCreate from "./pages/classes/ClassesCreate.tsx";
