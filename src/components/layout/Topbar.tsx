@@ -1,42 +1,72 @@
-import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 interface TopbarProps {
   title?: string;
   breadcrumbs?: { label: string; href?: string }[];
 }
 
-const Topbar = ({ title = "Dashboard", breadcrumbs }: TopbarProps) => (
-  <header className="sticky top-0 bg-card border-b border-border/60 px-8 py-5 flex items-center justify-between z-[5] max-[900px]:px-5 max-[640px]:flex-col max-[640px]:items-start max-[640px]:gap-4">
-    <div>
-      <div className="text-xs text-muted flex items-center gap-2 mb-1.5 flex-wrap">
-        <Link to="/" className="hover:text-foreground transition-colors">Certus Edu</Link>
-        {breadcrumbs?.map((b, i) => (
-          <span key={i} className="flex items-center gap-2">
-            <i className="ri-arrow-right-s-line text-[10px]" />
-            {b.href ? (
-              <Link to={b.href} className="hover:text-foreground transition-colors">{b.label}</Link>
-            ) : (
-              <span className="text-foreground">{b.label}</span>
-            )}
-          </span>
-        )) || (
-          <>
-            <i className="ri-arrow-right-s-line text-[10px]" />
-            <span>{title}</span>
-          </>
+const getGreeting = () => {
+  const h = new Date().getHours();
+  if (h < 12) return "Bom dia";
+  if (h < 18) return "Boa tarde";
+  return "Boa noite";
+};
+
+const Topbar = ({ title, breadcrumbs }: TopbarProps) => {
+  const { user } = useAuth();
+  const [profileName, setProfileName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("full_name, avatar_url")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.full_name) setProfileName(data.full_name);
+        if (data?.avatar_url) setAvatarUrl(data.avatar_url);
+      });
+  }, [user]);
+
+  const firstName = profileName?.split(" ")[0] || user?.email?.split("@")[0] || "Usuário";
+  const today = new Date().toLocaleDateString("pt-BR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  return (
+    <header className="sticky top-0 bg-card border-b border-border/60 px-8 py-5 flex items-center justify-between z-[5] max-[900px]:px-5 max-[640px]:flex-col max-[640px]:items-start max-[640px]:gap-4">
+      <div>
+        <h2 className="text-2xl font-bold text-primary">
+          {getGreeting()}, {firstName} 👋
+        </h2>
+        <p className="text-xs text-muted mt-1 capitalize">{today}</p>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="text-right max-[640px]:hidden">
+          <p className="text-sm font-semibold text-foreground">{profileName || firstName}</p>
+          <p className="text-[11px] text-muted">{user?.email}</p>
+        </div>
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt={firstName}
+            className="w-10 h-10 rounded-full object-cover border-2 border-primary/20"
+          />
+        ) : (
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm border-2 border-primary/20">
+            {firstName[0]?.toUpperCase()}
+          </div>
         )}
       </div>
-      <h2 className="text-2xl font-bold text-primary">{title}</h2>
-    </div>
-    <div className="flex items-center gap-3">
-      <span className="bg-accent text-muted text-xs px-3 py-2 rounded-full font-semibold">
-        Ano Letivo 2024
-      </span>
-      <Link to="/alunos/novo" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-[12px] font-bold text-sm hover:bg-primary/90 transition-colors">
-        <i className="ri-add-line" /> Novo Aluno
-      </Link>
-    </div>
-  </header>
-);
+    </header>
+  );
+};
 
 export default Topbar;
