@@ -9,11 +9,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
 import { toast } from "sonner";
 
+const docChecklist = [
+  { key: "certidao_nascimento", label: "Certidão de Nascimento", obrigatorio: true },
+  { key: "comprovante_residencia", label: "Comprovante de Residência", obrigatorio: true },
+  { key: "carteira_vacinacao", label: "Carteira de Vacinação", obrigatorio: true },
+  { key: "foto_3x4", label: "Foto 3x4", obrigatorio: false },
+  { key: "historico_escolar", label: "Histórico Escolar Anterior", obrigatorio: true },
+  { key: "laudo_medico", label: "Laudo Médico (PcD)", obrigatorio: false },
+];
+
 const StudentsCreate = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { schoolId } = useSchoolId();
   const [form, setForm] = useState({ full_name: "", birth_date: "", class_id: "", guardian_id: "" });
+  const [docs, setDocs] = useState<Record<string, boolean>>({});
 
   const { data: classes = [] } = useQuery({
     queryKey: ["classes", schoolId],
@@ -37,6 +47,8 @@ const StudentsCreate = () => {
 
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
+
+  const toggleDoc = (key: string) => setDocs((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -66,6 +78,8 @@ const StudentsCreate = () => {
     onError: (err: any) => toast.error(err.message || "Erro ao cadastrar"),
   });
 
+  const missingRequired = docChecklist.filter((d) => d.obrigatorio && !docs[d.key]);
+
   return (
     <AppLayout title="Novo Aluno" breadcrumbs={[{ label: "Alunos", href: "/admin/alunos" }, { label: "Novo Aluno" }]}>
       <PageHeader title="Cadastrar Aluno" description="Preencha os dados do novo aluno" />
@@ -77,6 +91,36 @@ const StudentsCreate = () => {
           <FormField label="Responsável" options={guardians.map((g: any) => ({ value: g.id, label: g.full_name }))} value={form.guardian_id} onChange={set("guardian_id")} />
         </div>
       </FormCard>
+
+      {/* Checklist de documentos */}
+      <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow mt-6">
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="text-sm font-bold text-primary">Documentos de Matrícula</h4>
+          {missingRequired.length > 0 && (
+            <span className="text-xs font-bold text-destructive">
+              {missingRequired.length} obrigatório(s) pendente(s)
+            </span>
+          )}
+        </div>
+        <div className="space-y-2">
+          {docChecklist.map((d) => (
+            <label key={d.key} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-accent/30 transition-colors cursor-pointer">
+              <input
+                type="checkbox"
+                checked={!!docs[d.key]}
+                onChange={() => toggleDoc(d.key)}
+                className="w-4 h-4 rounded border-border text-secondary focus:ring-secondary"
+              />
+              <span className="text-sm text-primary font-medium flex-1">{d.label}</span>
+              {d.obrigatorio ? (
+                <span className="text-[10px] font-bold text-warning-foreground bg-warning/15 px-2 py-0.5 rounded-full">Obrigatório</span>
+              ) : (
+                <span className="text-[10px] font-bold text-muted-foreground bg-accent px-2 py-0.5 rounded-full">Opcional</span>
+              )}
+            </label>
+          ))}
+        </div>
+      </div>
     </AppLayout>
   );
 };
