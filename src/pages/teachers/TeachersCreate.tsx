@@ -12,10 +12,17 @@ import { toast } from "sonner";
 const TeachersCreate = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [form, setForm] = useState({
+    full_name: "",
+    email: "",
+    status: "active",
+  });
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
 
-  // Fetch school_id
+  const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+    setForm((prev) => ({ ...prev, [key]: e.target.value }));
+
   const { data: schoolId } = useQuery({
     queryKey: ["current-school-id-teacher"],
     queryFn: async () => {
@@ -32,7 +39,6 @@ const TeachersCreate = () => {
     staleTime: 1000 * 60 * 5,
   });
 
-  // Fetch classes filtered by school_id
   const { data: classes = [] } = useQuery({
     queryKey: ["classes-for-teacher", schoolId],
     queryFn: async () => {
@@ -46,7 +52,6 @@ const TeachersCreate = () => {
     enabled: !!schoolId,
   });
 
-  // Fetch subjects filtered by school_id
   const { data: subjects = [] } = useQuery({
     queryKey: ["subjects-for-teacher", schoolId],
     queryFn: async () => {
@@ -72,6 +77,8 @@ const TeachersCreate = () => {
 
   const mutation = useMutation({
     mutationFn: async () => {
+      if (!form.full_name.trim()) throw new Error("Nome é obrigatório");
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
@@ -86,14 +93,18 @@ const TeachersCreate = () => {
 
       const { data: teacher, error: teacherError } = await supabase
         .from("teachers")
-        .insert({ school_id: membership.school_id })
+        .insert({
+          school_id: membership.school_id,
+          full_name: form.full_name,
+          email: form.email || null,
+          status: form.status,
+        } as any)
         .select()
         .maybeSingle();
 
       if (teacherError) throw teacherError;
       if (!teacher) throw new Error("Erro ao criar professor");
 
-      // Create assignments for each class × subject combination
       if (selectedClasses.length > 0 && selectedSubjects.length > 0) {
         const assignments = selectedClasses.flatMap((classId) =>
           selectedSubjects.map((subjectId) => ({
@@ -130,70 +141,74 @@ const TeachersCreate = () => {
     >
       <PageHeader
         title="Cadastrar Professor"
-        description="Selecione turmas e disciplinas para vincular ao professor"
+        description="Preencha os dados e selecione turmas e disciplinas"
       />
 
       <div className="space-y-6">
-        {/* Vínculos - Turmas */}
-        <div className="bg-card border border-border/60 rounded-xl certus-shadow p-6">
-          <h3 className="text-lg font-bold text-primary mb-4">Turmas</h3>
-          {classes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhuma turma cadastrada.</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {classes.map((c) => (
-                <label
-                  key={c.id}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-border/40 hover:bg-accent/50 transition-colors cursor-pointer"
-                >
-                  <Checkbox
-                    checked={selectedClasses.includes(c.id)}
-                    onCheckedChange={() => toggleClass(c.id)}
-                  />
-                  <div className="text-sm">
-                    <span className="font-medium">{c.name}</span>
-                    {(c.grade || c.shift) && (
-                      <span className="text-muted-foreground ml-1">
-                        — {[c.grade, c.shift].filter(Boolean).join(" / ")}
-                      </span>
-                    )}
-                  </div>
-                </label>
-              ))}
-            </div>
-          )}
-        </div>
+        <FormCard title="Dados do Professor" cancelTo="/admin/professores" onSubmit={() => mutation.mutate()}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField label="Nome Completo" placeholder="Nome do professor" value={form.full_name} onChange={set("full_name")} />
+            <FormField label="E-mail" type="email" placeholder="email@escola.edu.br" value={form.email} onChange={set("email")} />
+            <FormField label="Status" options={[
+              { value: "active", label: "Ativo" },
+              { value: "inactive", label: "Inativo" },
+            ]} value={form.status} onChange={set("status")} />
+          </div>
 
-        {/* Vínculos - Disciplinas */}
-        <div className="bg-card border border-border/60 rounded-xl certus-shadow p-6">
-          <h3 className="text-lg font-bold text-primary mb-4">Disciplinas</h3>
-          {subjects.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhuma disciplina cadastrada.</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {subjects.map((s) => (
-                <label
-                  key={s.id}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-border/40 hover:bg-accent/50 transition-colors cursor-pointer"
-                >
-                  <Checkbox
-                    checked={selectedSubjects.includes(s.id)}
-                    onCheckedChange={() => toggleSubject(s.id)}
-                  />
-                  <span className="text-sm font-medium">{s.name}</span>
-                </label>
-              ))}
-            </div>
-          )}
-        </div>
+          {/* Turmas */}
+          <div className="mt-6">
+            <h4 className="text-sm font-bold text-muted-foreground mb-3">Turmas</h4>
+            {classes.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhuma turma cadastrada.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {classes.map((c) => (
+                  <label
+                    key={c.id}
+                    className="flex items-center gap-3 p-3 rounded-lg border border-border/40 hover:bg-accent/50 transition-colors cursor-pointer"
+                  >
+                    <Checkbox
+                      checked={selectedClasses.includes(c.id)}
+                      onCheckedChange={() => toggleClass(c.id)}
+                    />
+                    <div className="text-sm">
+                      <span className="font-medium">{c.name}</span>
+                      {(c.grade || c.shift) && (
+                        <span className="text-muted-foreground ml-1">
+                          — {[c.grade, c.shift].filter(Boolean).join(" / ")}
+                        </span>
+                      )}
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
 
-        {/* Botões */}
-        <FormCard
-          title="Confirmar Cadastro"
-          cancelTo="/admin/professores"
-          onSubmit={() => mutation.mutate()}
-        >
-          <p className="text-sm text-muted-foreground">
+          {/* Disciplinas */}
+          <div className="mt-6">
+            <h4 className="text-sm font-bold text-muted-foreground mb-3">Disciplinas</h4>
+            {subjects.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhuma disciplina cadastrada.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {subjects.map((s) => (
+                  <label
+                    key={s.id}
+                    className="flex items-center gap-3 p-3 rounded-lg border border-border/40 hover:bg-accent/50 transition-colors cursor-pointer"
+                  >
+                    <Checkbox
+                      checked={selectedSubjects.includes(s.id)}
+                      onCheckedChange={() => toggleSubject(s.id)}
+                    />
+                    <span className="text-sm font-medium">{s.name}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <p className="text-xs text-muted-foreground mt-4">
             {selectedClasses.length} turma(s) e {selectedSubjects.length} disciplina(s) selecionada(s).
           </p>
         </FormCard>
