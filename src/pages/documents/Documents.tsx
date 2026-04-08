@@ -319,6 +319,7 @@ const Documents = () => {
           </div>
         </div>
       )}
+      <CertificadoModal open={certModalOpen} onOpenChange={setCertModalOpen} />
     </AppLayout>
   );
 };
