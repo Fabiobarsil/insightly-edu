@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import CertificadoModal from "@/components/documents/CertificadoModal";
 
 type Tab = "documentos" | "oficiais" | "declaracoes";
 
@@ -26,6 +27,7 @@ const officialDocs = [
   { id: "transferencia", nome: "Declaração de Transferência", icon: "ri-swap-line", desc: "Documento para transferência escolar" },
   { id: "frequencia", nome: "Declaração de Frequência", icon: "ri-calendar-check-line", desc: "Comprova frequência do aluno" },
   { id: "vaga", nome: "Atestado de Vaga", icon: "ri-checkbox-circle-line", desc: "Comprova existência de vaga" },
+  { id: "certificado", nome: "Certificado de Conclusão", icon: "ri-award-line", desc: "Certificado oficial de conclusão de curso" },
 ];
 
 const defaultReasons = [
