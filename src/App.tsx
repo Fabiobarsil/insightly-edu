@@ -48,6 +48,7 @@ import Documents from "./pages/documents/Documents.tsx";
 
 import Communication from "./pages/communication/Communication.tsx";
 import Settings from "./pages/settings/Settings.tsx";
+import CertificadoPage from "./pages/certificates/CertificadoPage.tsx";
 
 const queryClient = new QueryClient();
 
@@ -144,6 +145,9 @@ const App = () => (
             <Route path="/professor/disciplinas" element={<RoleRoute allowedRoles={["professor"]}><SubjectsList /></RoleRoute>} />
             <Route path="/professor/notas" element={<RoleRoute allowedRoles={["professor"]}><GradeEntry /></RoleRoute>} />
             <Route path="/professor/frequencia" element={<RoleRoute allowedRoles={["professor"]}><AttendanceRecord /></RoleRoute>} />
+
+            {/* Certificado */}
+            <Route path="/certificado" element={<ProtectedRoute><CertificadoPage /></ProtectedRoute>} />
 
             {/* Legacy route redirects - redirect to role-prefixed paths */}
             <Route path="/alunos" element={<LegacyRedirect path="/alunos" />} />
