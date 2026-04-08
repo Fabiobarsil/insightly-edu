@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import CertificadoModal from "@/components/documents/CertificadoModal";
 
 type Tab = "documentos" | "oficiais" | "declaracoes";
 
@@ -26,6 +27,7 @@ const officialDocs = [
   { id: "transferencia", nome: "Declaração de Transferência", icon: "ri-swap-line", desc: "Documento para transferência escolar" },
   { id: "frequencia", nome: "Declaração de Frequência", icon: "ri-calendar-check-line", desc: "Comprova frequência do aluno" },
   { id: "vaga", nome: "Atestado de Vaga", icon: "ri-checkbox-circle-line", desc: "Comprova existência de vaga" },
+  { id: "certificado", nome: "Certificado de Conclusão", icon: "ri-award-line", desc: "Certificado oficial de conclusão de curso" },
 ];
 
 const defaultReasons = [
@@ -46,6 +48,7 @@ const Documents = () => {
   // For official doc generation
   const [selectedDoc, setSelectedDoc] = useState("");
   const [selectedStudent, setSelectedStudent] = useState("");
+  const [certModalOpen, setCertModalOpen] = useState(false);
 
   // For declarations
   const [declReason, setDeclReason] = useState("");
@@ -72,6 +75,10 @@ const Documents = () => {
   const handleGenerateOfficial = () => {
     if (!selectedStudent || !selectedDoc) {
       toast.error("Selecione o aluno e o tipo de documento");
+      return;
+    }
+    if (selectedDoc === "certificado") {
+      setCertModalOpen(true);
       return;
     }
     const doc = officialDocs.find((d) => d.id === selectedDoc);
@@ -203,13 +210,19 @@ const Documents = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {officialDocs.map((d) => (
-              <div key={d.id} className="bg-card border border-border/60 rounded-xl p-5 certus-shadow">
+              <button
+                key={d.id}
+                onClick={() => {
+                  if (d.id === "certificado") setCertModalOpen(true);
+                }}
+                className="bg-card border border-border/60 rounded-xl p-5 certus-shadow text-left hover:border-secondary/40 transition-all"
+              >
                 <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center mb-3">
                   <i className={`${d.icon} text-lg text-primary`} />
                 </div>
                 <div className="text-sm font-bold text-primary">{d.nome}</div>
                 <div className="text-xs text-muted-foreground mt-1">{d.desc}</div>
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -306,6 +319,7 @@ const Documents = () => {
           </div>
         </div>
       )}
+      <CertificadoModal open={certModalOpen} onOpenChange={setCertModalOpen} />
     </AppLayout>
   );
 };
