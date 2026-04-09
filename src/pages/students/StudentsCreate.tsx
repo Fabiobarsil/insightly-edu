@@ -22,7 +22,10 @@ const StudentsCreate = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { schoolId } = useSchoolId();
-  const [form, setForm] = useState({ full_name: "", birth_date: "", class_id: "", guardian_id: "" });
+  const [form, setForm] = useState({
+    full_name: "", birth_date: "", class_id: "", guardian_id: "",
+    cpf: "", rg: "", email: "", academic_year: "",
+  });
   const [docs, setDocs] = useState<Record<string, boolean>>({});
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -84,7 +87,11 @@ const StudentsCreate = () => {
         school_id: schoolId,
         status: "ativo" as const,
         photo_url,
-      }).select("id").single();
+        cpf: form.cpf || null,
+        rg: form.rg || null,
+        email: form.email || null,
+        academic_year: form.academic_year ? parseInt(form.academic_year) : null,
+      } as any).select("id").single();
       if (error) throw error;
       if (form.guardian_id && student) {
         await supabase.from("student_guardians").insert({
@@ -129,6 +136,10 @@ const StudentsCreate = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField label="Nome Completo" placeholder="Nome do aluno" value={form.full_name} onChange={set("full_name")} />
           <FormField label="Data de Nascimento" type="date" value={form.birth_date} onChange={set("birth_date")} />
+          <FormField label="CPF" placeholder="000.000.000-00" value={form.cpf} onChange={set("cpf")} />
+          <FormField label="RG" placeholder="Número do RG" value={form.rg} onChange={set("rg")} />
+          <FormField label="E-mail" placeholder="email@exemplo.com" value={form.email} onChange={set("email")} />
+          <FormField label="Ano Letivo" placeholder="2026" value={form.academic_year} onChange={set("academic_year")} />
           <FormField label="Turma" options={classes.map((c: any) => ({ value: c.id, label: c.name }))} value={form.class_id} onChange={set("class_id")} />
           <FormField label="Responsável" options={guardians.map((g: any) => ({ value: g.id, label: g.full_name }))} value={form.guardian_id} onChange={set("guardian_id")} />
         </div>
