@@ -167,25 +167,112 @@ export type Database = {
       }
       guardians: {
         Row: {
+          address: string | null
+          birth_date: string | null
+          can_authorize_image: boolean | null
+          can_pickup: boolean | null
+          can_receive_reports: boolean | null
+          city: string | null
+          company: string | null
+          complement: string | null
+          cpf: string | null
+          district: string | null
           email: string | null
+          email_secondary: string | null
           full_name: string | null
+          gender: string | null
           id: string
+          income_range: string | null
+          is_financial: boolean | null
+          is_pedagogical: boolean | null
+          is_primary: boolean | null
+          marital_status: string | null
+          nationality: string | null
+          notes: string | null
+          number: string | null
           phone: string | null
+          phone_secondary: string | null
+          profession: string | null
+          relationship_description: string | null
+          relationship_type: string | null
+          rg: string | null
           school_id: string | null
+          state: string | null
+          whatsapp_enabled: boolean | null
+          work_phone: string | null
+          zipcode: string | null
         }
         Insert: {
+          address?: string | null
+          birth_date?: string | null
+          can_authorize_image?: boolean | null
+          can_pickup?: boolean | null
+          can_receive_reports?: boolean | null
+          city?: string | null
+          company?: string | null
+          complement?: string | null
+          cpf?: string | null
+          district?: string | null
           email?: string | null
+          email_secondary?: string | null
           full_name?: string | null
+          gender?: string | null
           id?: string
+          income_range?: string | null
+          is_financial?: boolean | null
+          is_pedagogical?: boolean | null
+          is_primary?: boolean | null
+          marital_status?: string | null
+          nationality?: string | null
+          notes?: string | null
+          number?: string | null
           phone?: string | null
+          phone_secondary?: string | null
+          profession?: string | null
+          relationship_description?: string | null
+          relationship_type?: string | null
+          rg?: string | null
           school_id?: string | null
+          state?: string | null
+          whatsapp_enabled?: boolean | null
+          work_phone?: string | null
+          zipcode?: string | null
         }
         Update: {
+          address?: string | null
+          birth_date?: string | null
+          can_authorize_image?: boolean | null
+          can_pickup?: boolean | null
+          can_receive_reports?: boolean | null
+          city?: string | null
+          company?: string | null
+          complement?: string | null
+          cpf?: string | null
+          district?: string | null
           email?: string | null
+          email_secondary?: string | null
           full_name?: string | null
+          gender?: string | null
           id?: string
+          income_range?: string | null
+          is_financial?: boolean | null
+          is_pedagogical?: boolean | null
+          is_primary?: boolean | null
+          marital_status?: string | null
+          nationality?: string | null
+          notes?: string | null
+          number?: string | null
           phone?: string | null
+          phone_secondary?: string | null
+          profession?: string | null
+          relationship_description?: string | null
+          relationship_type?: string | null
+          rg?: string | null
           school_id?: string | null
+          state?: string | null
+          whatsapp_enabled?: boolean | null
+          work_phone?: string | null
+          zipcode?: string | null
         }
         Relationships: [
           {
