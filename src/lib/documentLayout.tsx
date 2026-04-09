@@ -144,7 +144,7 @@ export function DocumentLayout({
         <img
           src={brasaoImg}
           alt="Brasão da República"
-          style={{ height: 60, width: "auto", objectFit: "contain" }}
+          style={{ height: 60, width: 56, objectFit: "contain" }}
         />
         <div style={{ flex: 1, textAlign: "center", padding: "0 16px" }}>
           <p
@@ -200,7 +200,7 @@ export function DocumentLayout({
             alt="Logo da Escola"
             style={{
               height: 60,
-              width: "auto",
+              width: 56,
               objectFit: "contain",
               borderRadius: 4,
             }}
