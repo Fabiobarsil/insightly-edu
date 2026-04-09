@@ -435,29 +435,41 @@ export type Database = {
       }
       students: {
         Row: {
+          academic_year: number | null
           birth_date: string | null
           class_id: string | null
+          cpf: string | null
+          email: string | null
           full_name: string
           id: string
           photo_url: string | null
+          rg: string | null
           school_id: string | null
           status: Database["public"]["Enums"]["student_status"] | null
         }
         Insert: {
+          academic_year?: number | null
           birth_date?: string | null
           class_id?: string | null
+          cpf?: string | null
+          email?: string | null
           full_name: string
           id?: string
           photo_url?: string | null
+          rg?: string | null
           school_id?: string | null
           status?: Database["public"]["Enums"]["student_status"] | null
         }
         Update: {
+          academic_year?: number | null
           birth_date?: string | null
           class_id?: string | null
+          cpf?: string | null
+          email?: string | null
           full_name?: string
           id?: string
           photo_url?: string | null
+          rg?: string | null
           school_id?: string | null
           status?: Database["public"]["Enums"]["student_status"] | null
         }

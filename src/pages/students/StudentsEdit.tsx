@@ -76,7 +76,11 @@ const StudentsEdit = () => {
         class_id: form.class_id || null,
         status: form.status,
         photo_url,
-      }).eq("id", id!);
+        cpf: form.cpf || null,
+        rg: form.rg || null,
+        email: form.email || null,
+        academic_year: form.academic_year ? parseInt(form.academic_year) : null,
+      } as any).eq("id", id!);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -120,6 +124,10 @@ const StudentsEdit = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField label="Nome Completo" value={form.full_name || ""} onChange={set("full_name")} />
             <FormField label="Data de Nascimento" type="date" value={form.birth_date || ""} onChange={set("birth_date")} />
+            <FormField label="CPF" placeholder="000.000.000-00" value={form.cpf || ""} onChange={set("cpf")} />
+            <FormField label="RG" placeholder="Número do RG" value={form.rg || ""} onChange={set("rg")} />
+            <FormField label="E-mail" placeholder="email@exemplo.com" value={form.email || ""} onChange={set("email")} />
+            <FormField label="Ano Letivo" placeholder="2026" value={form.academic_year ? String(form.academic_year) : ""} onChange={set("academic_year")} />
             <FormField label="Turma" options={classes.map((c: any) => ({ value: c.id, label: c.name }))} value={form.class_id || ""} onChange={set("class_id")} />
             <FormField label="Status" options={[
               { value: "ativo", label: "Ativo" },

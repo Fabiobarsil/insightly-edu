@@ -4,7 +4,6 @@ import { NavLink } from "@/components/NavLink";
 const navItems = [
   { icon: "ri-dashboard-3-line", label: "Dashboard", to: "/" },
   { icon: "ri-group-line", label: "Alunos", to: "/alunos" },
-  { icon: "ri-parent-line", label: "Responsáveis", to: "/responsaveis" },
   { icon: "ri-user-star-line", label: "Professores", to: "/professores" },
   { icon: "ri-book-open-line", label: "Turmas", to: "/turmas" },
   { icon: "ri-calendar-check-line", label: "Frequência", to: "/frequencia" },
