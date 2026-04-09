@@ -92,8 +92,10 @@ export default function CertificadoPage() {
             style={{
               textAlign: "center",
               marginTop: 30,
-              fontSize: 36,
-              color: "#1B5E20",
+              fontSize: 42,
+              letterSpacing: 4,
+              fontWeight: "bold",
+              color: "#0f2a44",
             }}
           >
             Certificado de Conclusão
@@ -104,7 +106,8 @@ export default function CertificadoPage() {
               marginTop: 30,
               textAlign: "justify",
               lineHeight: 1.8,
-              fontSize: 16,
+              fontSize: 18,
+              lineHeight: 1.8,
             }}
           >
             <p>
