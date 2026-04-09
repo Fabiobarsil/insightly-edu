@@ -19,8 +19,8 @@ const OfficialDocumentHeader = ({ school }: OfficialDocumentHeaderProps) => {
     <div className="w-full border-b-2 border-primary pb-4 mb-6 print:mb-4">
       <div className="flex items-start justify-between gap-4">
         {/* Brasão da República */}
-        <div className="flex-shrink-0 w-16 h-16">
-          <img src={brasaoImg} alt="Brasão da República" className="w-full h-full object-contain" />
+        <div className="flex-shrink-0" style={{ height: 60 }}>
+          <img src={brasaoImg} alt="Brasão da República" className="h-[60px] w-auto object-contain" />
         </div>
 
         {/* Texto Central */}
@@ -53,11 +53,11 @@ const OfficialDocumentHeader = ({ school }: OfficialDocumentHeaderProps) => {
         </div>
 
         {/* Logo da Escola */}
-        <div className="flex-shrink-0 w-16 h-16">
+        <div className="flex-shrink-0" style={{ height: 60 }}>
           {school.logo_url ? (
-            <img src={school.logo_url} alt="Logo da Escola" className="w-full h-full object-contain rounded" />
+            <img src={school.logo_url} alt="Logo da Escola" className="h-[60px] w-auto object-contain rounded" />
           ) : (
-            <div className="w-full h-full rounded bg-accent flex items-center justify-center">
+            <div className="h-[60px] w-[60px] rounded bg-accent flex items-center justify-center">
               <i className="ri-school-line text-xl text-muted-foreground" />
             </div>
           )}
