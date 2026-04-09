@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      assignments: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          school_id: string
+          term: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          school_id: string
+          term?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          school_id?: string
+          term?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       attendance: {
         Row: {
           created_at: string | null
@@ -291,6 +318,8 @@ export type Database = {
           full_name: string | null
           id: string
           role: string | null
+          school_id: string | null
+          status: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -298,6 +327,8 @@ export type Database = {
           full_name?: string | null
           id: string
           role?: string | null
+          school_id?: string | null
+          status?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -305,6 +336,8 @@ export type Database = {
           full_name?: string | null
           id?: string
           role?: string | null
+          school_id?: string | null
+          status?: string | null
         }
         Relationships: []
       }
@@ -385,6 +418,87 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      student_certificates: {
+        Row: {
+          additional_skills: string | null
+          city: string | null
+          completion_year: number
+          course_name: string
+          created_at: string | null
+          director_name: string | null
+          establishment: string | null
+          id: string
+          institution_name: string | null
+          issue_date: string | null
+          notes: string | null
+          registry_book: string | null
+          registry_number: string | null
+          registry_page: string | null
+          school_id: string
+          secretary_name: string | null
+          state: string | null
+          student_id: string
+          workload_hours: number | null
+        }
+        Insert: {
+          additional_skills?: string | null
+          city?: string | null
+          completion_year: number
+          course_name: string
+          created_at?: string | null
+          director_name?: string | null
+          establishment?: string | null
+          id?: string
+          institution_name?: string | null
+          issue_date?: string | null
+          notes?: string | null
+          registry_book?: string | null
+          registry_number?: string | null
+          registry_page?: string | null
+          school_id: string
+          secretary_name?: string | null
+          state?: string | null
+          student_id: string
+          workload_hours?: number | null
+        }
+        Update: {
+          additional_skills?: string | null
+          city?: string | null
+          completion_year?: number
+          course_name?: string
+          created_at?: string | null
+          director_name?: string | null
+          establishment?: string | null
+          id?: string
+          institution_name?: string | null
+          issue_date?: string | null
+          notes?: string | null
+          registry_book?: string | null
+          registry_number?: string | null
+          registry_page?: string | null
+          school_id?: string
+          secretary_name?: string | null
+          state?: string | null
+          student_id?: string
+          workload_hours?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_certificates_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_certificates_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_student_performance"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       student_guardians: {
         Row: {
@@ -647,6 +761,36 @@ export type Database = {
           created_at?: string | null
           id?: string | null
           name?: string | null
+        }
+        Relationships: []
+      }
+      user_invites: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          role: string
+          school_id: string
+          status: string | null
+          token: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          role: string
+          school_id: string
+          status?: string | null
+          token: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          role?: string
+          school_id?: string
+          status?: string | null
+          token?: string
         }
         Relationships: []
       }
