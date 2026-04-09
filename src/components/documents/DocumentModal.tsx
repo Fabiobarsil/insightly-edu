@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { useSchoolId } from "@/hooks/useSchoolId";
 import { FileDown, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { getDocumentText } from "@/lib/documentTexts";
-import brasaoImg from "@/assets/brasao-republica.png";
+import { DocumentLayout } from "@/lib/documentLayout";
 import html2pdf from "html2pdf.js";
 
 interface DocumentModalProps {
@@ -41,24 +41,13 @@ const DocumentModal = ({ open, onOpenChange, title, docId }: DocumentModalProps)
     queryKey: ["school-doc-modal", schoolId],
     queryFn: async () => {
       if (!schoolId) return null;
-      const { data } = await supabase
-        .from("schools")
-        .select("*")
-        .eq("id", schoolId)
-        .single();
+      const { data } = await supabase.from("schools").select("*").eq("id", schoolId).single();
       return data;
     },
     enabled: !!schoolId && open,
   });
 
   const student = students.find((s: any) => s.id === selectedStudent) as any;
-
-  const today = new Date().toLocaleDateString("pt-BR", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-
   const documentText = student ? getDocumentText(docId, { student, school }) : "";
 
   const handlePreview = () => {
@@ -84,9 +73,7 @@ const DocumentModal = ({ open, onOpenChange, title, docId }: DocumentModalProps)
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) { setSelectedStudent(""); setShowPreview(false); } }}>
       <DialogContent className={`rounded-xl p-6 shadow-lg max-h-[90vh] overflow-auto ${showPreview ? "max-w-[900px] w-[95vw]" : "max-w-[600px]"}`}>
         <DialogHeader>
-          <DialogTitle className="text-lg font-bold text-primary">
-            {title}
-          </DialogTitle>
+          <DialogTitle className="text-lg font-bold text-primary">{title}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 mt-2">
@@ -116,86 +103,14 @@ const DocumentModal = ({ open, onOpenChange, title, docId }: DocumentModalProps)
 
           {showPreview && student && (
             <div className="flex justify-center overflow-auto">
-              <div
-                id="doc-preview-content"
-                style={{
-                  width: "794px",
-                  minHeight: "1123px",
-                  background: "#fff",
-                  border: "4px solid #0f2a44",
-                  padding: "60px 50px",
-                  position: "relative",
-                  fontFamily: "'Times New Roman', serif",
-                  color: "#0f2a44",
-                }}
-              >
-                {/* Cabeçalho institucional */}
-                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24 }}>
-                  <img src={brasaoImg} alt="Brasão" style={{ width: 56, height: 56, objectFit: "contain" }} />
-                  <div style={{ flex: 1, textAlign: "center", padding: "0 16px" }}>
-                    <p style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: 2, margin: 0, color: "#666" }}>
-                      República Federativa do Brasil
-                    </p>
-                    <p style={{ fontSize: 14, fontWeight: "bold", textTransform: "uppercase", margin: "4px 0", letterSpacing: 1 }}>
-                      {school?.name || "Nome da Escola"}
-                    </p>
-                    {school?.address && <p style={{ fontSize: 9, margin: 0, color: "#666" }}>{school.address}</p>}
-                    {school?.cnpj && <p style={{ fontSize: 9, margin: 0, color: "#666" }}>CNPJ: {school.cnpj}</p>}
-                    {school?.mec_authorization_code && (
-                      <p style={{ fontSize: 9, margin: 0, color: "#666" }}>Portaria: {school.mec_authorization_code}</p>
-                    )}
-                  </div>
-                  {school?.logo_url ? (
-                    <img src={school.logo_url} alt="Logo" style={{ width: 56, height: 56, objectFit: "contain", borderRadius: 4 }} />
-                  ) : (
-                    <div style={{ width: 56, height: 56 }} />
-                  )}
-                </div>
-
-                {/* Linha separadora */}
-                <div style={{ height: 2, background: "#0f2a44", marginBottom: 40 }} />
-
-                {/* Título do documento */}
-                <div style={{ textAlign: "center", marginBottom: 40 }}>
-                  <h1 style={{
-                    fontSize: 24, fontWeight: "bold", textTransform: "uppercase",
-                    letterSpacing: 4, margin: 0, color: "#0f2a44",
-                  }}>
-                    {title}
-                  </h1>
-                  <div style={{
-                    width: 80, height: 2, margin: "10px auto",
-                    background: "#0f2a44",
-                  }} />
-                </div>
-
-                {/* Corpo do documento */}
-                <div style={{ padding: "0 30px", marginTop: 40 }}>
-                  <p style={{ fontSize: 15, lineHeight: 2, textAlign: "justify", textIndent: "2em" }}>
-                    {documentText}
-                  </p>
-                </div>
-
-                {/* Rodapé */}
-                <div style={{
-                  position: "absolute", bottom: 80, left: 50, right: 50,
-                  display: "flex", justifyContent: "space-between", alignItems: "flex-end",
-                }}>
-                  <p style={{ fontSize: 13, margin: 0 }}>
-                    {school?.address?.split(",").pop()?.trim() || "Local"}, {today}
-                  </p>
-                  <div style={{ textAlign: "center" }}>
-                    <div style={{ width: 240, borderTop: "1px solid #0f2a44", paddingTop: 6 }}>
-                      <p style={{ fontSize: 13, fontWeight: "bold", margin: 0 }}>
-                        {school?.director_name || "Diretor(a)"}
-                      </p>
-                      <p style={{ fontSize: 10, margin: 0, color: "#666" }}>
-                        {school?.director_role || "Diretor(a)"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <DocumentLayout
+                type={docId}
+                title={title}
+                content={documentText}
+                student={student}
+                school={school}
+                orientation="portrait"
+              />
             </div>
           )}
         </div>
