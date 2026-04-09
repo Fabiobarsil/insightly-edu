@@ -17,7 +17,21 @@ const statusMap: Record<string, { status: string; label: string }> = {
 };
 
 const columns = [
-  { key: "full_name", label: "Nome" },
+  {
+    key: "full_name", label: "Nome",
+    render: (_val: string, row: any) => (
+      <div className="flex items-center gap-3">
+        {row.photo_url ? (
+          <img src={row.photo_url} alt={row.full_name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+        ) : (
+          <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
+            <i className="ri-user-line text-muted-foreground" />
+          </div>
+        )}
+        <span className="font-medium">{row.full_name}</span>
+      </div>
+    ),
+  },
   { key: "class_name", label: "Turma" },
   { key: "birth_date", label: "Nascimento" },
   {
@@ -40,14 +54,14 @@ const StudentsList = () => {
       if (!schoolId) return [];
       const { data, error } = await supabase
         .from("students")
-        .select("id, full_name, status, birth_date, class_id, classes(name)")
+        .select("id, full_name, status, birth_date, photo_url, class_id, classes(name)")
         .eq("school_id", schoolId)
         .order("full_name");
       if (error) throw error;
-      console.log("[Students] fetched:", data?.length);
       return (data || []).map((s: any) => ({
         id: s.id,
         full_name: s.full_name,
+        photo_url: s.photo_url,
         class_name: s.classes?.name || "—",
         birth_date: s.birth_date || "—",
         status: s.status || "ativo",
@@ -73,7 +87,6 @@ const StudentsList = () => {
 
   const total = students.length;
   const ativos = students.filter((s: any) => s.status === "ativo").length;
-
   const loading = loadingSchool || isLoading;
 
   return (
