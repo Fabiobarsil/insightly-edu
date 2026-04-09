@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AppLayout from "@/components/layout/AppLayout";
@@ -15,6 +15,9 @@ const StudentsEdit = () => {
   const queryClient = useQueryClient();
   const { schoolId } = useSchoolId();
   const [form, setForm] = useState<any>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const { isLoading } = useQuery({
     queryKey: ["student", id],
@@ -25,7 +28,10 @@ const StudentsEdit = () => {
         .eq("id", id!)
         .maybeSingle();
       if (error) throw error;
-      if (data) setForm(data);
+      if (data) {
+        setForm(data);
+        if (data.photo_url) setPhotoPreview(data.photo_url);
+      }
       return data;
     },
     enabled: !!id,
@@ -44,18 +50,38 @@ const StudentsEdit = () => {
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((prev: any) => ({ ...prev, [key]: e.target.value }));
 
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPhotoFile(file);
+      const reader = new FileReader();
+      reader.onload = (ev) => setPhotoPreview(ev.target?.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
   const mutation = useMutation({
     mutationFn: async () => {
+      let photo_url = form.photo_url;
+      if (photoFile && schoolId) {
+        const filePath = `${schoolId}/photos/${Date.now()}_${photoFile.name}`;
+        const { error: upErr } = await supabase.storage.from("student-assets").upload(filePath, photoFile);
+        if (upErr) throw upErr;
+        const { data: urlData } = supabase.storage.from("student-assets").getPublicUrl(filePath);
+        photo_url = urlData.publicUrl;
+      }
       const { error } = await supabase.from("students").update({
         full_name: form.full_name,
         birth_date: form.birth_date || null,
         class_id: form.class_id || null,
         status: form.status,
+        photo_url,
       }).eq("id", id!);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["students", schoolId] });
+      queryClient.invalidateQueries({ queryKey: ["student", id] });
       toast.success("Aluno atualizado com sucesso!");
       navigate("/admin/alunos");
     },
@@ -73,6 +99,24 @@ const StudentsEdit = () => {
       <PageHeader title="Editar Aluno" description="Atualize os dados do aluno" />
       <div className="space-y-6">
         <FormCard title="Dados do Aluno" cancelTo="/admin/alunos" onSubmit={() => mutation.mutate()}>
+          {/* Foto */}
+          <div className="mb-4">
+            <label className="block text-xs font-bold text-muted-foreground mb-2">Foto do Aluno</label>
+            <div className="flex items-center gap-4">
+              {photoPreview ? (
+                <img src={photoPreview} alt="Preview" className="w-16 h-16 rounded-full object-cover border-2 border-secondary/30" />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-accent flex items-center justify-center">
+                  <i className="ri-camera-line text-xl text-muted-foreground" />
+                </div>
+              )}
+              <button type="button" onClick={() => photoInputRef.current?.click()} className="inline-flex items-center gap-2 px-3 py-2 rounded-[12px] border border-border text-sm font-medium text-muted-foreground hover:bg-accent transition-colors">
+                <i className="ri-upload-2-line" /> {photoPreview ? "Trocar foto" : "Selecionar foto"}
+              </button>
+              <input ref={photoInputRef} type="file" className="hidden" accept="image/*" onChange={handlePhotoSelect} />
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField label="Nome Completo" value={form.full_name || ""} onChange={set("full_name")} />
             <FormField label="Data de Nascimento" type="date" value={form.birth_date || ""} onChange={set("birth_date")} />

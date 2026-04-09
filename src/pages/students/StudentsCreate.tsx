@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AppLayout from "@/components/layout/AppLayout";
@@ -24,6 +24,9 @@ const StudentsCreate = () => {
   const { schoolId } = useSchoolId();
   const [form, setForm] = useState({ full_name: "", birth_date: "", class_id: "", guardian_id: "" });
   const [docs, setDocs] = useState<Record<string, boolean>>({});
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const { data: classes = [] } = useQuery({
     queryKey: ["classes", schoolId],
@@ -50,16 +53,37 @@ const StudentsCreate = () => {
 
   const toggleDoc = (key: string) => setDocs((prev) => ({ ...prev, [key]: !prev[key] }));
 
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPhotoFile(file);
+      const reader = new FileReader();
+      reader.onload = (ev) => setPhotoPreview(ev.target?.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
   const mutation = useMutation({
     mutationFn: async () => {
       if (!schoolId) throw new Error("Nenhuma escola vinculada");
       if (!form.full_name.trim()) throw new Error("Nome é obrigatório");
+
+      let photo_url: string | null = null;
+      if (photoFile) {
+        const filePath = `${schoolId}/photos/${Date.now()}_${photoFile.name}`;
+        const { error: upErr } = await supabase.storage.from("student-assets").upload(filePath, photoFile);
+        if (upErr) throw upErr;
+        const { data: urlData } = supabase.storage.from("student-assets").getPublicUrl(filePath);
+        photo_url = urlData.publicUrl;
+      }
+
       const { data: student, error } = await supabase.from("students").insert({
         full_name: form.full_name.trim(),
         birth_date: form.birth_date || null,
         class_id: form.class_id || null,
         school_id: schoolId,
         status: "ativo" as const,
+        photo_url,
       }).select("id").single();
       if (error) throw error;
       if (form.guardian_id && student) {
@@ -84,6 +108,24 @@ const StudentsCreate = () => {
     <AppLayout title="Novo Aluno" breadcrumbs={[{ label: "Alunos", href: "/admin/alunos" }, { label: "Novo Aluno" }]}>
       <PageHeader title="Cadastrar Aluno" description="Preencha os dados do novo aluno" />
       <FormCard title="Dados do Aluno" cancelTo="/admin/alunos" onSubmit={() => mutation.mutate()}>
+        {/* Foto do Aluno */}
+        <div className="mb-4">
+          <label className="block text-xs font-bold text-muted-foreground mb-2">Foto do Aluno</label>
+          <div className="flex items-center gap-4">
+            {photoPreview ? (
+              <img src={photoPreview} alt="Preview" className="w-16 h-16 rounded-full object-cover border-2 border-secondary/30" />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-accent flex items-center justify-center">
+                <i className="ri-camera-line text-xl text-muted-foreground" />
+              </div>
+            )}
+            <button type="button" onClick={() => photoInputRef.current?.click()} className="inline-flex items-center gap-2 px-3 py-2 rounded-[12px] border border-border text-sm font-medium text-muted-foreground hover:bg-accent transition-colors">
+              <i className="ri-upload-2-line" /> {photoPreview ? "Trocar foto" : "Selecionar foto"}
+            </button>
+            <input ref={photoInputRef} type="file" className="hidden" accept="image/*" onChange={handlePhotoSelect} />
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField label="Nome Completo" placeholder="Nome do aluno" value={form.full_name} onChange={set("full_name")} />
           <FormField label="Data de Nascimento" type="date" value={form.birth_date} onChange={set("birth_date")} />
@@ -105,12 +147,7 @@ const StudentsCreate = () => {
         <div className="space-y-2">
           {docChecklist.map((d) => (
             <label key={d.key} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-accent/30 transition-colors cursor-pointer">
-              <input
-                type="checkbox"
-                checked={!!docs[d.key]}
-                onChange={() => toggleDoc(d.key)}
-                className="w-4 h-4 rounded border-border text-secondary focus:ring-secondary"
-              />
+              <input type="checkbox" checked={!!docs[d.key]} onChange={() => toggleDoc(d.key)} className="w-4 h-4 rounded border-border text-secondary focus:ring-secondary" />
               <span className="text-sm text-primary font-medium flex-1">{d.label}</span>
               {d.obrigatorio ? (
                 <span className="text-[10px] font-bold text-warning-foreground bg-warning/15 px-2 py-0.5 rounded-full">Obrigatório</span>
