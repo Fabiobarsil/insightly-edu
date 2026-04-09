@@ -21,7 +21,6 @@ const menusByRole: Record<DashboardRole, NavItem[]> = {
   admin: [
     { icon: "ri-dashboard-3-line", label: "Dashboard", to: "/admin/dashboard" },
     { icon: "ri-group-line", label: "Alunos", to: "/admin/alunos" },
-    { icon: "ri-parent-line", label: "Responsáveis", to: "/admin/responsaveis" },
     { icon: "ri-book-open-line", label: "Turmas", to: "/admin/turmas" },
     { icon: "ri-booklet-line", label: "Disciplinas", to: "/admin/disciplinas" },
     { icon: "ri-user-star-line", label: "Professores", to: "/admin/professores" },
@@ -34,7 +33,6 @@ const menusByRole: Record<DashboardRole, NavItem[]> = {
   secretaria: [
     { icon: "ri-dashboard-3-line", label: "Dashboard", to: "/secretaria/dashboard" },
     { icon: "ri-group-line", label: "Alunos", to: "/secretaria/alunos" },
-    { icon: "ri-parent-line", label: "Responsáveis", to: "/secretaria/responsaveis" },
     { icon: "ri-book-open-line", label: "Turmas", to: "/secretaria/turmas" },
     { icon: "ri-booklet-line", label: "Disciplinas", to: "/secretaria/disciplinas" },
     { icon: "ri-user-star-line", label: "Professores", to: "/secretaria/professores" },
