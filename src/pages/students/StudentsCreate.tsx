@@ -59,6 +59,29 @@ const StudentsCreate = () => {
 
   const toggleDoc = (key: string) => setDocs((prev) => ({ ...prev, [key]: !prev[key] }));
 
+  const guardianMutation = useMutation({
+    mutationFn: async () => {
+      if (!schoolId) throw new Error("Nenhuma escola vinculada");
+      if (!newGuardian.full_name.trim()) throw new Error("Nome é obrigatório");
+      const { data, error } = await supabase.from("guardians").insert({
+        full_name: newGuardian.full_name.trim(),
+        phone: newGuardian.phone || null,
+        email: newGuardian.email || null,
+        school_id: schoolId,
+      }).select("id").single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["guardians", schoolId] });
+      setForm((prev) => ({ ...prev, guardian_id: data.id }));
+      setGuardianModalOpen(false);
+      setNewGuardian({ full_name: "", phone: "", email: "" });
+      toast.success("Responsável cadastrado!");
+    },
+    onError: (err: any) => toast.error(err.message || "Erro ao cadastrar responsável"),
+  });
+
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
