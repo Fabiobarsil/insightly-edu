@@ -131,8 +131,7 @@ const StudentsDetail = () => {
   const [activeTab, setActiveTab] = useState("pessoal");
   const [declReason, setDeclReason] = useState("");
   const [customReason, setCustomReason] = useState("");
-  const [addingGuardian, setAddingGuardian] = useState(false);
-  const [gf, setGf] = useState({ ...emptyGuardianForm });
+  const [guardianModalOpen, setGuardianModalOpen] = useState(false);
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const docInputRef = useRef<HTMLInputElement>(null);
 
