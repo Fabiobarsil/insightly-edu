@@ -48,15 +48,15 @@ const TeachersList = () => {
 
   return (
     <AppLayout title="Professores" breadcrumbs={[{ label: "Professores" }]}>
-      <PageHeader title="Professores" description="Gerencie o corpo docente" action={{ label: "Novo Professor", icon: "ri-add-line", to: "/professores/novo" }} />
+      <PageHeader title="Professores" description="Gerencie o corpo docente" action={{ label: "Novo Professor", icon: "ri-add-line", to: "/admin/professores/novo" }} />
       {isLoading ? (
         <div className="text-center py-12 text-muted-foreground">Carregando professores...</div>
       ) : teachers.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">Nenhum professor cadastrado ainda.</div>
       ) : (
         <DataTable columns={columns} data={teachers} searchPlaceholder="Buscar professor..." actions={(row) => [
-          { label: "Ver", icon: "ri-eye-line", to: `/professores/${row.id}` },
-          { label: "Editar", icon: "ri-pencil-line", to: `/professores/${row.id}/editar` },
+          { label: "Ver", icon: "ri-eye-line", to: `/admin/professores/${row.id}` },
+          { label: "Editar", icon: "ri-pencil-line", to: `/admin/professores/${row.id}/editar` },
           { label: "Excluir", icon: "ri-delete-bin-line", onClick: () => {
             if (confirm("Tem certeza que deseja excluir este professor e todos os seus vínculos?")) {
               deleteMutation.mutate(row.id);
