@@ -5,8 +5,9 @@ import AppLayout from "@/components/layout/AppLayout";
 import PageHeader from "@/components/shared/PageHeader";
 import FormCard from "@/components/shared/FormCard";
 import FormField from "@/components/shared/FormField";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useSchoolId } from "@/hooks/useSchoolId";
 
 interface Assignment {
   id: string;
@@ -20,6 +21,7 @@ const newId = () => `temp-${++tempId}`;
 const TeachersCreate = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { schoolId } = useSchoolId();
   const [form, setForm] = useState({
     full_name: "",
     email: "",
@@ -29,22 +31,6 @@ const TeachersCreate = () => {
 
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
-
-  const { data: schoolId } = useQuery({
-    queryKey: ["current-school-id-teacher"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
-      const { data: membership } = await supabase
-        .from("school_memberships")
-        .select("school_id")
-        .eq("user_id", user.id)
-        .eq("status", "ativo")
-        .maybeSingle();
-      return membership?.school_id ?? null;
-    },
-    staleTime: 1000 * 60 * 5,
-  });
 
   const { data: classes = [] } = useQuery({
     queryKey: ["classes-for-teacher", schoolId],
@@ -78,31 +64,23 @@ const TeachersCreate = () => {
   const mutation = useMutation({
     mutationFn: async () => {
       if (!form.full_name.trim()) throw new Error("Nome é obrigatório");
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuário não autenticado");
-
-      const { data: membership } = await supabase
-        .from("school_memberships")
-        .select("school_id")
-        .eq("user_id", user.id)
-        .eq("status", "ativo")
-        .maybeSingle();
-
-      if (!membership?.school_id) throw new Error("Escola não encontrada");
+      if (!schoolId) throw new Error("Escola não encontrada");
 
       const { data: teacher, error: teacherError } = await supabase
         .from("teachers")
         .insert({
-          school_id: membership.school_id,
+          school_id: schoolId,
           full_name: form.full_name,
           email: form.email || null,
           status: form.status,
-        } as any)
+        })
         .select()
         .maybeSingle();
 
-      if (teacherError) throw teacherError;
+      if (teacherError) {
+        console.error("Teacher insert error:", teacherError);
+        throw teacherError;
+      }
       if (!teacher) throw new Error("Erro ao criar professor");
 
       const validAssignments = assignments.filter((a) => a.class_id && a.subject_id);
@@ -111,10 +89,13 @@ const TeachersCreate = () => {
           teacher_id: teacher.id,
           class_id: a.class_id,
           subject_id: a.subject_id,
-          school_id: membership.school_id,
+          school_id: schoolId,
         }));
         const { error } = await supabase.from("teacher_assignments").insert(rows);
-        if (error) throw error;
+        if (error) {
+          console.error("Assignment insert error:", error);
+          throw error;
+        }
       }
     },
     onSuccess: () => {
@@ -122,13 +103,11 @@ const TeachersCreate = () => {
       toast.success("Professor cadastrado com sucesso!");
       navigate("/admin/professores");
     },
-    onError: (err: any) => toast.error(err.message || "Erro ao cadastrar professor"),
+    onError: (err: any) => {
+      console.error("Mutation error:", err);
+      toast.error(err.message || "Erro ao cadastrar professor");
+    },
   });
-
-  const classLabel = (id: string) => {
-    const c = classes.find((x) => x.id === id);
-    return c ? `${c.name}${c.grade ? ` - ${c.grade}` : ""}${c.shift ? ` (${c.shift})` : ""}` : "";
-  };
 
   return (
     <AppLayout
