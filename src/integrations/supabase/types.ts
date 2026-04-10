@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_members: {
+        Row: {
+          access_expires_at: string | null
+          access_type: string
+          account_id: string
+          created_at: string
+          id: string
+          invited_by: string | null
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_expires_at?: string | null
+          access_type?: string
+          account_id: string
+          created_at?: string
+          id?: string
+          invited_by?: string | null
+          role: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_expires_at?: string | null
+          access_type?: string
+          account_id?: string
+          created_at?: string
+          id?: string
+          invited_by?: string | null
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       assignments: {
         Row: {
           created_at: string | null
@@ -338,6 +374,48 @@ export type Database = {
           role?: string | null
           school_id?: string | null
           status?: string | null
+        }
+        Relationships: []
+      }
+      role_delegations: {
+        Row: {
+          account_id: string
+          created_at: string
+          created_by: string | null
+          delegated_role: string
+          ends_at: string
+          from_user_id: string
+          id: string
+          starts_at: string
+          status: string
+          to_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          created_by?: string | null
+          delegated_role: string
+          ends_at: string
+          from_user_id: string
+          id?: string
+          starts_at?: string
+          status?: string
+          to_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          created_by?: string | null
+          delegated_role?: string
+          ends_at?: string
+          from_user_id?: string
+          id?: string
+          starts_at?: string
+          status?: string
+          to_user_id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -809,8 +887,11 @@ export type Database = {
       }
     }
     Functions: {
+      current_account_id: { Args: never; Returns: string }
       current_school_id: { Args: never; Returns: string }
+      get_effective_role: { Args: never; Returns: string }
       is_member_of_school: { Args: { _school_id: string }; Returns: boolean }
+      user_has_access: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role:
