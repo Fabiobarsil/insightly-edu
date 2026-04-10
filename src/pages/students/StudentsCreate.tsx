@@ -167,7 +167,14 @@ const StudentsCreate = () => {
           <FormField label="E-mail" placeholder="email@exemplo.com" value={form.email} onChange={set("email")} />
           <FormField label="Ano Letivo" placeholder="2026" value={form.academic_year} onChange={set("academic_year")} />
           <FormField label="Turma" options={classes.map((c: any) => ({ value: c.id, label: c.name }))} value={form.class_id} onChange={set("class_id")} />
-          <FormField label="Responsável" options={guardians.map((g: any) => ({ value: g.id, label: g.full_name }))} value={form.guardian_id} onChange={set("guardian_id")} />
+          <div className="flex items-end gap-2">
+            <div className="flex-1">
+              <FormField label="Responsável" options={guardians.map((g: any) => ({ value: g.id, label: g.full_name }))} value={form.guardian_id} onChange={set("guardian_id")} />
+            </div>
+            <button type="button" onClick={() => setGuardianModalOpen(true)} className="mb-0.5 inline-flex items-center gap-1 px-3 py-2.5 rounded-[12px] border border-border text-sm font-medium text-muted-foreground hover:bg-accent transition-colors whitespace-nowrap">
+              <i className="ri-add-line" /> Novo
+            </button>
+          </div>
         </div>
       </FormCard>
 
