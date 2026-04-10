@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AppLayout from "@/components/layout/AppLayout";
 import PageHeader from "@/components/shared/PageHeader";
@@ -9,6 +9,11 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import CertificadoModal from "@/components/documents/CertificadoModal";
 import DocumentModal from "@/components/documents/DocumentModal";
+import { DocumentLayout } from "@/lib/documentLayout";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Eye, FileDown, Pencil } from "lucide-react";
+import html2pdf from "html2pdf.js";
 
 type Tab = "documentos" | "oficiais" | "declaracoes";
 
@@ -42,6 +47,8 @@ const defaultReasons = [
   "Para atividades extracurriculares",
 ];
 
+const DECL_TEMPLATE = `Declaramos, para os devidos fins, que o(a) aluno(a) {{nome}}, encontra-se devidamente matriculado(a) nesta instituição de ensino, no ano letivo de {{ano}}, cursando a turma {{turma}}.\n\nMotivo: {{motivo}}.\n\nA presente declaração é expedida a pedido do interessado para os fins acima citados.`;
+
 const Documents = () => {
   const [tab, setTab] = useState<Tab>("documentos");
   const { schoolId } = useSchoolId();
@@ -50,12 +57,17 @@ const Documents = () => {
   const [genericModalOpen, setGenericModalOpen] = useState(false);
   const [activeDoc, setActiveDoc] = useState<{ id: string; nome: string } | null>(null);
 
-  // For declarations
+  // Declarations state
   const [declReason, setDeclReason] = useState("");
   const [customReason, setCustomReason] = useState("");
   const [declStudent, setDeclStudent] = useState("");
   const [savedReasons, setSavedReasons] = useState<string[]>(defaultReasons);
   const [newReason, setNewReason] = useState("");
+
+  // Preview & edit state
+  const [conteudoDeclaracao, setConteudoDeclaracao] = useState("");
+  const [showDeclPreview, setShowDeclPreview] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const { data: students = [] } = useQuery({
     queryKey: ["students-docs", schoolId],
@@ -72,6 +84,19 @@ const Documents = () => {
     enabled: !!schoolId,
   });
 
+  const { data: school } = useQuery({
+    queryKey: ["school-decl", schoolId],
+    queryFn: async () => {
+      if (!schoolId) return null;
+      const { data } = await supabase.from("schools").select("*").eq("id", schoolId).single();
+      return data;
+    },
+    enabled: !!schoolId,
+  });
+
+  const selectedStudent = useMemo(() => students.find((s: any) => s.id === declStudent) as any, [students, declStudent]);
+  const resolvedReason = declReason === "__custom" ? customReason : declReason;
+
   const handleCardClick = (doc: typeof officialDocs[0]) => {
     if (doc.id === "certificado") {
       setCertModalOpen(true);
@@ -81,27 +106,41 @@ const Documents = () => {
     }
   };
 
-  const handleGenerateDeclaration = () => {
-    if (!declStudent) {
-      toast.error("Selecione um aluno");
-      return;
-    }
-    const reason = declReason === "__custom" ? customReason : declReason;
-    if (!reason) {
-      toast.error("Selecione ou digite o motivo da declaração");
-      return;
-    }
-    const student = students.find((s: any) => s.id === declStudent);
-    toast.success(`Declaração gerada para ${(student as any)?.full_name}!`);
+  const handlePreviewDeclaration = () => {
+    if (!declStudent) { toast.error("Selecione um aluno"); return; }
+    if (!resolvedReason) { toast.error("Selecione ou digite o motivo da declaração"); return; }
+
+    const nome = selectedStudent?.full_name || "";
+    const turma = selectedStudent?.classes?.name || "—";
+    const ano = String(new Date().getFullYear());
+
+    const text = DECL_TEMPLATE
+      .replace("{{nome}}", nome)
+      .replace("{{turma}}", turma)
+      .replace("{{ano}}", ano)
+      .replace("{{motivo}}", resolvedReason);
+
+    setConteudoDeclaracao(text);
+    setShowDeclPreview(true);
+    setIsEditing(false);
+  };
+
+  const handleGenerateDeclPDF = () => {
+    const element = document.getElementById("decl-preview-content");
+    if (!element) return;
+    html2pdf().from(element).set({
+      margin: 0,
+      filename: `declaracao-${selectedStudent?.full_name?.replace(/\s+/g, "-").toLowerCase() || "aluno"}.pdf`,
+      html2canvas: { scale: 2 },
+      jsPDF: { orientation: "portrait", format: "a4" },
+    }).save();
+    toast.success("PDF gerado com sucesso!");
   };
 
   const handleAddReason = () => {
     const trimmed = newReason.trim();
     if (!trimmed) return;
-    if (savedReasons.includes(trimmed)) {
-      toast.error("Motivo já existe");
-      return;
-    }
+    if (savedReasons.includes(trimmed)) { toast.error("Motivo já existe"); return; }
     setSavedReasons((prev) => [...prev, trimmed]);
     setNewReason("");
     toast.success("Motivo adicionado!");
@@ -111,6 +150,10 @@ const Documents = () => {
     setSavedReasons((prev) => prev.filter((r) => r !== reason));
     if (declReason === reason) setDeclReason("");
   };
+
+  // Reset preview when student/reason changes
+  const handleStudentChange = (v: string) => { setDeclStudent(v); setShowDeclPreview(false); };
+  const handleReasonChange = (v: string) => { setDeclReason(v); setShowDeclPreview(false); };
 
   const tabs: { id: Tab; label: string; icon: string }[] = [
     { id: "documentos", label: "Checklist de Docs", icon: "ri-file-list-3-line" },
@@ -139,7 +182,7 @@ const Documents = () => {
         ))}
       </div>
 
-      {/* Tab: Checklist de documentos de matrícula */}
+      {/* Tab: Checklist */}
       {tab === "documentos" && (
         <div className="bg-card border border-border/60 rounded-xl certus-shadow">
           <div className="px-5 py-3 border-b border-border/40">
@@ -151,16 +194,13 @@ const Documents = () => {
                 <i className="ri-file-text-line text-lg text-muted-foreground" />
                 <span className="text-sm font-bold text-primary">{d.nome}</span>
               </div>
-              <StatusBadge
-                status={d.obrigatorio ? "warning" : "info"}
-                label={d.obrigatorio ? "Obrigatório" : "Opcional"}
-              />
+              <StatusBadge status={d.obrigatorio ? "warning" : "info"} label={d.obrigatorio ? "Obrigatório" : "Opcional"} />
             </div>
           ))}
         </div>
       )}
 
-      {/* Tab: Documentos oficiais - apenas cards clicáveis */}
+      {/* Tab: Docs Oficiais */}
       {tab === "oficiais" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {officialDocs.map((d) => (
@@ -179,7 +219,7 @@ const Documents = () => {
         </div>
       )}
 
-      {/* Tab: Declarações com motivos */}
+      {/* Tab: Declarações com preview/edição */}
       {tab === "declaracoes" && (
         <div className="space-y-6">
           <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow">
@@ -189,7 +229,7 @@ const Documents = () => {
                 <label className="block text-xs font-bold text-muted-foreground mb-1.5">Aluno</label>
                 <select
                   value={declStudent}
-                  onChange={(e) => setDeclStudent(e.target.value)}
+                  onChange={(e) => handleStudentChange(e.target.value)}
                   className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
                 >
                   <option value="">Selecionar aluno...</option>
@@ -204,7 +244,7 @@ const Documents = () => {
                 <label className="block text-xs font-bold text-muted-foreground mb-1.5">Motivo da Declaração</label>
                 <select
                   value={declReason}
-                  onChange={(e) => setDeclReason(e.target.value)}
+                  onChange={(e) => handleReasonChange(e.target.value)}
                   className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
                 >
                   <option value="">Selecionar motivo...</option>
@@ -221,20 +261,67 @@ const Documents = () => {
                 <label className="block text-xs font-bold text-muted-foreground mb-1.5">Motivo personalizado</label>
                 <input
                   value={customReason}
-                  onChange={(e) => setCustomReason(e.target.value)}
+                  onChange={(e) => { setCustomReason(e.target.value); setShowDeclPreview(false); }}
                   placeholder="Digite o motivo da declaração..."
                   className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
                 />
               </div>
             )}
 
-            <button
-              onClick={handleGenerateDeclaration}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[12px] bg-secondary text-secondary-foreground text-sm font-bold hover:bg-secondary/90 transition-colors"
-            >
-              <i className="ri-file-download-line" /> Gerar Declaração
-            </button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handlePreviewDeclaration} disabled={!declStudent || !resolvedReason}>
+                <Eye className="mr-2 h-4 w-4" /> Visualizar
+              </Button>
+            </div>
           </div>
+
+          {/* Preview & Edit */}
+          {showDeclPreview && selectedStudent && (
+            <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-bold text-primary">Pré-visualização da Declaração</h4>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditing(!isEditing)}
+                  >
+                    <Pencil className="mr-2 h-4 w-4" />
+                    {isEditing ? "Voltar ao Preview" : "Editar Texto"}
+                  </Button>
+                  <Button size="sm" onClick={handleGenerateDeclPDF}>
+                    <FileDown className="mr-2 h-4 w-4" /> Gerar PDF
+                  </Button>
+                </div>
+              </div>
+
+              {isEditing ? (
+                <div>
+                  <label className="block text-xs font-bold text-muted-foreground mb-1.5">
+                    Edite o conteúdo da declaração antes de gerar o PDF
+                  </label>
+                  <Textarea
+                    value={conteudoDeclaracao}
+                    onChange={(e) => setConteudoDeclaracao(e.target.value)}
+                    rows={8}
+                    className="font-serif text-sm leading-relaxed"
+                  />
+                </div>
+              ) : (
+                <div className="flex justify-center overflow-auto">
+                  <DocumentLayout
+                    id="decl-preview-content"
+                    type="declaracao"
+                    title="Declaração"
+                    content={conteudoDeclaracao}
+                    student={selectedStudent}
+                    school={school}
+                    orientation="portrait"
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Gerenciar motivos */}
           <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow">
