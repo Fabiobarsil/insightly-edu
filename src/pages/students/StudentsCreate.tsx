@@ -202,6 +202,25 @@ const StudentsCreate = () => {
           ))}
         </div>
       </div>
+
+      <Dialog open={guardianModalOpen} onOpenChange={setGuardianModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Novo Responsável</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <FormField label="Nome Completo" placeholder="Nome do responsável" value={newGuardian.full_name} onChange={(e) => setNewGuardian(prev => ({ ...prev, full_name: e.target.value }))} />
+            <FormField label="Telefone" placeholder="(00) 00000-0000" value={newGuardian.phone} onChange={(e) => setNewGuardian(prev => ({ ...prev, phone: e.target.value }))} />
+            <FormField label="E-mail" placeholder="email@exemplo.com" value={newGuardian.email} onChange={(e) => setNewGuardian(prev => ({ ...prev, email: e.target.value }))} />
+            <div className="flex justify-end gap-2 pt-2">
+              <button type="button" onClick={() => setGuardianModalOpen(false)} className="px-4 py-2 rounded-[12px] border border-border text-sm font-medium text-muted-foreground hover:bg-accent transition-colors">Cancelar</button>
+              <button type="button" onClick={() => guardianMutation.mutate()} disabled={guardianMutation.isPending} className="px-4 py-2 rounded-[12px] bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50">
+                {guardianMutation.isPending ? "Salvando..." : "Salvar"}
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 };
