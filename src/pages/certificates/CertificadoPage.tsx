@@ -107,7 +107,6 @@ export default function CertificadoPage() {
               textAlign: "justify",
               lineHeight: 1.8,
               fontSize: 18,
-              lineHeight: 1.8,
             }}
           >
             <p>
