@@ -31,6 +31,8 @@ const StudentsCreate = () => {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const [guardianModalOpen, setGuardianModalOpen] = useState(false);
+  const [newGuardian, setNewGuardian] = useState({ full_name: "", phone: "", email: "" });
 
   const { data: classes = [] } = useQuery({
     queryKey: ["classes", schoolId],
