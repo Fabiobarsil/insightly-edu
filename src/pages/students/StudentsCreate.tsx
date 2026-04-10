@@ -8,6 +8,7 @@ import FormField from "@/components/shared/FormField";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const docChecklist = [
   { key: "certidao_nascimento", label: "Certidão de Nascimento", obrigatorio: true },
