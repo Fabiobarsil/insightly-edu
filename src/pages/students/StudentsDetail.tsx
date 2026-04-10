@@ -50,79 +50,12 @@ const relationshipTypes = [
   { value: "outro", label: "Outro" },
 ];
 
-const genderOptions = [
-  { value: "masculino", label: "Masculino" },
-  { value: "feminino", label: "Feminino" },
-  { value: "outro", label: "Outro" },
-];
-
-const maritalOptions = [
-  { value: "solteiro", label: "Solteiro(a)" },
-  { value: "casado", label: "Casado(a)" },
-  { value: "divorciado", label: "Divorciado(a)" },
-  { value: "viuvo", label: "Viúvo(a)" },
-  { value: "uniao_estavel", label: "União Estável" },
-];
-
-const incomeOptions = [
-  { value: "ate_1sm", label: "Até 1 salário mínimo" },
-  { value: "1_a_3sm", label: "1 a 3 salários mínimos" },
-  { value: "3_a_5sm", label: "3 a 5 salários mínimos" },
-  { value: "5_a_10sm", label: "5 a 10 salários mínimos" },
-  { value: "acima_10sm", label: "Acima de 10 salários mínimos" },
-];
-
 const InfoRow = ({ label, value }: { label: string; value: string }) => (
   <div className="flex justify-between py-2.5 border-b border-border/20 last:border-0">
     <span className="text-xs font-bold text-muted-foreground">{label}</span>
     <span className="text-sm text-primary font-medium">{value}</span>
   </div>
 );
-
-const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-  <h5 className="text-xs font-bold text-secondary uppercase tracking-wider mt-5 mb-3 first:mt-0">{children}</h5>
-);
-
-const FieldInput = ({ label, value, onChange, placeholder, type = "text" }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string;
-}) => (
-  <div>
-    <label className="block text-xs font-bold text-muted-foreground mb-1">{label}</label>
-    <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-      className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
-  </div>
-);
-
-const FieldSelect = ({ label, value, onChange, options }: {
-  label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[];
-}) => (
-  <div>
-    <label className="block text-xs font-bold text-muted-foreground mb-1">{label}</label>
-    <select value={value} onChange={(e) => onChange(e.target.value)}
-      className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors">
-      <option value="">Selecionar...</option>
-      {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-    </select>
-  </div>
-);
-
-const FieldCheck = ({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) => (
-  <label className="flex items-center gap-2 cursor-pointer">
-    <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)}
-      className="w-4 h-4 rounded border-border text-secondary focus:ring-secondary" />
-    <span className="text-sm text-primary">{label}</span>
-  </label>
-);
-
-const emptyGuardianForm = {
-  full_name: "", cpf: "", rg: "", birth_date: "", gender: "", nationality: "", marital_status: "",
-  relationship_type: "", relationship_description: "", is_financial: false, is_pedagogical: false, is_primary: false,
-  phone: "", phone_secondary: "", email: "", email_secondary: "", whatsapp_enabled: true,
-  zipcode: "", address: "", number: "", complement: "", district: "", city: "", state: "",
-  profession: "", company: "", income_range: "", work_phone: "",
-  can_pickup: false, can_receive_reports: true, can_authorize_image: false,
-  notes: "",
-};
 
 const StudentsDetail = () => {
   const { id } = useParams();
@@ -135,8 +68,58 @@ const StudentsDetail = () => {
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const docInputRef = useRef<HTMLInputElement>(null);
 
-
   const { data: student, isLoading } = useQuery({
+    queryKey: ["student", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("students")
+        .select("*, classes(name, grade, shift)")
+        .eq("id", id!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+
+  const { data: guardiansList = [] } = useQuery({
+    queryKey: ["student-guardians", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("student_guardians")
+        .select("guardian_id, guardians(id, full_name, phone, email, relationship_type, whatsapp_enabled)")
+        .eq("student_id", id!);
+      if (error) throw error;
+      return (data || []).map((sg: any) => sg.guardians).filter(Boolean);
+    },
+    enabled: !!id,
+  });
+
+  const { data: grades = [] } = useQuery({
+    queryKey: ["student-grades", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("grades")
+        .select("grade_value, term, assignment_id, teacher_assignments(subject_id, subjects(name))")
+        .eq("student_id", id!);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!id && activeTab === "notas",
+  });
+
+  const { data: documents = [] } = useQuery({
+    queryKey: ["student-documents", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("documents")
+        .select("*")
+        .eq("student_id", id!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!id && activeTab === "documentos",
   });
 
   const unlinkGuardianMutation = useMutation({
@@ -294,90 +277,12 @@ const StudentsDetail = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-bold text-primary">Responsáveis Vinculados ({guardiansList.length})</h4>
-            <button onClick={() => setAddingGuardian(!addingGuardian)} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-secondary text-secondary-foreground text-xs font-bold hover:bg-secondary/90 transition-colors">
-              <i className={addingGuardian ? "ri-close-line" : "ri-add-line"} /> {addingGuardian ? "Cancelar" : "Adicionar Responsável"}
+            <button onClick={() => setGuardianModalOpen(true)} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-secondary text-secondary-foreground text-xs font-bold hover:bg-secondary/90 transition-colors">
+              <i className="ri-add-line" /> Adicionar Responsável
             </button>
           </div>
 
-          {addingGuardian && (
-            <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow space-y-1">
-              <SectionTitle>Identificação</SectionTitle>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <FieldInput label="Nome Completo *" value={gf.full_name} onChange={gSet("full_name")} placeholder="Nome completo" />
-                <FieldInput label="CPF" value={gf.cpf} onChange={gSet("cpf")} placeholder="000.000.000-00" />
-                <FieldInput label="RG" value={gf.rg} onChange={gSet("rg")} placeholder="Número do RG" />
-                <FieldInput label="Data de Nascimento" value={gf.birth_date} onChange={gSet("birth_date")} type="date" />
-                <FieldSelect label="Sexo" value={gf.gender} onChange={gSet("gender")} options={genderOptions} />
-                <FieldInput label="Nacionalidade" value={gf.nationality} onChange={gSet("nationality")} placeholder="Brasileiro(a)" />
-                <FieldSelect label="Estado Civil" value={gf.marital_status} onChange={gSet("marital_status")} options={maritalOptions} />
-              </div>
-
-              <SectionTitle>Relação com o Aluno</SectionTitle>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <FieldSelect label="Tipo de Relação" value={gf.relationship_type} onChange={gSet("relationship_type")} options={relationshipTypes} />
-                <FieldInput label="Grau de Parentesco" value={gf.relationship_description} onChange={gSet("relationship_description")} placeholder="Ex: Avó materna" />
-              </div>
-              <div className="flex flex-wrap gap-4 mt-2">
-                <FieldCheck label="Responsável financeiro" checked={gf.is_financial} onChange={gCheck("is_financial")} />
-                <FieldCheck label="Responsável pedagógico" checked={gf.is_pedagogical} onChange={gCheck("is_pedagogical")} />
-                <FieldCheck label="Responsável principal" checked={gf.is_primary} onChange={gCheck("is_primary")} />
-              </div>
-
-              <SectionTitle>Contato</SectionTitle>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <FieldInput label="Telefone Principal" value={gf.phone} onChange={gSet("phone")} placeholder="(00) 00000-0000" />
-                <FieldInput label="Telefone Secundário" value={gf.phone_secondary} onChange={gSet("phone_secondary")} placeholder="(00) 00000-0000" />
-                <FieldInput label="E-mail Principal" value={gf.email} onChange={gSet("email")} placeholder="email@exemplo.com" />
-                <FieldInput label="E-mail Secundário" value={gf.email_secondary} onChange={gSet("email_secondary")} placeholder="email2@exemplo.com" />
-              </div>
-              <div className="mt-2">
-                <FieldCheck label="WhatsApp habilitado" checked={gf.whatsapp_enabled} onChange={gCheck("whatsapp_enabled")} />
-              </div>
-
-              <SectionTitle>Endereço</SectionTitle>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <FieldInput label="CEP" value={gf.zipcode} onChange={gSet("zipcode")} placeholder="00000-000" />
-                <div className="md:col-span-2">
-                  <FieldInput label="Endereço" value={gf.address} onChange={gSet("address")} placeholder="Rua, Avenida..." />
-                </div>
-                <FieldInput label="Número" value={gf.number} onChange={gSet("number")} placeholder="Nº" />
-                <FieldInput label="Complemento" value={gf.complement} onChange={gSet("complement")} placeholder="Apto, Bloco..." />
-                <FieldInput label="Bairro" value={gf.district} onChange={gSet("district")} placeholder="Bairro" />
-                <FieldInput label="Cidade" value={gf.city} onChange={gSet("city")} placeholder="Cidade" />
-                <FieldInput label="Estado" value={gf.state} onChange={gSet("state")} placeholder="UF" />
-              </div>
-
-              <SectionTitle>Dados Profissionais</SectionTitle>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <FieldInput label="Profissão" value={gf.profession} onChange={gSet("profession")} placeholder="Profissão" />
-                <FieldInput label="Empresa" value={gf.company} onChange={gSet("company")} placeholder="Empresa" />
-                <FieldSelect label="Faixa de Renda" value={gf.income_range} onChange={gSet("income_range")} options={incomeOptions} />
-                <FieldInput label="Telefone Comercial" value={gf.work_phone} onChange={gSet("work_phone")} placeholder="(00) 0000-0000" />
-              </div>
-
-              <SectionTitle>Permissões</SectionTitle>
-              <div className="flex flex-wrap gap-4">
-                <FieldCheck label="Pode buscar o aluno" checked={gf.can_pickup} onChange={gCheck("can_pickup")} />
-                <FieldCheck label="Pode receber relatórios" checked={gf.can_receive_reports} onChange={gCheck("can_receive_reports")} />
-                <FieldCheck label="Pode autorizar uso de imagem" checked={gf.can_authorize_image} onChange={gCheck("can_authorize_image")} />
-              </div>
-
-              <SectionTitle>Observações</SectionTitle>
-              <div>
-                <textarea value={gf.notes} onChange={(e) => setGf((p) => ({ ...p, notes: e.target.value }))} placeholder="Observações adicionais..." rows={3}
-                  className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors resize-none" />
-              </div>
-
-              <div className="pt-3">
-                <button onClick={() => addGuardianMutation.mutate()} disabled={addGuardianMutation.isPending}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[12px] bg-secondary text-secondary-foreground text-sm font-bold hover:bg-secondary/90 transition-colors disabled:opacity-50">
-                  <i className="ri-save-line" /> {addGuardianMutation.isPending ? "Salvando..." : "Salvar Responsável"}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {guardiansList.length === 0 && !addingGuardian ? (
+          {guardiansList.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">Nenhum responsável vinculado.</div>
           ) : guardiansList.map((g: any) => (
             <div key={g.id} className="bg-card border border-border/60 rounded-xl p-5 certus-shadow flex items-center justify-between">
@@ -396,7 +301,7 @@ const StudentsDetail = () => {
               <div className="flex items-center gap-2">
                 {g.phone && (
                   <a href={`https://wa.me/${g.phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-[10px] bg-green-500/10 text-green-600 text-xs font-bold hover:bg-green-500/20 transition-colors">
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-[10px] bg-secondary/10 text-secondary text-xs font-bold hover:bg-secondary/20 transition-colors">
                     <i className="ri-whatsapp-line" /> WhatsApp
                   </a>
                 )}
@@ -411,7 +316,6 @@ const StudentsDetail = () => {
       {/* TAB: Notas */}
       {activeTab === "notas" && (
         <div className="space-y-6">
-          {/* Analytics cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-card border border-border/60 rounded-xl p-4 certus-shadow">
               <div className="text-xs font-bold text-muted-foreground mb-1">Média Geral</div>
@@ -431,7 +335,6 @@ const StudentsDetail = () => {
             </div>
           </div>
 
-          {/* Chart */}
           {gradesByTerm.length >= 2 && (
             <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow">
               <h4 className="text-sm font-bold text-primary mb-4">Evolução por Bimestre</h4>
@@ -447,7 +350,6 @@ const StudentsDetail = () => {
             </div>
           )}
 
-          {/* Table */}
           <div className="bg-card border border-border/60 rounded-xl certus-shadow overflow-x-auto">
             {grades.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">Nenhuma nota registrada.</div>
@@ -475,7 +377,7 @@ const StudentsDetail = () => {
         </div>
       )}
 
-      {/* TAB: Documentos - MANTIDO COMO ESTÁ */}
+      {/* TAB: Documentos */}
       {activeTab === "documentos" && (
         <div className="space-y-6">
           <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow">
@@ -514,7 +416,6 @@ const StudentsDetail = () => {
             )}
           </div>
 
-          {/* Gerar documentos oficiais */}
           <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow">
             <h4 className="text-sm font-bold text-primary mb-4">Gerar Documentos Oficiais</h4>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -529,7 +430,6 @@ const StudentsDetail = () => {
             </div>
           </div>
 
-          {/* Declaração com motivo */}
           <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow">
             <h4 className="text-sm font-bold text-primary mb-4">Gerar Declaração com Motivo</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -554,6 +454,13 @@ const StudentsDetail = () => {
           </div>
         </div>
       )}
+
+      <GuardianFormModal
+        open={guardianModalOpen}
+        onOpenChange={setGuardianModalOpen}
+        schoolId={schoolId}
+        studentId={id}
+      />
     </AppLayout>
   );
 };
