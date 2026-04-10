@@ -108,26 +108,32 @@ export type Database = {
         Row: {
           academic_year: number | null
           grade: string | null
+          grade_id: string | null
           id: string
           name: string
-          school_id: string | null
+          school_id: string
           shift: string | null
+          shift_id: string | null
         }
         Insert: {
           academic_year?: number | null
           grade?: string | null
+          grade_id?: string | null
           id?: string
           name: string
-          school_id?: string | null
+          school_id: string
           shift?: string | null
+          shift_id?: string | null
         }
         Update: {
           academic_year?: number | null
           grade?: string | null
+          grade_id?: string | null
           id?: string
           name?: string
-          school_id?: string | null
+          school_id?: string
           shift?: string | null
+          shift_id?: string | null
         }
         Relationships: [
           {
@@ -419,6 +425,27 @@ export type Database = {
         }
         Relationships: []
       }
+      school_grades: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          school_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          school_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          school_id?: string
+        }
+        Relationships: []
+      }
       school_memberships: {
         Row: {
           created_at: string | null
@@ -460,6 +487,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      school_shifts: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          school_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          school_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          school_id?: string
+        }
+        Relationships: []
       }
       schools: {
         Row: {
