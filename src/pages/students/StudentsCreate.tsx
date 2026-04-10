@@ -8,7 +8,7 @@ import FormField from "@/components/shared/FormField";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import GuardianFormModal from "@/components/guardians/GuardianFormModal";
 
 const docChecklist = [
   { key: "certidao_nascimento", label: "Certidão de Nascimento", obrigatorio: true },
@@ -32,7 +32,6 @@ const StudentsCreate = () => {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [guardianModalOpen, setGuardianModalOpen] = useState(false);
-  const [newGuardian, setNewGuardian] = useState({ full_name: "", phone: "", email: "" });
 
   const { data: classes = [] } = useQuery({
     queryKey: ["classes", schoolId],
@@ -58,29 +57,6 @@ const StudentsCreate = () => {
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
   const toggleDoc = (key: string) => setDocs((prev) => ({ ...prev, [key]: !prev[key] }));
-
-  const guardianMutation = useMutation({
-    mutationFn: async () => {
-      if (!schoolId) throw new Error("Nenhuma escola vinculada");
-      if (!newGuardian.full_name.trim()) throw new Error("Nome é obrigatório");
-      const { data, error } = await supabase.from("guardians").insert({
-        full_name: newGuardian.full_name.trim(),
-        phone: newGuardian.phone || null,
-        email: newGuardian.email || null,
-        school_id: schoolId,
-      }).select("id").single();
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["guardians", schoolId] });
-      setForm((prev) => ({ ...prev, guardian_id: data.id }));
-      setGuardianModalOpen(false);
-      setNewGuardian({ full_name: "", phone: "", email: "" });
-      toast.success("Responsável cadastrado!");
-    },
-    onError: (err: any) => toast.error(err.message || "Erro ao cadastrar responsável"),
-  });
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -167,13 +143,18 @@ const StudentsCreate = () => {
           <FormField label="E-mail" placeholder="email@exemplo.com" value={form.email} onChange={set("email")} />
           <FormField label="Ano Letivo" placeholder="2026" value={form.academic_year} onChange={set("academic_year")} />
           <FormField label="Turma" options={classes.map((c: any) => ({ value: c.id, label: c.name }))} value={form.class_id} onChange={set("class_id")} />
-          <div className="flex items-end gap-2">
-            <div className="flex-1">
-              <FormField label="Responsável" options={guardians.map((g: any) => ({ value: g.id, label: g.full_name }))} value={form.guardian_id} onChange={set("guardian_id")} />
+          <div>
+            <label className="block text-xs font-bold text-muted-foreground mb-1.5">Responsável</label>
+            <div className="flex items-center gap-2">
+              <select value={form.guardian_id} onChange={set("guardian_id")} className="flex-1 border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors">
+                <option value="">Selecionar...</option>
+                {guardians.map((g: any) => <option key={g.id} value={g.id}>{g.full_name}</option>)}
+              </select>
+              <button type="button" onClick={() => setGuardianModalOpen(true)}
+                className="inline-flex items-center gap-1 px-3 py-2.5 rounded-[12px] bg-secondary text-secondary-foreground text-sm font-bold hover:bg-secondary/90 transition-colors whitespace-nowrap">
+                <i className="ri-add-line" /> Novo
+              </button>
             </div>
-            <button type="button" onClick={() => setGuardianModalOpen(true)} className="mb-0.5 inline-flex items-center gap-1 px-3 py-2.5 rounded-[12px] border border-border text-sm font-medium text-muted-foreground hover:bg-accent transition-colors whitespace-nowrap">
-              <i className="ri-add-line" /> Novo
-            </button>
           </div>
         </div>
       </FormCard>
@@ -203,24 +184,14 @@ const StudentsCreate = () => {
         </div>
       </div>
 
-      <Dialog open={guardianModalOpen} onOpenChange={setGuardianModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Novo Responsável</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 pt-2">
-            <FormField label="Nome Completo" placeholder="Nome do responsável" value={newGuardian.full_name} onChange={(e) => setNewGuardian(prev => ({ ...prev, full_name: e.target.value }))} />
-            <FormField label="Telefone" placeholder="(00) 00000-0000" value={newGuardian.phone} onChange={(e) => setNewGuardian(prev => ({ ...prev, phone: e.target.value }))} />
-            <FormField label="E-mail" placeholder="email@exemplo.com" value={newGuardian.email} onChange={(e) => setNewGuardian(prev => ({ ...prev, email: e.target.value }))} />
-            <div className="flex justify-end gap-2 pt-2">
-              <button type="button" onClick={() => setGuardianModalOpen(false)} className="px-4 py-2 rounded-[12px] border border-border text-sm font-medium text-muted-foreground hover:bg-accent transition-colors">Cancelar</button>
-              <button type="button" onClick={() => guardianMutation.mutate()} disabled={guardianMutation.isPending} className="px-4 py-2 rounded-[12px] bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50">
-                {guardianMutation.isPending ? "Salvando..." : "Salvar"}
-              </button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <GuardianFormModal
+        open={guardianModalOpen}
+        onOpenChange={setGuardianModalOpen}
+        schoolId={schoolId}
+        onCreated={(guardian) => {
+          setForm((prev) => ({ ...prev, guardian_id: guardian.id }));
+        }}
+      />
     </AppLayout>
   );
 };
