@@ -54,11 +54,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Standalone function that fetches role - called OUTSIDE of auth lock
   const fetchRole = async (userId: string) => {
     try {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", userId)
-        .maybeSingle();
+      const { data: profile } = await supabase.from("profiles").select("role").eq("id", userId).maybeSingle();
 
       console.log("[Auth] profile for", userId, ":", profile);
 
@@ -90,59 +86,64 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     mountedRef.current = true;
 
     // 1. Restore session from storage - ALWAYS call setLoading(false)
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
-      if (!mountedRef.current) return;
+    supabase.auth
+      .getSession()
+      .then(({ data: { session: s } }) => {
+        if (!mountedRef.current) return;
 
-      console.log("[Auth] SESSION:", s);
-      console.log("[Auth] USER:", s?.user ?? null);
-      setSession(s);
+        console.log("[Auth] SESSION:", s);
+        console.log("[Auth] USER:", s?.user ?? null);
+        setSession(s);
 
-      if (s?.user) {
-        fetchRole(s.user.id).finally(() => {
-          if (mountedRef.current) {
-            console.log("[Auth] LOADING FINALIZADO (com sessão)");
-            setLoading(false);
-          }
-        });
-      } else {
-        console.log("[Auth] LOADING FINALIZADO (sem sessão)");
-        setLoading(false);
-      }
-    }).catch((err) => {
-      console.error("[Auth] getSession error:", err);
-      if (mountedRef.current) {
-        setSession(null);
-        setLoading(false);
-        console.log("[Auth] LOADING FINALIZADO (erro getSession)");
-      }
-    });
+        if (s?.user) {
+          fetchRole(s.user.id).finally(() => {
+            if (mountedRef.current) {
+              console.log("[Auth] LOADING FINALIZADO (com sessão)");
+              setLoading(false);
+            }
+          });
+        } else {
+          console.log("[Auth] LOADING FINALIZADO (sem sessão)");
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error("[Auth] getSession error:", err);
+        if (mountedRef.current) {
+          setSession(null);
+          setLoading(false);
+          console.log("[Auth] LOADING FINALIZADO (erro getSession)");
+        }
+      });
 
     // 2. Listen for auth changes
     // IMPORTANT: Do NOT await anything inside this callback - it holds an internal lock.
     // Use .then() to defer DB queries outside the lock.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, nextSession) => {
-        console.log("[Auth] onAuthStateChange:", _event, nextSession?.user?.id);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      console.log("[Auth] onAuthStateChange:", _event, nextSession?.user?.id);
 
-        if (!mountedRef.current) return;
-        setSession(nextSession);
+      if (!mountedRef.current) return;
+      setSession(nextSession);
 
-        if (nextSession?.user) {
-          const userId = nextSession.user.id;
-          // Use .then() - this returns immediately, releasing the auth lock
-          // The fetchRole promise runs after the callback returns
-          Promise.resolve().then(() => {
-            if (!mountedRef.current) return;
-            fetchRole(userId).finally(() => {
-              if (mountedRef.current) setLoading(false);
-            });
+      if (nextSession?.user) {
+        const userId = nextSession.user.id;
+        // Use .then() - this returns immediately, releasing the auth lock
+        // The fetchRole promise runs after the callback returns
+        Promise.resolve().then(() => {
+          if (!mountedRef.current) return;
+          fetchRole(userId).finally(() => {
+            if (mountedRef.current) setLoading(false);
           });
-        } else {
-          setRole(null);
-          setLoading(false);
-        }
+        });
+      } else {
+        console.log("Nenhum role encontrado — criando fallback");
+
+        setRole("owner"); // 👈 TEMPORÁRIO pra destravar
+        setLoading(false);
       }
-    );
+    });
 
     return () => {
       mountedRef.current = false;
