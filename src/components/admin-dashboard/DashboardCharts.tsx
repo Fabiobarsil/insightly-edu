@@ -1,29 +1,28 @@
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-  LineChart,
-  Line,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+  LineChart, Line, PieChart, Pie, Cell,
 } from "recharts";
 
-const distributionData = [
-  { serie: "1º Ano", alunos: 42 },
-  { serie: "2º Ano", alunos: 38 },
-  { serie: "3º Ano", alunos: 35 },
-  { serie: "4º Ano", alunos: 40 },
-  { serie: "5º Ano", alunos: 33 },
+const frequencyData = [
+  { turma: "1ºA", freq: 92 },
+  { turma: "2ºB", freq: 87 },
+  { turma: "3ºA", freq: 78 },
+  { turma: "4ºC", freq: 85 },
+  { turma: "5ºB", freq: 90 },
 ];
 
-const approvalData = [
-  { serie: "1º Ano", taxa: 92 },
-  { serie: "2º Ano", taxa: 87 },
-  { serie: "3º Ano", taxa: 78 },
-  { serie: "4º Ano", taxa: 85 },
-  { serie: "5º Ano", taxa: 90 },
+const gradeData = [
+  { turma: "1ºA", media: 7.8 },
+  { turma: "2ºB", media: 6.5 },
+  { turma: "3ºA", media: 5.9 },
+  { turma: "4ºC", media: 7.2 },
+  { turma: "5ºB", media: 8.1 },
+];
+
+const distributionData = [
+  { name: "Aprovados", value: 152, color: "hsl(var(--secondary))" },
+  { name: "Reprovados", value: 18, color: "hsl(var(--destructive))" },
+  { name: "Pendentes", value: 18, color: "hsl(var(--warning))" },
 ];
 
 const tooltipStyle = {
@@ -37,44 +36,56 @@ const tooltipStyle = {
 };
 
 const DashboardCharts = () => (
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-    {/* Distribution */}
+  <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+    {/* Frequency by class */}
     <div className="bg-card rounded-2xl border border-border/50 p-6 shadow-sm">
-      <h3 className="text-sm font-bold text-foreground mb-5">
-        Distribuição de Alunos por Série
-      </h3>
-      <ResponsiveContainer width="100%" height={260}>
-        <BarChart data={distributionData} barSize={32}>
+      <h3 className="text-sm font-bold text-foreground mb-5">Frequência por Turma (%)</h3>
+      <ResponsiveContainer width="100%" height={240}>
+        <BarChart data={frequencyData} barSize={28}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-          <XAxis dataKey="serie" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
-          <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
-          <Tooltip {...tooltipStyle} />
-          <Bar dataKey="alunos" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+          <XAxis dataKey="turma" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+          <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" domain={[0, 100]} unit="%" />
+          <Tooltip {...tooltipStyle} formatter={(v: number) => [`${v}%`, "Frequência"]} />
+          <Bar dataKey="freq" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>
 
-    {/* Approval Rate */}
+    {/* Average grades by class */}
     <div className="bg-card rounded-2xl border border-border/50 p-6 shadow-sm">
-      <h3 className="text-sm font-bold text-foreground mb-5">
-        Taxa de Aprovação por Série
-      </h3>
-      <ResponsiveContainer width="100%" height={260}>
-        <LineChart data={approvalData}>
+      <h3 className="text-sm font-bold text-foreground mb-5">Média de Notas por Turma</h3>
+      <ResponsiveContainer width="100%" height={240}>
+        <LineChart data={gradeData}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-          <XAxis dataKey="serie" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
-          <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" domain={[0, 100]} unit="%" />
-          <Tooltip {...tooltipStyle} formatter={(v: number) => [`${v}%`, "Taxa"]} />
-          <Line
-            type="monotone"
-            dataKey="taxa"
-            stroke="hsl(var(--secondary))"
-            strokeWidth={2.5}
-            dot={{ r: 4, fill: "hsl(var(--secondary))" }}
-            activeDot={{ r: 6 }}
-          />
+          <XAxis dataKey="turma" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+          <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" domain={[0, 10]} />
+          <Tooltip {...tooltipStyle} formatter={(v: number) => [v.toFixed(1), "Média"]} />
+          <Line type="monotone" dataKey="media" stroke="hsl(var(--secondary))" strokeWidth={2.5} dot={{ r: 4, fill: "hsl(var(--secondary))" }} activeDot={{ r: 6 }} />
         </LineChart>
       </ResponsiveContainer>
+    </div>
+
+    {/* Distribution pie */}
+    <div className="bg-card rounded-2xl border border-border/50 p-6 shadow-sm">
+      <h3 className="text-sm font-bold text-foreground mb-5">Distribuição Geral</h3>
+      <ResponsiveContainer width="100%" height={240}>
+        <PieChart>
+          <Pie data={distributionData} cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={4} dataKey="value" strokeWidth={0}>
+            {distributionData.map((entry, i) => (
+              <Cell key={i} fill={entry.color} />
+            ))}
+          </Pie>
+          <Tooltip {...tooltipStyle} />
+        </PieChart>
+      </ResponsiveContainer>
+      <div className="flex justify-center gap-4 mt-2">
+        {distributionData.map((d) => (
+          <div key={d.name} className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
+            <span className="text-[11px] text-muted-foreground font-medium">{d.name} ({d.value})</span>
+          </div>
+        ))}
+      </div>
     </div>
   </div>
 );
