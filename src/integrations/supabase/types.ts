@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      academic_results: {
+        Row: {
+          academic_year: number
+          created_at: string | null
+          dependency_count: number | null
+          final_status: string
+          id: string
+          school_id: string
+          student_id: string
+        }
+        Insert: {
+          academic_year: number
+          created_at?: string | null
+          dependency_count?: number | null
+          final_status: string
+          id?: string
+          school_id: string
+          student_id: string
+        }
+        Update: {
+          academic_year?: number
+          created_at?: string | null
+          dependency_count?: number | null
+          final_status?: string
+          id?: string
+          school_id?: string
+          student_id?: string
+        }
+        Relationships: []
+      }
       account_members: {
         Row: {
           access_expires_at: string | null
@@ -107,6 +137,7 @@ export type Database = {
       classes: {
         Row: {
           academic_year: number | null
+          capacity: number | null
           grade: string | null
           grade_id: string | null
           id: string
@@ -117,6 +148,7 @@ export type Database = {
         }
         Insert: {
           academic_year?: number | null
+          capacity?: number | null
           grade?: string | null
           grade_id?: string | null
           id?: string
@@ -127,6 +159,7 @@ export type Database = {
         }
         Update: {
           academic_year?: number | null
+          capacity?: number | null
           grade?: string | null
           grade_id?: string | null
           id?: string
@@ -175,6 +208,39 @@ export type Database = {
           school_id?: string
           status?: string | null
           student_id?: string | null
+        }
+        Relationships: []
+      }
+      enrollments: {
+        Row: {
+          academic_year: number
+          class_id: string | null
+          created_at: string | null
+          grade_id: string | null
+          id: string
+          school_id: string
+          status: string | null
+          student_id: string
+        }
+        Insert: {
+          academic_year: number
+          class_id?: string | null
+          created_at?: string | null
+          grade_id?: string | null
+          id?: string
+          school_id: string
+          status?: string | null
+          student_id: string
+        }
+        Update: {
+          academic_year?: number
+          class_id?: string | null
+          created_at?: string | null
+          grade_id?: string | null
+          id?: string
+          school_id?: string
+          status?: string | null
+          student_id?: string
         }
         Relationships: []
       }
@@ -429,18 +495,21 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          level: number | null
           name: string
           school_id: string
         }
         Insert: {
           created_at?: string | null
           id?: string
+          level?: number | null
           name: string
           school_id: string
         }
         Update: {
           created_at?: string | null
           id?: string
+          level?: number | null
           name?: string
           school_id?: string
         }
@@ -625,6 +694,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      student_dependencies: {
+        Row: {
+          academic_year: number
+          created_at: string | null
+          id: string
+          status: string | null
+          student_id: string
+          subject_id: string | null
+          subject_name: string | null
+        }
+        Insert: {
+          academic_year: number
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          student_id: string
+          subject_id?: string | null
+          subject_name?: string | null
+        }
+        Update: {
+          academic_year?: number
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          student_id?: string
+          subject_id?: string | null
+          subject_name?: string | null
+        }
+        Relationships: []
       }
       student_guardians: {
         Row: {
@@ -935,10 +1034,27 @@ export type Database = {
       }
     }
     Functions: {
+      calculate_final_status: { Args: { dep_count: number }; Returns: string }
+      close_academic_year: { Args: { p_year: number }; Returns: number }
+      close_academic_year_debug: {
+        Args: { p_year: number }
+        Returns: {
+          aprovados: number
+          dependencia: number
+          reprovados: number
+          total: number
+        }[]
+      }
       current_account_id: { Args: never; Returns: string }
       current_school_id: { Args: never; Returns: string }
       get_effective_role: { Args: never; Returns: string }
       is_member_of_school: { Args: { _school_id: string }; Returns: boolean }
+      process_rematricula: { Args: { p_year: number }; Returns: number }
+      process_rematricula_with_class: {
+        Args: { p_year: number }
+        Returns: number
+      }
+      promote_students: { Args: { p_year: number }; Returns: number }
       user_has_access: { Args: never; Returns: boolean }
     }
     Enums: {
