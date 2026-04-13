@@ -1,16 +1,20 @@
-import { UserPlus, ClipboardList, FileText, Send, BarChart3 } from "lucide-react";
+import { ClipboardList, FileText, Send, BarChart3, FilePlus2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const actions = [
-  { icon: UserPlus, label: "Novo Aluno", to: "/admin/alunos/novo" },
-  { icon: ClipboardList, label: "Nova Matrícula", to: "/admin/alunos/novo" },
-  { icon: FileText, label: "Novo Documento", to: "/admin/documentos" },
-  { icon: Send, label: "Enviar Comunicação", to: "/admin/comunicacao" },
-  { icon: BarChart3, label: "Gerar Relatório", to: null },
-];
+interface QuickActionsProps {
+  onNewRequest?: () => void;
+}
 
-const QuickActions = () => {
+const QuickActions = ({ onNewRequest }: QuickActionsProps) => {
   const navigate = useNavigate();
+
+  const actions = [
+    { icon: FilePlus2, label: "Nova Solicitação", to: null, onClick: onNewRequest },
+    { icon: ClipboardList, label: "Nova Matrícula", to: "/admin/alunos/novo" },
+    { icon: FileText, label: "Novo Documento", to: "/admin/documentos" },
+    { icon: Send, label: "Enviar Comunicação", to: "/admin/comunicacao" },
+    { icon: BarChart3, label: "Gerar Relatório", to: null },
+  ];
 
   return (
     <div className="bg-card rounded-2xl border border-border/50 p-5 shadow-sm">
@@ -19,7 +23,7 @@ const QuickActions = () => {
         {actions.map((a) => (
           <button
             key={a.label}
-            onClick={() => a.to ? navigate(a.to) : null}
+            onClick={() => a.onClick ? a.onClick() : a.to ? navigate(a.to) : null}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border text-sm font-semibold text-foreground hover:border-primary hover:text-primary hover:bg-primary/5 transition-all duration-200 active:scale-[0.97] hover:shadow-sm"
           >
             <a.icon className="h-4 w-4" />

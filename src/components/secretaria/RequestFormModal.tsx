@@ -7,14 +7,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Search } from "lucide-react";
+import { format } from "date-fns";
+
+const SITUATIONS = [
+  "Nova Matrícula",
+  "Matriculado",
+  "Formando",
+  "Transferido",
+  "Inativo",
+];
 
 const REQUEST_TYPES = [
-  "Transferência",
+  "Boletim",
   "Histórico Escolar",
   "Declaração",
-  "Diploma",
-  "Segunda via",
-  "Outro",
+  "Certificado de Conclusão",
+  "Outros",
 ];
 
 interface Props {
@@ -27,9 +35,11 @@ const RequestFormModal = ({ open, onOpenChange, onCreated }: Props) => {
   const { schoolId } = useSchoolId();
   const [search, setSearch] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<{ id: string; full_name: string; class_id: string | null } | null>(null);
+  const [situation, setSituation] = useState("");
   const [requestType, setRequestType] = useState("");
   const [description, setDescription] = useState("");
-  const [deadline, setDeadline] = useState("");
+  const [startDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [endDate, setEndDate] = useState("");
   const [saving, setSaving] = useState(false);
 
   const { data: students = [] } = useQuery({
@@ -50,13 +60,14 @@ const RequestFormModal = ({ open, onOpenChange, onCreated }: Props) => {
   const resetForm = () => {
     setSearch("");
     setSelectedStudent(null);
+    setSituation("");
     setRequestType("");
     setDescription("");
-    setDeadline("");
+    setEndDate("");
   };
 
   const handleSave = async () => {
-    if (!schoolId || !requestType) return;
+    if (!schoolId || !requestType || !situation) return;
     setSaving(true);
     try {
       const { data, error } = await supabase.from("secretary_requests").insert({
@@ -64,12 +75,13 @@ const RequestFormModal = ({ open, onOpenChange, onCreated }: Props) => {
         student_id: selectedStudent?.id || null,
         student_name: selectedStudent?.full_name || null,
         class_id: selectedStudent?.class_id || null,
+        student_status: situation.toLowerCase(),
         request_type: requestType,
         description: description || null,
-        deadline: deadline || null,
-        priority: "media", // temporary, will be classified next
+        deadline: endDate || null,
+        priority: "media",
         status: "aberto",
-        is_recurring: requestType === "Segunda via",
+        is_recurring: requestType === "Certificado de Conclusão",
       }).select("id").single();
       if (error) throw error;
       resetForm();
@@ -100,7 +112,7 @@ const RequestFormModal = ({ open, onOpenChange, onCreated }: Props) => {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar aluno..."
+                placeholder="Buscar aluno pelo nome..."
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setSelectedStudent(null); }}
                 className="pl-9"
@@ -117,9 +129,25 @@ const RequestFormModal = ({ open, onOpenChange, onCreated }: Props) => {
             )}
           </div>
 
+          {/* Situation */}
+          <div>
+            <label className="block text-xs font-bold text-muted-foreground mb-1.5">📊 Situação</label>
+            <div className="flex flex-wrap gap-2">
+              {SITUATIONS.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setSituation(s)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${situation === s ? "bg-primary text-primary-foreground" : "bg-muted/50 text-muted-foreground hover:bg-accent"}`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Request type */}
           <div>
-            <label className="block text-xs font-bold text-muted-foreground mb-1.5">📂 Tipo de solicitação</label>
+            <label className="block text-xs font-bold text-muted-foreground mb-1.5">📂 Tipo de Solicitação</label>
             <div className="flex flex-wrap gap-2">
               {REQUEST_TYPES.map((t) => (
                 <button
@@ -136,17 +164,30 @@ const RequestFormModal = ({ open, onOpenChange, onCreated }: Props) => {
           {/* Description */}
           <div>
             <label className="block text-xs font-bold text-muted-foreground mb-1.5">📝 Descrição</label>
-            <Textarea placeholder="Descreva a solicitação..." value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+            <Textarea
+              placeholder="Descreva o problema ou solicitação (máx. 1000 caracteres)..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value.slice(0, 1000))}
+              rows={3}
+              maxLength={1000}
+            />
+            <p className="text-xs text-muted-foreground text-right mt-1">{description.length}/1000</p>
           </div>
 
-          {/* Deadline */}
-          <div>
-            <label className="block text-xs font-bold text-muted-foreground mb-1.5">⏱ Prazo</label>
-            <Input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
+          {/* Dates */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-muted-foreground mb-1.5">📅 Abertura</label>
+              <Input type="date" value={startDate} disabled className="bg-muted/30" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-muted-foreground mb-1.5">📅 Prazo Final</label>
+              <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+            </div>
           </div>
 
-          <Button className="w-full" onClick={handleSave} disabled={!requestType || saving}>
-            {saving ? "Salvando..." : "Salvar e Classificar"}
+          <Button className="w-full" onClick={handleSave} disabled={!requestType || !situation || saving}>
+            {saving ? "Salvando..." : "Salvar e Classificar Prioridade"}
           </Button>
         </div>
       </DialogContent>
