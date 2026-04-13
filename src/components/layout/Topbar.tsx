@@ -29,7 +29,9 @@ const Topbar = ({ title, breadcrumbs }: TopbarProps) => {
   const { user } = useAuth();
   const [profileName, setProfileName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-
+  const [motivationalQuote] = useState(
+    () => MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)]
+  );
   useEffect(() => {
     if (!user) return;
     supabase
