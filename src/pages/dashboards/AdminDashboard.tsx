@@ -28,18 +28,18 @@ const AdminDashboard = () => {
   return (
     <RoleLayout title="Secretaria Digital">
       <div className="flex flex-col gap-6" key={refreshKey}>
-        {/* Header */}
-        <div>
-          <h2 className="text-2xl font-bold text-foreground tracking-tight">Secretaria Digital</h2>
-          <p className="text-sm text-muted-foreground mt-1">Centro de controle administrativo da escola</p>
+        {/* Title + Actions on same row */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-foreground tracking-tight">Secretaria Digital</h2>
+            <p className="text-sm text-muted-foreground mt-1">Centro de controle administrativo da escola</p>
+          </div>
+          <DashboardHeader
+            selectedYear={selectedYear}
+            onYearChange={setSelectedYear}
+            onDataRefresh={handleRefresh}
+          />
         </div>
-
-        {/* Header actions */}
-        <DashboardHeader
-          selectedYear={selectedYear}
-          onYearChange={setSelectedYear}
-          onDataRefresh={handleRefresh}
-        />
 
         {/* Quick Access Cards 2x2 */}
         <QuickAccessCards />
