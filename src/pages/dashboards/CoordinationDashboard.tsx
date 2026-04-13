@@ -581,17 +581,16 @@ const CoordinationDashboard = () => {
         </DialogContent>
       </Dialog>
 
-      {/* ── Request modals ── */}
+      {/* ── Request modal (no priority classification for coordination) ── */}
       <RequestFormModal
         open={requestModalOpen}
         onOpenChange={setRequestModalOpen}
-        onCreated={(id) => setClassifyId(id)}
+        onCreated={() => {
+          toast.success("Solicitação enviada para a secretaria!");
+          queryClient.invalidateQueries({ queryKey: ["coord-open-requests"] });
+        }}
         origin="coordenacao"
-      />
-      <PriorityModal
-        open={!!classifyId}
-        onConfirm={(priority) => classifyId && classifyMutation.mutate({ id: classifyId, priority })}
-        onCancel={() => setClassifyId(null)}
+        hideDeadline
       />
     </RoleLayout>
   );
