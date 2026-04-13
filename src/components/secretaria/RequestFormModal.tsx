@@ -29,9 +29,10 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated: (requestId: string) => void;
+  origin?: string;
 }
 
-const RequestFormModal = ({ open, onOpenChange, onCreated }: Props) => {
+const RequestFormModal = ({ open, onOpenChange, onCreated, origin = "secretaria" }: Props) => {
   const { schoolId } = useSchoolId();
   const [search, setSearch] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<{ id: string; full_name: string; class_id: string | null } | null>(null);
@@ -82,6 +83,7 @@ const RequestFormModal = ({ open, onOpenChange, onCreated }: Props) => {
         priority: "media",
         status: "aberto",
         is_recurring: requestType === "Certificado de Conclusão",
+        origin,
       }).select("id").single();
       if (error) throw error;
       resetForm();
