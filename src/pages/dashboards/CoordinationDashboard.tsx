@@ -580,6 +580,19 @@ const CoordinationDashboard = () => {
           </ScrollArea>
         </DialogContent>
       </Dialog>
+
+      {/* ── Request modals ── */}
+      <RequestFormModal
+        open={requestModalOpen}
+        onOpenChange={setRequestModalOpen}
+        onCreated={(id) => setClassifyId(id)}
+        origin="coordenacao"
+      />
+      <PriorityModal
+        open={!!classifyId}
+        onConfirm={(priority) => classifyId && classifyMutation.mutate({ id: classifyId, priority })}
+        onCancel={() => setClassifyId(null)}
+      />
     </RoleLayout>
   );
 };
