@@ -419,6 +419,36 @@ export type Database = {
           },
         ]
       }
+      message_templates: {
+        Row: {
+          category: string
+          content: string
+          created_at: string | null
+          id: string
+          school_id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          school_id: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          school_id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

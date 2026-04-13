@@ -11,9 +11,13 @@ import { useSchoolId } from "@/hooks/useSchoolId";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import TeacherRegistrationTab from "@/components/settings/TeacherRegistrationTab";
+import TemplatesTab from "@/components/settings/TemplatesTab";
 
 const tabs = [
   { id: "escola", label: "Dados da Escola", icon: "ri-building-line" },
+  { id: "professores", label: "Cadastro de Professor", icon: "ri-user-star-line" },
+  { id: "templates", label: "Mensagens e Templates", icon: "ri-chat-3-line" },
   { id: "documentos", label: "Cabeçalho Oficial", icon: "ri-draft-line" },
   { id: "assinaturas", label: "Assinaturas", icon: "ri-quill-pen-line" },
   { id: "usuarios", label: "Usuários e Papéis", icon: "ri-shield-user-line" },
@@ -132,7 +136,6 @@ const Settings = () => {
   const handleCreateUser = async () => {
     if (!userForm.email.trim()) { toast.error("Informe o e-mail"); return; }
     if (userForm.access_type === "temporary" && !userForm.access_expires_at) { toast.error("Informe a data de expiração"); return; }
-
     setSaving(true);
     try {
       const { data, error } = await supabase.functions.invoke("create-user", {
@@ -143,44 +146,33 @@ const Settings = () => {
           access_expires_at: userForm.access_type === "temporary" ? userForm.access_expires_at : null,
         },
       });
-
       if (error) throw error;
       if (data?.error) { toast.error(data.error); setSaving(false); return; }
-
       toast.success(data?.message || "Usuário criado!");
       setModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ["account-members"] });
     } catch (err: any) {
       toast.error(err.message || "Erro ao criar usuário");
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
   const handleUpdateMember = async () => {
     if (!editingMember) return;
     if (userForm.access_type === "temporary" && !userForm.access_expires_at) { toast.error("Informe a data de expiração"); return; }
-
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from("account_members")
-        .update({
-          role: userForm.role,
-          access_type: userForm.access_type,
-          access_expires_at: userForm.access_type === "temporary" ? userForm.access_expires_at : null,
-        })
-        .eq("id", editingMember.id);
-
+      const { error } = await supabase.from("account_members").update({
+        role: userForm.role,
+        access_type: userForm.access_type,
+        access_expires_at: userForm.access_type === "temporary" ? userForm.access_expires_at : null,
+      }).eq("id", editingMember.id);
       if (error) throw error;
       toast.success("Usuário atualizado!");
       setModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ["account-members"] });
     } catch (err: any) {
       toast.error(err.message || "Erro ao atualizar");
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
   const handleUserFormChange = (field: keyof UserFormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -267,6 +259,12 @@ const Settings = () => {
           </FormCard>
         </div>
       )}
+
+      {/* ========== PROFESSORES ========== */}
+      {tab === "professores" && <TeacherRegistrationTab schoolId={schoolId} />}
+
+      {/* ========== TEMPLATES ========== */}
+      {tab === "templates" && <TemplatesTab schoolId={schoolId} />}
 
       {/* ========== DOCUMENTOS ========== */}
       {tab === "documentos" && (
@@ -377,59 +375,32 @@ const Settings = () => {
                 {!editingMember && (
                   <div>
                     <label className="block text-xs font-bold text-muted-foreground mb-1.5">E-mail</label>
-                    <input
-                      type="email"
-                      value={userForm.email}
-                      onChange={handleUserFormChange("email")}
-                      placeholder="usuario@email.com"
-                      className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
-                    />
+                    <input type="email" value={userForm.email} onChange={handleUserFormChange("email")} placeholder="usuario@email.com" className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
                   </div>
                 )}
-
                 <div>
                   <label className="block text-xs font-bold text-muted-foreground mb-1.5">Papel</label>
-                  <select
-                    value={userForm.role}
-                    onChange={handleUserFormChange("role")}
-                    className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
-                  >
+                  <select value={userForm.role} onChange={handleUserFormChange("role")} className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors">
                     <option value="owner">Proprietário</option>
                     <option value="admin">Administrador</option>
                     <option value="editor">Editor</option>
                     <option value="viewer">Visualizador</option>
                   </select>
                 </div>
-
                 <div>
                   <label className="block text-xs font-bold text-muted-foreground mb-1.5">Tipo de Acesso</label>
-                  <select
-                    value={userForm.access_type}
-                    onChange={handleUserFormChange("access_type")}
-                    className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
-                  >
+                  <select value={userForm.access_type} onChange={handleUserFormChange("access_type")} className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors">
                     <option value="permanent">Permanente</option>
                     <option value="temporary">Temporário</option>
                   </select>
                 </div>
-
                 {userForm.access_type === "temporary" && (
                   <div>
                     <label className="block text-xs font-bold text-muted-foreground mb-1.5">Data de Expiração</label>
-                    <input
-                      type="date"
-                      value={userForm.access_expires_at}
-                      onChange={handleUserFormChange("access_expires_at")}
-                      className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
-                    />
+                    <input type="date" value={userForm.access_expires_at} onChange={handleUserFormChange("access_expires_at")} className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
                   </div>
                 )}
-
-                <button
-                  onClick={editingMember ? handleUpdateMember : handleCreateUser}
-                  disabled={saving}
-                  className="w-full py-2.5 rounded-[12px] bg-secondary text-secondary-foreground text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
-                >
+                <button onClick={editingMember ? handleUpdateMember : handleCreateUser} disabled={saving} className="w-full py-2.5 rounded-[12px] bg-secondary text-secondary-foreground text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50">
                   {saving ? "Salvando..." : editingMember ? "Salvar Alterações" : "Criar Usuário"}
                 </button>
               </div>
