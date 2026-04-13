@@ -1,21 +1,25 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import RoleLayout from "@/components/layout/RoleLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
 import {
   AlertTriangle, TrendingDown, ShieldAlert, ClipboardList,
   User, ChevronRight, CheckCircle2, Clock, XCircle,
-  BarChart3, Eye
+  BarChart3, Eye, FilePlus2, Bell
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
+import RequestFormModal from "@/components/secretaria/RequestFormModal";
+import PriorityModal from "@/components/secretaria/PriorityModal";
+import { toast } from "sonner";
 
 /* ── mock interventions (no table yet) ── */
 const mockInterventions = [
@@ -35,9 +39,76 @@ const mockTrend = [
 const CoordinationDashboard = () => {
   const navigate = useNavigate();
   const { schoolId } = useSchoolId();
+  const queryClient = useQueryClient();
   const [alertsModalOpen, setAlertsModalOpen] = useState(false);
   const [riskModalOpen, setRiskModalOpen] = useState(false);
   const [interventionsModalOpen, setInterventionsModalOpen] = useState(false);
+  const [requestModalOpen, setRequestModalOpen] = useState(false);
+  const [classifyId, setClassifyId] = useState<string | null>(null);
+
+  /* ── fetch resolved requests from coordination ── */
+  const { data: resolvedRequests = [] } = useQuery({
+    queryKey: ["coord-resolved-requests", schoolId],
+    queryFn: async () => {
+      if (!schoolId) return [];
+      const { data } = await supabase
+        .from("secretary_requests")
+        .select("*")
+        .eq("school_id", schoolId)
+        .eq("origin", "coordenacao")
+        .eq("status", "concluido")
+        .eq("resolved_notified", false)
+        .order("updated_at", { ascending: false });
+      return data ?? [];
+    },
+    enabled: !!schoolId,
+  });
+
+  /* ── fetch open coordination requests ── */
+  const { data: openCoordRequests = [] } = useQuery({
+    queryKey: ["coord-open-requests", schoolId],
+    queryFn: async () => {
+      if (!schoolId) return [];
+      const { data } = await supabase
+        .from("secretary_requests")
+        .select("*")
+        .eq("school_id", schoolId)
+        .eq("origin", "coordenacao")
+        .neq("status", "concluido")
+        .order("created_at", { ascending: false });
+      return data ?? [];
+    },
+    enabled: !!schoolId,
+  });
+
+  const classifyMutation = useMutation({
+    mutationFn: async ({ id, priority }: { id: string; priority: string }) => {
+      const { error } = await supabase
+        .from("secretary_requests")
+        .update({ priority, updated_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Solicitação enviada para a secretaria!");
+      queryClient.invalidateQueries({ queryKey: ["coord-open-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["secretary-requests"] });
+      setClassifyId(null);
+    },
+  });
+
+  const dismissResolved = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("secretary_requests")
+        .update({ resolved_notified: true })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["coord-resolved-requests"] });
+    },
+  });
 
   /* ── fetch students ── */
   const { data: students = [] } = useQuery({
@@ -148,12 +219,69 @@ const CoordinationDashboard = () => {
     <RoleLayout title="Coordenação Pedagógica">
       <div className="flex flex-col gap-6">
         {/* Header */}
-        <div>
-          <h2 className="text-xl font-bold text-foreground">Coordenação Pedagógica</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Acompanhamento estratégico do desempenho escolar
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-foreground">Coordenação Pedagógica</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Acompanhamento estratégico do desempenho escolar
+            </p>
+          </div>
+          <Button onClick={() => setRequestModalOpen(true)} className="gap-2">
+            <FilePlus2 className="h-4 w-4" />
+            Nova Solicitação
+          </Button>
         </div>
+
+        {/* Resolved requests alerts */}
+        {resolvedRequests.length > 0 && (
+          <div className="flex flex-col gap-2">
+            {resolvedRequests.map((r: any) => (
+              <div key={r.id} className="flex items-center gap-3 bg-secondary/10 border border-secondary/20 rounded-xl px-4 py-3">
+                <CheckCircle2 className="h-5 w-5 text-secondary shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground">Solicitação Resolvida</p>
+                  <p className="text-xs text-muted-foreground">
+                    {r.request_type} — {r.student_name || "Sem aluno"} foi concluída pela secretaria.
+                  </p>
+                </div>
+                <button
+                  onClick={() => dismissResolved.mutate(r.id)}
+                  className="text-xs font-semibold text-secondary hover:underline shrink-0"
+                >
+                  Dispensar
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Open coordination requests */}
+        {openCoordRequests.length > 0 && (
+          <Card className="rounded-2xl border-border/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-bold flex items-center gap-2">
+                <Bell className="h-4 w-4 text-primary" />
+                Minhas Solicitações à Secretaria ({openCoordRequests.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-2">
+                {openCoordRequests.map((r: any) => (
+                  <div key={r.id} className="flex items-center gap-3 rounded-xl bg-muted/30 px-4 py-3">
+                    <Clock className="h-4 w-4 text-primary" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{r.student_name || "Sem aluno"}</p>
+                      <p className="text-[10px] text-muted-foreground">{r.request_type}</p>
+                    </div>
+                    <Badge variant="secondary" className="text-[10px]">
+                      {r.status === "aberto" ? "Aberto" : "Em andamento"}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* KPI Widgets */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -452,6 +580,19 @@ const CoordinationDashboard = () => {
           </ScrollArea>
         </DialogContent>
       </Dialog>
+
+      {/* ── Request modals ── */}
+      <RequestFormModal
+        open={requestModalOpen}
+        onOpenChange={setRequestModalOpen}
+        onCreated={(id) => setClassifyId(id)}
+        origin="coordenacao"
+      />
+      <PriorityModal
+        open={!!classifyId}
+        onConfirm={(priority) => classifyId && classifyMutation.mutate({ id: classifyId, priority })}
+        onCancel={() => setClassifyId(null)}
+      />
     </RoleLayout>
   );
 };

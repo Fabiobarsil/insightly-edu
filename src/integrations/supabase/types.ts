@@ -652,8 +652,10 @@ export type Database = {
           description: string | null
           id: string
           is_recurring: boolean | null
+          origin: string
           priority: string
           request_type: string
+          resolved_notified: boolean
           school_id: string
           status: string
           student_id: string | null
@@ -668,8 +670,10 @@ export type Database = {
           description?: string | null
           id?: string
           is_recurring?: boolean | null
+          origin?: string
           priority?: string
           request_type: string
+          resolved_notified?: boolean
           school_id: string
           status?: string
           student_id?: string | null
@@ -684,8 +688,10 @@ export type Database = {
           description?: string | null
           id?: string
           is_recurring?: boolean | null
+          origin?: string
           priority?: string
           request_type?: string
+          resolved_notified?: boolean
           school_id?: string
           status?: string
           student_id?: string | null
