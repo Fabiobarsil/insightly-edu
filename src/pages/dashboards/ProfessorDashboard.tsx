@@ -48,7 +48,6 @@ const ProfessorDashboard = () => {
         .select("*")
         .eq("school_id", schoolId)
         .eq("teacher_id", currentTeacher.id)
-        .in("status", ["aberto", "em_andamento"])
         .order("created_at", { ascending: false });
       return data ?? [];
     },
