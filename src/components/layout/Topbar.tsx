@@ -7,6 +7,17 @@ interface TopbarProps {
   breadcrumbs?: { label: string; href?: string }[];
 }
 
+const MOTIVATIONAL_QUOTES = [
+  "Organização hoje, tranquilidade amanhã.",
+  "Resolver pendências cedo economiza tempo depois.",
+  "Documentos em dia, rotina em paz.",
+  "Hoje é um bom dia para fechar ciclos.",
+  "Cada tarefa concluída melhora o dia de alguém.",
+  "Pequenos passos geram grandes resultados.",
+  "Uma escola organizada transforma vidas.",
+  "Planejamento é o primeiro passo para o sucesso.",
+];
+
 const getGreeting = () => {
   const h = new Date().getHours();
   if (h < 12) return "Bom dia";
