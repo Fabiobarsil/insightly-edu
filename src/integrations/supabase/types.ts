@@ -644,6 +644,79 @@ export type Database = {
         }
         Relationships: []
       }
+      secretary_requests: {
+        Row: {
+          class_id: string | null
+          created_at: string
+          deadline: string | null
+          description: string | null
+          id: string
+          is_recurring: boolean | null
+          priority: string
+          request_type: string
+          school_id: string
+          status: string
+          student_id: string | null
+          student_name: string | null
+          student_status: string
+          updated_at: string
+        }
+        Insert: {
+          class_id?: string | null
+          created_at?: string
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          is_recurring?: boolean | null
+          priority?: string
+          request_type: string
+          school_id: string
+          status?: string
+          student_id?: string | null
+          student_name?: string | null
+          student_status?: string
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string | null
+          created_at?: string
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          is_recurring?: boolean | null
+          priority?: string
+          request_type?: string
+          school_id?: string
+          status?: string
+          student_id?: string | null
+          student_name?: string | null
+          student_status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "secretary_requests_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "secretary_requests_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "secretary_requests_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_student_performance"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_certificates: {
         Row: {
           additional_skills: string | null
