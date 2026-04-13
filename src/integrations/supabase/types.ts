@@ -449,6 +449,108 @@ export type Database = {
         }
         Relationships: []
       }
+      pedagogical_interventions: {
+        Row: {
+          action_type: string | null
+          avg_grade: number | null
+          class_id: string | null
+          created_at: string
+          created_by: string | null
+          created_role: string | null
+          freq_percent: number | null
+          id: string
+          impact: string | null
+          reason: string
+          recommendation: string | null
+          school_id: string
+          severity: string
+          status: string
+          student_id: string
+          subject_id: string | null
+          teacher_id: string | null
+          teacher_notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          action_type?: string | null
+          avg_grade?: number | null
+          class_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_role?: string | null
+          freq_percent?: number | null
+          id?: string
+          impact?: string | null
+          reason: string
+          recommendation?: string | null
+          school_id: string
+          severity?: string
+          status?: string
+          student_id: string
+          subject_id?: string | null
+          teacher_id?: string | null
+          teacher_notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action_type?: string | null
+          avg_grade?: number | null
+          class_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_role?: string | null
+          freq_percent?: number | null
+          id?: string
+          impact?: string | null
+          reason?: string
+          recommendation?: string | null
+          school_id?: string
+          severity?: string
+          status?: string
+          student_id?: string
+          subject_id?: string | null
+          teacher_id?: string | null
+          teacher_notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedagogical_interventions_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedagogical_interventions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedagogical_interventions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_student_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedagogical_interventions_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedagogical_interventions_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
