@@ -7,6 +7,17 @@ interface TopbarProps {
   breadcrumbs?: { label: string; href?: string }[];
 }
 
+const MOTIVATIONAL_QUOTES = [
+  "Organização hoje, tranquilidade amanhã.",
+  "Resolver pendências cedo economiza tempo depois.",
+  "Documentos em dia, rotina em paz.",
+  "Hoje é um bom dia para fechar ciclos.",
+  "Cada tarefa concluída melhora o dia de alguém.",
+  "Pequenos passos geram grandes resultados.",
+  "Uma escola organizada transforma vidas.",
+  "Planejamento é o primeiro passo para o sucesso.",
+];
+
 const getGreeting = () => {
   const h = new Date().getHours();
   if (h < 12) return "Bom dia";
@@ -18,7 +29,9 @@ const Topbar = ({ title, breadcrumbs }: TopbarProps) => {
   const { user } = useAuth();
   const [profileName, setProfileName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-
+  const [motivationalQuote] = useState(
+    () => MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)]
+  );
   useEffect(() => {
     if (!user) return;
     supabase
@@ -46,6 +59,7 @@ const Topbar = ({ title, breadcrumbs }: TopbarProps) => {
         <h2 className="text-2xl font-bold text-primary">
           {getGreeting()}, {firstName} 👋
         </h2>
+        <p className="text-[13px] italic text-muted-foreground/70 mt-1">{motivationalQuote}</p>
         <p className="text-xs text-muted mt-1 capitalize">{today}</p>
       </div>
       <div className="flex items-center gap-3">
