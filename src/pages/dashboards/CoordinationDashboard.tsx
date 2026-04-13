@@ -34,7 +34,7 @@ const mockTrend = [
 
 const CoordinationDashboard = () => {
   const navigate = useNavigate();
-  const schoolId = useSchoolId();
+  const { schoolId } = useSchoolId();
   const [alertsModalOpen, setAlertsModalOpen] = useState(false);
   const [riskModalOpen, setRiskModalOpen] = useState(false);
   const [interventionsModalOpen, setInterventionsModalOpen] = useState(false);
