@@ -18,7 +18,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
 import RequestFormModal from "@/components/secretaria/RequestFormModal";
-import PriorityModal from "@/components/secretaria/PriorityModal";
+
 import { toast } from "sonner";
 
 /* ── mock interventions (no table yet) ── */
@@ -44,7 +44,7 @@ const CoordinationDashboard = () => {
   const [riskModalOpen, setRiskModalOpen] = useState(false);
   const [interventionsModalOpen, setInterventionsModalOpen] = useState(false);
   const [requestModalOpen, setRequestModalOpen] = useState(false);
-  const [classifyId, setClassifyId] = useState<string | null>(null);
+  
 
   /* ── fetch resolved requests from coordination ── */
   const { data: resolvedRequests = [] } = useQuery({
@@ -79,22 +79,6 @@ const CoordinationDashboard = () => {
       return data ?? [];
     },
     enabled: !!schoolId,
-  });
-
-  const classifyMutation = useMutation({
-    mutationFn: async ({ id, priority }: { id: string; priority: string }) => {
-      const { error } = await supabase
-        .from("secretary_requests")
-        .update({ priority, updated_at: new Date().toISOString() })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Solicitação enviada para a secretaria!");
-      queryClient.invalidateQueries({ queryKey: ["coord-open-requests"] });
-      queryClient.invalidateQueries({ queryKey: ["secretary-requests"] });
-      setClassifyId(null);
-    },
   });
 
   const dismissResolved = useMutation({
@@ -273,8 +257,8 @@ const CoordinationDashboard = () => {
                       <p className="text-sm font-medium text-foreground truncate">{r.student_name || "Sem aluno"}</p>
                       <p className="text-[10px] text-muted-foreground">{r.request_type}</p>
                     </div>
-                    <Badge variant="secondary" className="text-[10px]">
-                      {r.status === "aberto" ? "Aberto" : "Em andamento"}
+                    <Badge variant="outline" className="text-[10px] bg-warning/10 text-warning-foreground border-warning/30">
+                      ⏳ Aguardando
                     </Badge>
                   </div>
                 ))}
@@ -581,17 +565,16 @@ const CoordinationDashboard = () => {
         </DialogContent>
       </Dialog>
 
-      {/* ── Request modals ── */}
+      {/* ── Request modal (no priority classification for coordination) ── */}
       <RequestFormModal
         open={requestModalOpen}
         onOpenChange={setRequestModalOpen}
-        onCreated={(id) => setClassifyId(id)}
+        onCreated={() => {
+          toast.success("Solicitação enviada para a secretaria!");
+          queryClient.invalidateQueries({ queryKey: ["coord-open-requests"] });
+        }}
         origin="coordenacao"
-      />
-      <PriorityModal
-        open={!!classifyId}
-        onConfirm={(priority) => classifyId && classifyMutation.mutate({ id: classifyId, priority })}
-        onCancel={() => setClassifyId(null)}
+        hideDeadline
       />
     </RoleLayout>
   );
