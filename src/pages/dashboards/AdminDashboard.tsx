@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import RoleLayout from "@/components/layout/RoleLayout";
 import DashboardHeader from "@/components/admin-dashboard/DashboardHeader";
 import MetricCards, { type DashboardMetrics } from "@/components/admin-dashboard/MetricCards";
+import QuickAccessCards from "@/components/admin-dashboard/QuickAccessCards";
 import OperationalPriorities from "@/components/admin-dashboard/OperationalPriorities";
 import SmartAlerts from "@/components/admin-dashboard/SmartAlerts";
 import DashboardCharts from "@/components/admin-dashboard/DashboardCharts";
@@ -25,19 +26,31 @@ const AdminDashboard = () => {
   const handleRefresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
   return (
-    <RoleLayout title="Dashboard">
+    <RoleLayout title="Secretaria Digital">
       <div className="flex flex-col gap-6" key={refreshKey}>
-        {/* 1. Header */}
+        {/* Header */}
+        <div>
+          <h2 className="text-2xl font-bold text-foreground tracking-tight">Secretaria Digital</h2>
+          <p className="text-sm text-muted-foreground mt-1">Centro de controle administrativo da escola</p>
+        </div>
+
+        {/* Header actions */}
         <DashboardHeader
           selectedYear={selectedYear}
           onYearChange={setSelectedYear}
           onDataRefresh={handleRefresh}
         />
 
-        {/* 2. Metric Cards */}
+        {/* Quick Access Cards 2x2 */}
+        <QuickAccessCards />
+
+        {/* Quick Actions */}
+        <QuickActions />
+
+        {/* Metric Cards */}
         <MetricCards metrics={MOCK_METRICS} />
 
-        {/* 3. Operational: Priorities + Alerts */}
+        {/* Priorities + Alerts */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
           <div className="lg:col-span-3">
             <OperationalPriorities />
@@ -47,13 +60,10 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* 4. Charts */}
+        {/* Charts */}
         <DashboardCharts />
 
-        {/* 5. Quick Actions */}
-        <QuickActions />
-
-        {/* 6. Bottom: Activity + Health + Agenda */}
+        {/* Bottom: Activity + Health + Agenda */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <AdminRecentActivity />
           <AdminHealthScore avgFrequency={86} avgGrade={7.1} pendingCount={18} />

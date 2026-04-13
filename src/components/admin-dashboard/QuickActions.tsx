@@ -1,30 +1,34 @@
-import { UserPlus, CalendarCheck, PenLine, FileText, BarChart3 } from "lucide-react";
-import { toast } from "sonner";
+import { UserPlus, ClipboardList, FileText, Send, BarChart3 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const actions = [
-  { icon: UserPlus, label: "Adicionar Aluno" },
-  { icon: CalendarCheck, label: "Registrar Frequência" },
-  { icon: PenLine, label: "Lançar Notas" },
-  { icon: FileText, label: "Solicitar Documentos" },
-  { icon: BarChart3, label: "Gerar Relatório" },
+  { icon: UserPlus, label: "Novo Aluno", to: "/admin/alunos/novo" },
+  { icon: ClipboardList, label: "Nova Matrícula", to: "/admin/alunos/novo" },
+  { icon: FileText, label: "Novo Documento", to: "/admin/documentos" },
+  { icon: Send, label: "Enviar Comunicação", to: "/admin/comunicacao" },
+  { icon: BarChart3, label: "Gerar Relatório", to: null },
 ];
 
-const QuickActions = () => (
-  <div className="bg-card rounded-2xl border border-border/50 p-5 shadow-sm">
-    <h3 className="text-sm font-bold text-foreground mb-4">Ações Rápidas</h3>
-    <div className="flex flex-wrap gap-3">
-      {actions.map((a) => (
-        <button
-          key={a.label}
-          onClick={() => toast.info(`Ação: ${a.label}`)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border text-sm font-semibold text-foreground hover:border-primary hover:text-primary hover:bg-primary/5 transition-all duration-200 active:scale-[0.97] hover:shadow-sm"
-        >
-          <a.icon className="h-4 w-4" />
-          {a.label}
-        </button>
-      ))}
+const QuickActions = () => {
+  const navigate = useNavigate();
+
+  return (
+    <div className="bg-card rounded-2xl border border-border/50 p-5 shadow-sm">
+      <h3 className="text-sm font-bold text-foreground mb-4">Ações Rápidas</h3>
+      <div className="flex flex-wrap gap-3">
+        {actions.map((a) => (
+          <button
+            key={a.label}
+            onClick={() => a.to ? navigate(a.to) : null}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border text-sm font-semibold text-foreground hover:border-primary hover:text-primary hover:bg-primary/5 transition-all duration-200 active:scale-[0.97] hover:shadow-sm"
+          >
+            <a.icon className="h-4 w-4" />
+            {a.label}
+          </button>
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default QuickActions;
