@@ -5,21 +5,21 @@ import RoleLayout from "@/components/layout/RoleLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
 import {
-  AlertTriangle, TrendingDown, TrendingUp, ShieldAlert, ClipboardList,
-  User, ChevronRight, CheckCircle2, Clock, XCircle, Send,
-  BarChart3, Eye, FilePlus2, Bell, Activity, Heart, Zap,
-  BookOpen, PhoneCall, MessageSquare
+  AlertTriangle, TrendingDown, TrendingUp, ShieldAlert,
+  User, CheckCircle2, Clock, XCircle, Send,
+  BarChart3, Eye, FilePlus2, Bell, Activity, Zap,
+  PhoneCall, ArrowUpRight, ArrowDownRight, Minus,
+  Target, Flame, Shield
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  BarChart, Bar, Cell, ReferenceLine, Area, AreaChart
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  ReferenceLine, Area, AreaChart, ReferenceArea
 } from "recharts";
 import RequestFormModal from "@/components/secretaria/RequestFormModal";
 import { toast } from "sonner";
@@ -30,7 +30,6 @@ const CoordinationDashboard = () => {
   const queryClient = useQueryClient();
   const [requestModalOpen, setRequestModalOpen] = useState(false);
   const [focusModalOpen, setFocusModalOpen] = useState(false);
-  const [sendAlertStudentId, setSendAlertStudentId] = useState<string | null>(null);
 
   /* ── Data fetching ── */
   const { data: students = [] } = useQuery({
@@ -154,7 +153,6 @@ const CoordinationDashboard = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["coord-resolved-requests"] }),
   });
 
-  /* ── Send intervention to professor ── */
   const sendIntervention = useMutation({
     mutationFn: async (params: {
       studentId: string; teacherId: string; subjectId: string; classId: string;
@@ -179,7 +177,6 @@ const CoordinationDashboard = () => {
     onSuccess: () => {
       toast.success("Ponto de atenção enviado ao professor!");
       queryClient.invalidateQueries({ queryKey: ["coord-interventions"] });
-      setSendAlertStudentId(null);
     },
     onError: () => toast.error("Erro ao enviar ponto de atenção."),
   });
@@ -200,9 +197,7 @@ const CoordinationDashboard = () => {
       const lowFreq = freqPercent < 75;
       const lowGrade = avg !== null && avg < 6;
       const atRisk = lowFreq || lowGrade;
-      const inRecovery = avg !== null && avg >= 5 && avg < 6;
 
-      // Find related subjects with low grades
       const subjectGrades = new Map<string, number[]>();
       sGrades.forEach((g) => {
         const assignment = teacherAssignments.find((ta) => ta.id === g.assignment_id);
@@ -230,44 +225,37 @@ const CoordinationDashboard = () => {
         }
       });
 
-      // Generate recommendations
       const recommendations: string[] = [];
-      if (lowFreq && lowGrade) recommendations.push("Alta correlação entre faltas e queda de desempenho");
-      if (lowFreq) recommendations.push("Necessário contato com responsável sobre frequência");
+      if (lowFreq && lowGrade) recommendations.push("Convocar responsável — correlação faltas × notas");
+      if (lowFreq && !lowGrade) recommendations.push("Contato urgente com responsável sobre frequência");
       weakSubjects.forEach((ws) => {
-        recommendations.push(`Recomenda-se reforço em ${ws.subjectName}`);
+        recommendations.push(`Reforço em ${ws.subjectName} (média ${ws.avg.toFixed(1)})`);
       });
-      if (recommendations.length === 0 && atRisk) recommendations.push("Acompanhar evolução nas próximas semanas");
+      if (recommendations.length === 0 && atRisk) recommendations.push("Monitorar evolução nas próximas 2 semanas");
 
       const severity = (lowFreq && lowGrade) ? "critica" : lowGrade ? "alta" : lowFreq ? "media" : "baixa";
 
-      return { ...s, freqPercent, avg, lowFreq, lowGrade, atRisk, inRecovery, weakSubjects, recommendations, severity };
+      return { ...s, freqPercent, avg, lowFreq, lowGrade, atRisk, weakSubjects, recommendations, severity };
     });
   }, [students, attendance, grades, teacherAssignments, subjects, teachers]);
 
   const totalStudents = students.length;
-  const atRiskList = riskStudents.filter((s) => s.atRisk);
-  const healthyList = riskStudents.filter((s) => !s.atRisk);
-  const recoveryList = riskStudents.filter((s) => s.inRecovery);
+  const atRiskList = riskStudents.filter((s) => s.atRisk).sort((a, b) => {
+    const order = { critica: 0, alta: 1, media: 2, baixa: 3 };
+    return (order[a.severity as keyof typeof order] ?? 3) - (order[b.severity as keyof typeof order] ?? 3);
+  });
+  const criticalCount = atRiskList.filter((s) => s.severity === "critica").length;
 
-  const healthyPct = totalStudents > 0 ? Math.round((healthyList.length / totalStudents) * 100) : 0;
-  const riskPct = totalStudents > 0 ? Math.round((atRiskList.length / totalStudents) * 100) : 0;
-  const recoveryPct = totalStudents > 0 ? Math.round((recoveryList.length / totalStudents) * 100) : 0;
-
-  // Risk cause analysis
   const lowFreqCount = riskStudents.filter((s) => s.lowFreq).length;
   const lowGradeCount = riskStudents.filter((s) => s.lowGrade).length;
   const bothCount = riskStudents.filter((s) => s.lowFreq && s.lowGrade).length;
-  const riskTotal = lowFreqCount + lowGradeCount;
-  const freqImpact = riskTotal > 0 ? Math.round((lowFreqCount / riskTotal) * 100) : 0;
-  const gradeImpact = riskTotal > 0 ? Math.round((lowGradeCount / riskTotal) * 100) : 0;
+  const onlyFreq = lowFreqCount - bothCount;
+  const onlyGrade = lowGradeCount - bothCount;
+  const riskTotal = atRiskList.length || 1;
 
-  // Performance trend (mock from real averages if available)
   const avgGrade = useMemo(() => {
-    const validGrades = grades.filter((g) => g.grade_value != null);
-    return validGrades.length > 0
-      ? validGrades.reduce((s, g) => s + Number(g.grade_value), 0) / validGrades.length
-      : 0;
+    const valid = grades.filter((g) => g.grade_value != null);
+    return valid.length > 0 ? valid.reduce((s, g) => s + Number(g.grade_value), 0) / valid.length : 0;
   }, [grades]);
 
   const trendData = [
@@ -276,14 +264,17 @@ const CoordinationDashboard = () => {
     { month: "Mar", media: avgGrade },
     { month: "Abr", media: Math.max(avgGrade - 0.3, 0) },
   ];
-  const trendDirection = trendData[trendData.length - 1].media < trendData[0].media ? "queda" : "melhora";
+  const variation = trendData[trendData.length - 1].media - trendData[0].media;
+  const trendDirection = variation < -0.2 ? "queda" : variation > 0.2 ? "melhora" : "estavel";
 
-  // Interventions by status
-  const openInterventions = interventions.filter((i: any) => i.status === "aberto");
-  const inProgressInterventions = interventions.filter((i: any) => i.status === "em_andamento");
-  const resolvedInterventions = interventions.filter((i: any) => i.status === "resolvido");
+  // Intervention results
+  const resolvedInterventions = interventions.filter((i) => i.status === "resolvido");
+  const openInterventions = interventions.filter((i) => i.status === "aberto");
+  const inProgressInterventions = interventions.filter((i) => i.status === "em_andamento");
+  const improvedCount = resolvedInterventions.filter((i) => i.impact === "melhorou").length;
+  const worsenedCount = resolvedInterventions.filter((i) => i.impact === "piorou").length;
+  const unchangedCount = resolvedInterventions.filter((i) => i.impact === "sem_mudanca").length;
 
-  // Subject weaknesses
   const subjectWeakness = useMemo(() => {
     const map = new Map<string, { name: string; count: number }>();
     atRiskList.forEach((s) => {
@@ -323,27 +314,26 @@ const CoordinationDashboard = () => {
     }
   };
 
+  const heroColor = trendDirection === "queda"
+    ? "from-destructive/15 to-destructive/5 border-destructive/30"
+    : trendDirection === "melhora"
+      ? "from-secondary/15 to-secondary/5 border-secondary/30"
+      : "from-warning/15 to-warning/5 border-warning/30";
+
+  const heroIcon = trendDirection === "queda"
+    ? <TrendingDown className="h-8 w-8 text-destructive" />
+    : trendDirection === "melhora"
+      ? <TrendingUp className="h-8 w-8 text-secondary" />
+      : <Minus className="h-8 w-8 text-warning-foreground" />;
+
   return (
     <RoleLayout title="Coordenação Pedagógica">
       <div className="flex flex-col gap-6">
-        {/* Header */}
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div>
-            <h2 className="text-xl font-bold text-foreground">Coordenação Pedagógica</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Análise estratégica → Recomendações → Ação dos professores
-            </p>
-          </div>
-          <Button onClick={() => setRequestModalOpen(true)} variant="outline" className="gap-2">
-            <FilePlus2 className="h-4 w-4" />
-            Nova Solicitação
-          </Button>
-        </div>
 
         {/* Resolved alerts */}
         {resolvedRequests.length > 0 && (
           <div className="flex flex-col gap-2">
-            {resolvedRequests.map((r: any) => (
+            {resolvedRequests.map((r) => (
               <div key={r.id} className="flex items-center gap-3 bg-secondary/10 border border-secondary/20 rounded-xl px-4 py-3">
                 <CheckCircle2 className="h-5 w-5 text-secondary shrink-0" />
                 <div className="flex-1 min-w-0">
@@ -356,292 +346,424 @@ const CoordinationDashboard = () => {
           </div>
         )}
 
-        {/* ── 1. VISÃO EXECUTIVA ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <Card className="rounded-2xl border-border/50">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="w-11 h-11 rounded-xl bg-secondary/10 flex items-center justify-center">
-                <Heart className="h-5 w-5 text-secondary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{healthyPct}%</p>
-                <p className="text-xs text-muted-foreground">Saudáveis</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="rounded-2xl border-border/50">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="w-11 h-11 rounded-xl bg-destructive/10 flex items-center justify-center">
-                <AlertTriangle className="h-5 w-5 text-destructive" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{riskPct}%</p>
-                <p className="text-xs text-muted-foreground">Em Risco</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="rounded-2xl border-border/50">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="w-11 h-11 rounded-xl bg-warning/10 flex items-center justify-center">
-                <Activity className="h-5 w-5 text-warning-foreground" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{recoveryPct}%</p>
-                <p className="text-xs text-muted-foreground">Recuperação</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="rounded-2xl border-border/50">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${trendDirection === "melhora" ? "bg-secondary/10" : "bg-destructive/10"}`}>
-                {trendDirection === "melhora"
-                  ? <TrendingUp className="h-5 w-5 text-secondary" />
-                  : <TrendingDown className="h-5 w-5 text-destructive" />}
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{trendDirection === "melhora" ? "↑" : "↓"}</p>
-                <p className="text-xs text-muted-foreground">Tendência</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* ── 2. TENDÊNCIA + 3. ANÁLISE DE CAUSA ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="rounded-2xl border-border/50">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-bold flex items-center gap-2">
-                <BarChart3 className="h-4 w-4 text-primary" />
-                Tendência de Desempenho
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={trendData}>
-                  <defs>
-                    <linearGradient id="gradMedia" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
-                  <YAxis domain={[0, 10]} tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
-                  <ReferenceLine y={6} stroke="hsl(var(--destructive))" strokeDasharray="5 5" label={{ value: "Min. 6.0", fill: "hsl(var(--destructive))", fontSize: 10 }} />
-                  <Tooltip />
-                  <Area type="monotone" dataKey="media" stroke="hsl(var(--primary))" fill="url(#gradMedia)" strokeWidth={2} dot={{ r: 4, fill: "hsl(var(--primary))" }} name="Média Geral" />
-                </AreaChart>
-              </ResponsiveContainer>
-              <div className="flex items-center gap-2 mt-2">
-                <Badge variant={trendDirection === "queda" ? "destructive" : "secondary"} className="text-[10px]">
-                  {trendDirection === "queda" ? "⚠ Tendência de queda" : "✓ Tendência de melhora"}
-                </Badge>
-                <span className="text-[10px] text-muted-foreground">Média atual: {avgGrade.toFixed(1)}</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-2xl border-border/50">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-bold flex items-center gap-2">
-                <Zap className="h-4 w-4 text-warning-foreground" />
-                Principais Causas de Risco
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="text-muted-foreground flex items-center gap-1.5">
-                    <XCircle className="h-3 w-3 text-destructive" /> Baixa Frequência
-                  </span>
-                  <span className="font-bold text-foreground">{lowFreqCount} alunos ({freqImpact}%)</span>
-                </div>
-                <Progress value={freqImpact} className="h-2" />
-              </div>
-              <div>
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="text-muted-foreground flex items-center gap-1.5">
-                    <TrendingDown className="h-3 w-3 text-warning-foreground" /> Notas Baixas
-                  </span>
-                  <span className="font-bold text-foreground">{lowGradeCount} alunos ({gradeImpact}%)</span>
-                </div>
-                <Progress value={gradeImpact} className="h-2" />
-              </div>
-              {bothCount > 0 && (
-                <div className="bg-destructive/5 rounded-lg p-3 text-xs">
-                  <span className="font-bold text-destructive">{bothCount} alunos</span>
-                  <span className="text-muted-foreground"> com ambos os fatores (alta correlação)</span>
-                </div>
-              )}
-              {subjectWeakness.length > 0 && (
+        {/* ══════════════════════════════════════════════════
+            🔴 1. HERO — SITUAÇÃO DA ESCOLA HOJE
+           ══════════════════════════════════════════════════ */}
+        <div className={`rounded-2xl border bg-gradient-to-br ${heroColor} p-6`}>
+          <div className="flex items-start justify-between flex-wrap gap-4">
+            <div className="space-y-2">
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Situação da Escola Hoje</p>
+              <div className="flex items-center gap-3">
+                {heroIcon}
                 <div>
-                  <p className="text-xs font-semibold text-foreground mb-2">Disciplinas mais afetadas:</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {subjectWeakness.map((s) => (
-                      <Badge key={s.name} variant="outline" className="text-[10px]">
-                        {s.name} ({s.count})
-                      </Badge>
-                    ))}
-                  </div>
+                  <p className="text-3xl font-extrabold text-foreground leading-none">
+                    {trendDirection === "queda" ? "Em Queda" : trendDirection === "melhora" ? "Evoluindo" : "Estável"}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    Variação recente:{" "}
+                    <span className={`font-bold ${variation < 0 ? "text-destructive" : variation > 0 ? "text-secondary" : "text-muted-foreground"}`}>
+                      {variation >= 0 ? "+" : ""}{variation.toFixed(1)} pts
+                    </span>
+                    {" · "}Média geral: <span className="font-bold text-foreground">{avgGrade.toFixed(1)}</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 flex-wrap">
+              <div className="rounded-xl bg-card border border-border/50 px-5 py-3 text-center min-w-[90px]">
+                <p className="text-2xl font-extrabold text-foreground">{totalStudents}</p>
+                <p className="text-[10px] text-muted-foreground font-medium">Alunos Ativos</p>
+              </div>
+              <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-5 py-3 text-center min-w-[90px]">
+                <p className="text-2xl font-extrabold text-destructive">{criticalCount}</p>
+                <p className="text-[10px] text-destructive font-medium">Risco Crítico</p>
+              </div>
+              <div className="rounded-xl bg-warning/10 border border-warning/20 px-5 py-3 text-center min-w-[90px]">
+                <p className="text-2xl font-extrabold text-warning-foreground">{atRiskList.length}</p>
+                <p className="text-[10px] text-warning-foreground font-medium">Em Risco Total</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick actions */}
+          <div className="flex gap-2 mt-4 flex-wrap">
+            <Button size="sm" className="text-xs gap-1.5" onClick={() => setFocusModalOpen(true)}>
+              <Target className="h-3.5 w-3.5" /> Ver Ações Recomendadas
+            </Button>
+            <Button size="sm" variant="outline" className="text-xs gap-1.5" onClick={() => setRequestModalOpen(true)}>
+              <FilePlus2 className="h-3.5 w-3.5" /> Solicitar à Secretaria
+            </Button>
+          </div>
+        </div>
+
+        {/* ══════════════════════════════════════════════════
+            🧠 2. CAUSAS DE RISCO (INTELIGENTE)
+           ══════════════════════════════════════════════════ */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <Card className="rounded-2xl border-border/50">
+            <CardContent className="p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center">
+                  <XCircle className="h-4 w-4 text-destructive" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-foreground">Baixa Frequência</p>
+                  <p className="text-[10px] text-muted-foreground">{onlyFreq} alunos afetados exclusivamente</p>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between text-[10px]">
+                  <span className="text-muted-foreground">Impacto no risco total</span>
+                  <span className="font-bold text-foreground">{Math.round((onlyFreq / riskTotal) * 100)}%</span>
+                </div>
+                <Progress value={(onlyFreq / riskTotal) * 100} className="h-1.5" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl border-border/50">
+            <CardContent className="p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-warning/10 flex items-center justify-center">
+                  <TrendingDown className="h-4 w-4 text-warning-foreground" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-foreground">Notas Baixas</p>
+                  <p className="text-[10px] text-muted-foreground">{onlyGrade} alunos afetados exclusivamente</p>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between text-[10px]">
+                  <span className="text-muted-foreground">Impacto no risco total</span>
+                  <span className="font-bold text-foreground">{Math.round((onlyGrade / riskTotal) * 100)}%</span>
+                </div>
+                <Progress value={(onlyGrade / riskTotal) * 100} className="h-1.5" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl border-destructive/20 bg-destructive/[0.02]">
+            <CardContent className="p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center">
+                  <Flame className="h-4 w-4 text-destructive" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-destructive">Dupla Causa</p>
+                  <p className="text-[10px] text-muted-foreground">{bothCount} alunos com faltas + notas baixas</p>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between text-[10px]">
+                  <span className="text-muted-foreground">Impacto no risco total</span>
+                  <span className="font-bold text-destructive">{Math.round((bothCount / riskTotal) * 100)}%</span>
+                </div>
+                <Progress value={(bothCount / riskTotal) * 100} className="h-1.5" />
+              </div>
+              {subjectWeakness.length > 0 && (
+                <div className="flex flex-wrap gap-1 pt-1">
+                  {subjectWeakness.slice(0, 3).map((s) => (
+                    <Badge key={s.name} variant="outline" className="text-[9px] border-destructive/30 text-destructive">
+                      {s.name} ({s.count})
+                    </Badge>
+                  ))}
                 </div>
               )}
             </CardContent>
           </Card>
         </div>
 
-        {/* ── 4. FOCO DO COORDENADOR + 5. RECOMENDAÇÕES ── */}
+        {/* ══════════════════════════════════════════════════
+            🎯 3. AÇÕES RECOMENDADAS HOJE
+           ══════════════════════════════════════════════════ */}
         <Card className="rounded-2xl border-border/50">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-bold flex items-center gap-2">
-                <ShieldAlert className="h-4 w-4 text-destructive" />
-                Alunos que Exigem Ação ({atRiskList.length})
+                <Target className="h-4 w-4 text-primary" />
+                Ações Recomendadas Hoje
+                {atRiskList.length > 0 && (
+                  <Badge variant="destructive" className="text-[9px] ml-1">{atRiskList.length} alunos</Badge>
+                )}
               </CardTitle>
-              {atRiskList.length > 5 && (
-                <Button variant="ghost" size="sm" onClick={() => setFocusModalOpen(true)} className="text-xs">
-                  Ver todos
+              {atRiskList.length > 4 && (
+                <Button variant="ghost" size="sm" onClick={() => setFocusModalOpen(true)} className="text-xs gap-1">
+                  Ver todos <ArrowUpRight className="h-3 w-3" />
                 </Button>
               )}
             </div>
           </CardHeader>
           <CardContent>
             {atRiskList.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">🎉 Nenhum aluno em situação de risco identificado!</p>
+              <div className="text-center py-8 space-y-2">
+                <Shield className="h-10 w-10 text-secondary mx-auto opacity-60" />
+                <p className="text-sm font-medium text-foreground">Todos os alunos estão em situação saudável</p>
+                <p className="text-xs text-muted-foreground">Nenhuma ação de intervenção necessária no momento.</p>
+              </div>
             ) : (
               <div className="flex flex-col gap-3">
-                {atRiskList.slice(0, 6).map((s) => (
-                  <div key={s.id} className="rounded-xl border border-border/50 p-4 space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-9 h-9 rounded-full flex items-center justify-center ${s.severity === "critica" ? "bg-destructive/10" : s.severity === "alta" ? "bg-warning/10" : "bg-muted"}`}>
-                          <User className={`h-4 w-4 ${s.severity === "critica" ? "text-destructive" : s.severity === "alta" ? "text-warning-foreground" : "text-muted-foreground"}`} />
-                        </div>
-                        <div>
-                          <button onClick={() => navigate(`/admin/alunos/${s.id}`)} className="text-sm font-semibold text-foreground hover:underline text-left">{s.full_name}</button>
-                          <div className="flex gap-1.5 mt-0.5 flex-wrap">
-                            {s.lowFreq && <Badge variant="destructive" className="text-[9px] px-1.5 py-0">Freq: {s.freqPercent.toFixed(0)}%</Badge>}
-                            {s.lowGrade && <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-warning/50 text-warning-foreground">Média: {s.avg?.toFixed(1)}</Badge>}
-                            <Badge variant="outline" className="text-[9px] px-1.5 py-0">
-                              {s.severity === "critica" ? "🔴 Crítico" : s.severity === "alta" ? "🟠 Alto" : "🟡 Médio"}
-                            </Badge>
+                {atRiskList.slice(0, 5).map((s) => {
+                  const alreadySent = interventions.some(
+                    (i) => i.student_id === s.id && (i.status === "aberto" || i.status === "em_andamento")
+                  );
+                  return (
+                    <div key={s.id} className={`rounded-xl border p-4 space-y-3 transition-colors ${
+                      s.severity === "critica"
+                        ? "border-destructive/30 bg-destructive/[0.03]"
+                        : s.severity === "alta"
+                          ? "border-warning/30 bg-warning/[0.02]"
+                          : "border-border/50"
+                    }`}>
+                      {/* Student header */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
+                            s.severity === "critica" ? "bg-destructive/15 text-destructive"
+                              : s.severity === "alta" ? "bg-warning/15 text-warning-foreground"
+                                : "bg-muted/50 text-muted-foreground"
+                          }`}>
+                            {s.full_name.charAt(0)}
+                          </div>
+                          <div>
+                            <button
+                              onClick={() => navigate(`/admin/alunos/${s.id}`)}
+                              className="text-sm font-bold text-foreground hover:text-primary transition-colors text-left"
+                            >
+                              {s.full_name}
+                            </button>
+                            <div className="flex gap-2 mt-1">
+                              {s.lowFreq && (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-destructive bg-destructive/10 px-2 py-0.5 rounded-full">
+                                  <XCircle className="h-2.5 w-2.5" /> Freq: {s.freqPercent.toFixed(0)}%
+                                </span>
+                              )}
+                              {s.lowGrade && (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-warning-foreground bg-warning/10 px-2 py-0.5 rounded-full">
+                                  <TrendingDown className="h-2.5 w-2.5" /> Média: {s.avg?.toFixed(1)}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
+                        <Badge variant={s.severity === "critica" ? "destructive" : "outline"} className="text-[9px] shrink-0">
+                          {s.severity === "critica" ? "🔴 Crítico" : s.severity === "alta" ? "🟠 Alto" : "🟡 Médio"}
+                        </Badge>
                       </div>
-                    </div>
 
-                    {/* Disciplinas afetadas */}
-                    {s.weakSubjects.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {s.weakSubjects.map((ws) => (
-                          <span key={ws.subjectId} className="text-[10px] px-2 py-1 rounded-md bg-muted/50 text-muted-foreground">
-                            📚 {ws.subjectName} ({ws.avg.toFixed(1)}) — Prof. {ws.teacherName || "N/A"}
-                          </span>
+                      {/* Recommendation */}
+                      <div className="bg-primary/5 rounded-lg px-3 py-2.5 border border-primary/10">
+                        {s.recommendations.map((r, i) => (
+                          <p key={i} className="text-[11px] text-primary font-medium flex items-start gap-1.5">
+                            <Zap className="h-3 w-3 shrink-0 mt-0.5" /> {r}
+                          </p>
                         ))}
                       </div>
-                    )}
 
-                    {/* Recomendações */}
-                    <div className="space-y-1">
-                      {s.recommendations.map((r, i) => (
-                        <p key={i} className="text-[11px] text-primary flex items-start gap-1.5">
-                          <span className="mt-0.5">💡</span> {r}
-                        </p>
-                      ))}
+                      {/* Actions */}
+                      <div className="flex gap-2 flex-wrap">
+                        {!alreadySent ? (
+                          <Button
+                            size="sm"
+                            className="text-[11px] h-7 gap-1.5"
+                            onClick={() => handleSendAlert(s)}
+                            disabled={sendIntervention.isPending}
+                          >
+                            <Send className="h-3 w-3" /> Notificar Professor
+                          </Button>
+                        ) : (
+                          <Badge variant="secondary" className="text-[10px] gap-1">
+                            <CheckCircle2 className="h-3 w-3" /> Já notificado
+                          </Badge>
+                        )}
+                        <Button size="sm" variant="outline" className="text-[11px] h-7 gap-1" onClick={() => setRequestModalOpen(true)}>
+                          <FilePlus2 className="h-3 w-3" /> Solicitar Secretaria
+                        </Button>
+                        <Button size="sm" variant="ghost" className="text-[11px] h-7 gap-1" onClick={() => navigate(`/admin/alunos/${s.id}`)}>
+                          <Eye className="h-3 w-3" /> Histórico
+                        </Button>
+                      </div>
                     </div>
-
-                    {/* Ações */}
-                    <div className="flex gap-2 pt-1">
-                      <Button
-                        size="sm"
-                        variant="default"
-                        className="text-[11px] h-7 gap-1.5"
-                        onClick={() => handleSendAlert(s)}
-                        disabled={sendIntervention.isPending}
-                      >
-                        <Send className="h-3 w-3" />
-                        Enviar ao Professor
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-[11px] h-7"
-                        onClick={() => navigate(`/admin/alunos/${s.id}`)}
-                      >
-                        <Eye className="h-3 w-3" />
-                        Ver Ficha
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* ── 11. INTERVENÇÕES PEDAGÓGICAS ── */}
-        <Card className="rounded-2xl border-border/50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-bold flex items-center gap-2">
-              <ClipboardList className="h-4 w-4 text-primary" />
-              Intervenções Pedagógicas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="abertas">
-              <TabsList className="mb-4">
-                <TabsTrigger value="abertas" className="text-xs">Abertas ({openInterventions.length})</TabsTrigger>
-                <TabsTrigger value="andamento" className="text-xs">Em Andamento ({inProgressInterventions.length})</TabsTrigger>
-                <TabsTrigger value="resolvidas" className="text-xs">Resolvidas ({resolvedInterventions.length})</TabsTrigger>
-              </TabsList>
+        {/* ══════════════════════════════════════════════════
+            📊 4. INTERVENÇÕES COM RESULTADO
+           ══════════════════════════════════════════════════ */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="rounded-2xl border-border/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-bold flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-primary" />
+                Resultado das Intervenções
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Summary boxes */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-xl bg-secondary/10 border border-secondary/20 p-3 text-center">
+                  <ArrowUpRight className="h-4 w-4 text-secondary mx-auto mb-1" />
+                  <p className="text-lg font-extrabold text-secondary">{improvedCount}</p>
+                  <p className="text-[9px] text-muted-foreground font-medium">Melhoraram</p>
+                </div>
+                <div className="rounded-xl bg-muted/30 border border-border/50 p-3 text-center">
+                  <Minus className="h-4 w-4 text-muted-foreground mx-auto mb-1" />
+                  <p className="text-lg font-extrabold text-foreground">{unchangedCount}</p>
+                  <p className="text-[9px] text-muted-foreground font-medium">Sem mudança</p>
+                </div>
+                <div className="rounded-xl bg-destructive/10 border border-destructive/20 p-3 text-center">
+                  <ArrowDownRight className="h-4 w-4 text-destructive mx-auto mb-1" />
+                  <p className="text-lg font-extrabold text-destructive">{worsenedCount}</p>
+                  <p className="text-[9px] text-muted-foreground font-medium">Pioraram</p>
+                </div>
+              </div>
 
-              {["abertas", "andamento", "resolvidas"].map((tab) => {
-                const list = tab === "abertas" ? openInterventions : tab === "andamento" ? inProgressInterventions : resolvedInterventions;
-                return (
-                  <TabsContent key={tab} value={tab}>
-                    {list.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-4">Nenhuma intervenção nesta categoria.</p>
-                    ) : (
-                      <div className="flex flex-col gap-2">
-                        {list.slice(0, 10).map((item: any) => {
-                          const student = students.find((st) => st.id === item.student_id);
-                          const teacher = teachers.find((t) => t.id === item.teacher_id);
-                          return (
-                            <div key={item.id} className="flex items-center gap-3 rounded-xl bg-muted/30 px-4 py-3">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                                item.status === "aberto" ? "bg-warning/10" : item.status === "em_andamento" ? "bg-primary/10" : "bg-secondary/10"
-                              }`}>
-                                {item.status === "aberto" ? <Clock className="h-4 w-4 text-warning-foreground" />
-                                  : item.status === "em_andamento" ? <Activity className="h-4 w-4 text-primary" />
-                                  : <CheckCircle2 className="h-4 w-4 text-secondary" />}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-foreground truncate">{student?.full_name || "Aluno"}</p>
-                                <p className="text-[10px] text-muted-foreground truncate">{item.reason}</p>
-                                {teacher && <p className="text-[10px] text-primary">Prof. {teacher.full_name}</p>}
-                              </div>
-                              <div className="flex flex-col items-end gap-1">
-                                <Badge variant={item.status === "resolvido" ? "secondary" : "outline"} className="text-[9px]">
-                                  {item.status === "aberto" ? "Aguardando" : item.status === "em_andamento" ? "Em Andamento" : "Resolvido"}
-                                </Badge>
-                                {item.impact && (
-                                  <span className={`text-[9px] font-semibold ${
-                                    item.impact === "melhorou" ? "text-secondary" : item.impact === "piorou" ? "text-destructive" : "text-muted-foreground"
-                                  }`}>
-                                    {item.impact === "melhorou" ? "↑ Melhorou" : item.impact === "piorou" ? "↓ Piorou" : "— Sem mudança"}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
+              {/* Pipeline */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-1.5 text-muted-foreground">
+                    <Clock className="h-3 w-3" /> Aguardando
+                  </span>
+                  <span className="font-bold text-foreground">{openInterventions.length}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-1.5 text-muted-foreground">
+                    <Activity className="h-3 w-3" /> Em andamento
+                  </span>
+                  <span className="font-bold text-foreground">{inProgressInterventions.length}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-1.5 text-muted-foreground">
+                    <CheckCircle2 className="h-3 w-3" /> Resolvidas
+                  </span>
+                  <span className="font-bold text-foreground">{resolvedInterventions.length}</span>
+                </div>
+              </div>
+
+              {/* Effectiveness */}
+              {resolvedInterventions.length > 0 && (
+                <div className="rounded-lg bg-secondary/5 border border-secondary/10 p-3">
+                  <p className="text-[10px] font-bold text-foreground mb-1">Taxa de Eficácia</p>
+                  <div className="flex items-center gap-2">
+                    <Progress value={(improvedCount / resolvedInterventions.length) * 100} className="h-2 flex-1" />
+                    <span className="text-xs font-bold text-secondary">
+                      {Math.round((improvedCount / resolvedInterventions.length) * 100)}%
+                    </span>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* ══════════════════════════════════════════════════
+              📉 5. GRÁFICO DE DESEMPENHO COM ZONAS
+             ══════════════════════════════════════════════════ */}
+          <Card className="rounded-2xl border-border/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-bold flex items-center gap-2">
+                <Activity className="h-4 w-4 text-primary" />
+                Evolução do Desempenho
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={220}>
+                <AreaChart data={trendData}>
+                  <defs>
+                    <linearGradient id="gradPerf" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  {/* Zone colors */}
+                  <ReferenceArea y1={0} y2={4} fill="hsl(var(--destructive))" fillOpacity={0.06} />
+                  <ReferenceArea y1={4} y2={6} fill="hsl(var(--warning))" fillOpacity={0.06} />
+                  <ReferenceArea y1={6} y2={10} fill="hsl(var(--secondary))" fillOpacity={0.04} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                  <YAxis domain={[0, 10]} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                  <ReferenceLine y={6} stroke="hsl(var(--destructive))" strokeDasharray="5 5" label={{ value: "Mín. 6.0", fill: "hsl(var(--destructive))", fontSize: 9 }} />
+                  <ReferenceLine y={4} stroke="hsl(var(--destructive))" strokeDasharray="2 4" strokeOpacity={0.4} />
+                  <Tooltip
+                    contentStyle={{
+                      background: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="media"
+                    stroke="hsl(var(--primary))"
+                    fill="url(#gradPerf)"
+                    strokeWidth={2.5}
+                    dot={{ r: 5, fill: "hsl(var(--primary))", strokeWidth: 2, stroke: "hsl(var(--card))" }}
+                    name="Média Geral"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+              <div className="flex items-center gap-3 mt-3">
+                <div className="flex items-center gap-1.5 text-[9px]">
+                  <div className="w-3 h-2 rounded-sm bg-secondary/20" /> Saudável (≥6)
+                </div>
+                <div className="flex items-center gap-1.5 text-[9px]">
+                  <div className="w-3 h-2 rounded-sm bg-warning/20" /> Atenção (4-6)
+                </div>
+                <div className="flex items-center gap-1.5 text-[9px]">
+                  <div className="w-3 h-2 rounded-sm bg-destructive/20" /> Crítico (&lt;4)
+                </div>
+                <span className={`text-[10px] font-bold ml-auto ${
+                  variation < 0 ? "text-destructive" : variation > 0 ? "text-secondary" : "text-muted-foreground"
+                }`}>
+                  {variation >= 0 ? "+" : ""}{variation.toFixed(1)} pts no período
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* ── Active intervention details ── */}
+        {(openInterventions.length > 0 || inProgressInterventions.length > 0) && (
+          <Card className="rounded-2xl border-border/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-bold flex items-center gap-2">
+                <ShieldAlert className="h-4 w-4 text-primary" />
+                Intervenções Ativas ({openInterventions.length + inProgressInterventions.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-2">
+                {[...openInterventions, ...inProgressInterventions].slice(0, 8).map((item) => {
+                  const student = students.find((st) => st.id === item.student_id);
+                  const teacher = teachers.find((t) => t.id === item.teacher_id);
+                  return (
+                    <div key={item.id} className="flex items-center gap-3 rounded-xl bg-muted/30 px-4 py-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                        item.status === "aberto" ? "bg-warning/10" : "bg-primary/10"
+                      }`}>
+                        {item.status === "aberto"
+                          ? <Clock className="h-4 w-4 text-warning-foreground" />
+                          : <Activity className="h-4 w-4 text-primary" />}
                       </div>
-                    )}
-                  </TabsContent>
-                );
-              })}
-            </Tabs>
-          </CardContent>
-        </Card>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{student?.full_name || "Aluno"}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{item.reason}</p>
+                        {teacher && <p className="text-[10px] text-primary">Prof. {teacher.full_name}</p>}
+                      </div>
+                      <Badge variant="outline" className="text-[9px] shrink-0">
+                        {item.status === "aberto" ? "⏳ Aguardando" : "🔄 Em Andamento"}
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Open coord requests to secretary */}
         {openCoordRequests.length > 0 && (
@@ -654,7 +776,7 @@ const CoordinationDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col gap-2">
-                {openCoordRequests.map((r: any) => (
+                {openCoordRequests.map((r) => (
                   <div key={r.id} className="flex items-center gap-3 rounded-xl bg-muted/30 px-4 py-3">
                     <Clock className="h-4 w-4 text-primary" />
                     <div className="flex-1 min-w-0">
@@ -670,38 +792,58 @@ const CoordinationDashboard = () => {
         )}
       </div>
 
-      {/* ── Focus modal ── */}
+      {/* ── Focus modal — all at-risk students ── */}
       <Dialog open={focusModalOpen} onOpenChange={setFocusModalOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <ShieldAlert className="h-5 w-5 text-destructive" />
-              Todos os Alunos em Risco ({atRiskList.length})
+              <Target className="h-5 w-5 text-primary" />
+              Todas as Ações Recomendadas ({atRiskList.length})
             </DialogTitle>
           </DialogHeader>
           <ScrollArea className="max-h-[70vh]">
             <div className="flex flex-col gap-3 pr-2">
-              {atRiskList.map((s) => (
-                <div key={s.id} className="rounded-xl border border-border/50 p-4 space-y-2">
-                  <div className="flex items-center gap-3">
-                    <User className="h-4 w-4 text-destructive" />
-                    <span className="text-sm font-semibold">{s.full_name}</span>
-                    <Badge variant="outline" className="text-[9px] ml-auto">
-                      {s.severity === "critica" ? "🔴 Crítico" : s.severity === "alta" ? "🟠 Alto" : "🟡 Médio"}
-                    </Badge>
+              {atRiskList.map((s) => {
+                const alreadySent = interventions.some(
+                  (i) => i.student_id === s.id && (i.status === "aberto" || i.status === "em_andamento")
+                );
+                return (
+                  <div key={s.id} className={`rounded-xl border p-4 space-y-2 ${
+                    s.severity === "critica" ? "border-destructive/30 bg-destructive/[0.03]" : "border-border/50"
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                          s.severity === "critica" ? "bg-destructive/15 text-destructive" : "bg-muted/50 text-muted-foreground"
+                        }`}>{s.full_name.charAt(0)}</div>
+                        <span className="text-sm font-semibold text-foreground">{s.full_name}</span>
+                      </div>
+                      <Badge variant={s.severity === "critica" ? "destructive" : "outline"} className="text-[9px]">
+                        {s.severity === "critica" ? "🔴 Crítico" : s.severity === "alta" ? "🟠 Alto" : "🟡 Médio"}
+                      </Badge>
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      {s.lowFreq && <span className="text-[9px] font-semibold text-destructive bg-destructive/10 px-2 py-0.5 rounded-full">Freq: {s.freqPercent.toFixed(0)}%</span>}
+                      {s.lowGrade && <span className="text-[9px] font-semibold text-warning-foreground bg-warning/10 px-2 py-0.5 rounded-full">Média: {s.avg?.toFixed(1)}</span>}
+                    </div>
+                    {s.recommendations.map((r, i) => (
+                      <p key={i} className="text-[11px] text-primary font-medium flex items-start gap-1"><Zap className="h-3 w-3 shrink-0 mt-0.5" /> {r}</p>
+                    ))}
+                    <div className="flex gap-2">
+                      {!alreadySent ? (
+                        <Button size="sm" className="text-[11px] h-7 gap-1.5" onClick={() => handleSendAlert(s)} disabled={sendIntervention.isPending}>
+                          <Send className="h-3 w-3" /> Notificar Professor
+                        </Button>
+                      ) : (
+                        <Badge variant="secondary" className="text-[10px] gap-1"><CheckCircle2 className="h-3 w-3" /> Já notificado</Badge>
+                      )}
+                      <Button size="sm" variant="ghost" className="text-[11px] h-7 gap-1" onClick={() => navigate(`/admin/alunos/${s.id}`)}>
+                        <Eye className="h-3 w-3" /> Ver Histórico
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex gap-2 flex-wrap">
-                    {s.lowFreq && <Badge variant="destructive" className="text-[9px]">Freq: {s.freqPercent.toFixed(0)}%</Badge>}
-                    {s.lowGrade && <Badge variant="outline" className="text-[9px] border-warning/50 text-warning-foreground">Média: {s.avg?.toFixed(1)}</Badge>}
-                  </div>
-                  {s.recommendations.map((r, i) => (
-                    <p key={i} className="text-[11px] text-primary">💡 {r}</p>
-                  ))}
-                  <Button size="sm" className="text-[11px] h-7 gap-1.5" onClick={() => handleSendAlert(s)} disabled={sendIntervention.isPending}>
-                    <Send className="h-3 w-3" /> Enviar ao Professor
-                  </Button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </ScrollArea>
         </DialogContent>
