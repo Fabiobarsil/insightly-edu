@@ -44,7 +44,7 @@ const CoordinationDashboard = () => {
   const [riskModalOpen, setRiskModalOpen] = useState(false);
   const [interventionsModalOpen, setInterventionsModalOpen] = useState(false);
   const [requestModalOpen, setRequestModalOpen] = useState(false);
-  const [classifyId, setClassifyId] = useState<string | null>(null);
+  
 
   /* ── fetch resolved requests from coordination ── */
   const { data: resolvedRequests = [] } = useQuery({
