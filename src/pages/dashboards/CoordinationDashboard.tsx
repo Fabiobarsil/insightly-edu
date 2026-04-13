@@ -219,12 +219,69 @@ const CoordinationDashboard = () => {
     <RoleLayout title="Coordenação Pedagógica">
       <div className="flex flex-col gap-6">
         {/* Header */}
-        <div>
-          <h2 className="text-xl font-bold text-foreground">Coordenação Pedagógica</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Acompanhamento estratégico do desempenho escolar
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-foreground">Coordenação Pedagógica</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Acompanhamento estratégico do desempenho escolar
+            </p>
+          </div>
+          <Button onClick={() => setRequestModalOpen(true)} className="gap-2">
+            <FilePlus2 className="h-4 w-4" />
+            Nova Solicitação
+          </Button>
         </div>
+
+        {/* Resolved requests alerts */}
+        {resolvedRequests.length > 0 && (
+          <div className="flex flex-col gap-2">
+            {resolvedRequests.map((r: any) => (
+              <div key={r.id} className="flex items-center gap-3 bg-secondary/10 border border-secondary/20 rounded-xl px-4 py-3">
+                <CheckCircle2 className="h-5 w-5 text-secondary shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground">Solicitação Resolvida</p>
+                  <p className="text-xs text-muted-foreground">
+                    {r.request_type} — {r.student_name || "Sem aluno"} foi concluída pela secretaria.
+                  </p>
+                </div>
+                <button
+                  onClick={() => dismissResolved.mutate(r.id)}
+                  className="text-xs font-semibold text-secondary hover:underline shrink-0"
+                >
+                  Dispensar
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Open coordination requests */}
+        {openCoordRequests.length > 0 && (
+          <Card className="rounded-2xl border-border/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-bold flex items-center gap-2">
+                <Bell className="h-4 w-4 text-primary" />
+                Minhas Solicitações à Secretaria ({openCoordRequests.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-2">
+                {openCoordRequests.map((r: any) => (
+                  <div key={r.id} className="flex items-center gap-3 rounded-xl bg-muted/30 px-4 py-3">
+                    <Clock className="h-4 w-4 text-primary" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{r.student_name || "Sem aluno"}</p>
+                      <p className="text-[10px] text-muted-foreground">{r.request_type}</p>
+                    </div>
+                    <Badge variant="secondary" className="text-[10px]">
+                      {r.status === "aberto" ? "Aberto" : "Em andamento"}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* KPI Widgets */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
