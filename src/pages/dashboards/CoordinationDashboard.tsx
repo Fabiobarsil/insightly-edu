@@ -105,11 +105,11 @@ const CoordinationDashboard = () => {
     queryFn: async () => {
       if (!schoolId) return [];
       const { data } = await supabase
-        .from("pedagogical_interventions" as any)
+        .from("pedagogical_interventions")
         .select("*")
         .eq("school_id", schoolId)
         .order("created_at", { ascending: false });
-      return (data as any[]) ?? [];
+      return data ?? [];
     },
     enabled: !!schoolId,
   });
@@ -160,8 +160,8 @@ const CoordinationDashboard = () => {
       studentId: string; teacherId: string; subjectId: string; classId: string;
       reason: string; recommendation: string; severity: string; avgGrade: number | null; freqPercent: number;
     }) => {
-      const { error } = await supabase.from("pedagogical_interventions" as any).insert({
-        school_id: schoolId,
+      const { error } = await supabase.from("pedagogical_interventions").insert({
+        school_id: schoolId!,
         student_id: params.studentId,
         teacher_id: params.teacherId,
         subject_id: params.subjectId,
@@ -173,7 +173,7 @@ const CoordinationDashboard = () => {
         freq_percent: params.freqPercent,
         status: "aberto",
         created_role: "coordenacao",
-      } as any);
+      });
       if (error) throw error;
     },
     onSuccess: () => {
