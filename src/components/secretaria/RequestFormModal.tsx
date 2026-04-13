@@ -30,9 +30,10 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   onCreated: (requestId: string) => void;
   origin?: string;
+  hideDeadline?: boolean;
 }
 
-const RequestFormModal = ({ open, onOpenChange, onCreated, origin = "secretaria" }: Props) => {
+const RequestFormModal = ({ open, onOpenChange, onCreated, origin = "secretaria", hideDeadline = false }: Props) => {
   const { schoolId } = useSchoolId();
   const [search, setSearch] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<{ id: string; full_name: string; class_id: string | null } | null>(null);
@@ -177,19 +178,21 @@ const RequestFormModal = ({ open, onOpenChange, onCreated, origin = "secretaria"
           </div>
 
           {/* Dates */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-muted-foreground mb-1.5">📅 Abertura</label>
-              <Input type="date" value={startDate} disabled className="bg-muted/30" />
+          {!hideDeadline && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5">📅 Abertura</label>
+                <Input type="date" value={startDate} disabled className="bg-muted/30" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5">📅 Prazo Final</label>
+                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-muted-foreground mb-1.5">📅 Prazo Final</label>
-              <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-            </div>
-          </div>
+          )}
 
           <Button className="w-full" onClick={handleSave} disabled={!requestType || !situation || saving}>
-            {saving ? "Salvando..." : "Salvar e Classificar Prioridade"}
+            {saving ? "Salvando..." : hideDeadline ? "Enviar à Secretaria" : "Salvar e Classificar Prioridade"}
           </Button>
         </div>
       </DialogContent>
