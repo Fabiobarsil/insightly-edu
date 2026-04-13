@@ -1,7 +1,9 @@
+import { useNavigate } from "react-router-dom";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   LineChart, Line, PieChart, Pie, Cell,
 } from "recharts";
+import { toast } from "sonner";
 
 const frequencyData = [
   { turma: "1ºA", freq: 92 },
@@ -35,59 +37,122 @@ const tooltipStyle = {
   },
 };
 
-const DashboardCharts = () => (
-  <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-    {/* Frequency by class */}
-    <div className="bg-card rounded-2xl border border-border/50 p-6 shadow-sm">
-      <h3 className="text-sm font-bold text-foreground mb-5">Frequência por Turma (%)</h3>
-      <ResponsiveContainer width="100%" height={240}>
-        <BarChart data={frequencyData} barSize={28}>
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-          <XAxis dataKey="turma" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
-          <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" domain={[0, 100]} unit="%" />
-          <Tooltip {...tooltipStyle} formatter={(v: number) => [`${v}%`, "Frequência"]} />
-          <Bar dataKey="freq" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
+const DashboardCharts = () => {
+  const navigate = useNavigate();
 
-    {/* Average grades by class */}
-    <div className="bg-card rounded-2xl border border-border/50 p-6 shadow-sm">
-      <h3 className="text-sm font-bold text-foreground mb-5">Média de Notas por Turma</h3>
-      <ResponsiveContainer width="100%" height={240}>
-        <LineChart data={gradeData}>
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-          <XAxis dataKey="turma" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
-          <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" domain={[0, 10]} />
-          <Tooltip {...tooltipStyle} formatter={(v: number) => [v.toFixed(1), "Média"]} />
-          <Line type="monotone" dataKey="media" stroke="hsl(var(--secondary))" strokeWidth={2.5} dot={{ r: 4, fill: "hsl(var(--secondary))" }} activeDot={{ r: 6 }} />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
+  const handleBarClick = (data: any) => {
+    if (data?.turma) {
+      toast.info(`Abrindo turma ${data.turma}`);
+      navigate("/admin/turmas");
+    }
+  };
 
-    {/* Distribution pie */}
-    <div className="bg-card rounded-2xl border border-border/50 p-6 shadow-sm">
-      <h3 className="text-sm font-bold text-foreground mb-5">Distribuição Geral</h3>
-      <ResponsiveContainer width="100%" height={240}>
-        <PieChart>
-          <Pie data={distributionData} cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={4} dataKey="value" strokeWidth={0}>
-            {distributionData.map((entry, i) => (
-              <Cell key={i} fill={entry.color} />
-            ))}
-          </Pie>
-          <Tooltip {...tooltipStyle} />
-        </PieChart>
-      </ResponsiveContainer>
-      <div className="flex justify-center gap-4 mt-2">
-        {distributionData.map((d) => (
-          <div key={d.name} className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
-            <span className="text-[11px] text-muted-foreground font-medium">{d.name} ({d.value})</span>
-          </div>
-        ))}
+  const handleLineClick = (data: any) => {
+    if (data?.turma) {
+      toast.info(`Detalhes de notas: ${data.turma}`);
+      navigate("/admin/turmas");
+    }
+  };
+
+  const handlePieClick = (data: any) => {
+    if (data?.name === "Aprovados") {
+      navigate("/admin/alunos?status=ativo");
+    } else if (data?.name === "Reprovados") {
+      navigate("/admin/alunos?status=inativo");
+    } else if (data?.name === "Pendentes") {
+      navigate("/admin/alunos?status=incompleto");
+    }
+    toast.info(`Filtro: ${data?.name}`);
+  };
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      {/* Frequency by class */}
+      <div className="bg-card rounded-2xl border border-border/50 p-6 shadow-sm">
+        <h3 className="text-sm font-bold text-foreground mb-5">Frequência por Turma (%)</h3>
+        <ResponsiveContainer width="100%" height={240}>
+          <BarChart data={frequencyData} barSize={28}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+            <XAxis dataKey="turma" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+            <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" domain={[0, 100]} unit="%" />
+            <Tooltip {...tooltipStyle} formatter={(v: number) => [`${v}%`, "Frequência"]} />
+            <Bar dataKey="freq" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} cursor="pointer" onClick={handleBarClick} />
+          </BarChart>
+        </ResponsiveContainer>
+        <button
+          onClick={() => navigate("/admin/frequencia")}
+          className="w-full mt-3 py-2 rounded-xl border border-border text-xs font-semibold text-foreground hover:bg-accent transition-colors"
+        >
+          Ver relatório completo
+        </button>
+      </div>
+
+      {/* Average grades by class */}
+      <div className="bg-card rounded-2xl border border-border/50 p-6 shadow-sm">
+        <h3 className="text-sm font-bold text-foreground mb-5">Média de Notas por Turma</h3>
+        <ResponsiveContainer width="100%" height={240}>
+          <LineChart data={gradeData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+            <XAxis dataKey="turma" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+            <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" domain={[0, 10]} />
+            <Tooltip {...tooltipStyle} formatter={(v: number) => [v.toFixed(1), "Média"]} />
+            <Line
+              type="monotone"
+              dataKey="media"
+              stroke="hsl(var(--secondary))"
+              strokeWidth={2.5}
+              dot={{ r: 4, fill: "hsl(var(--secondary))", cursor: "pointer" }}
+              activeDot={{ r: 6, cursor: "pointer", onClick: (_: any, payload: any) => handleLineClick(payload?.payload) }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+        <button
+          onClick={() => navigate("/admin/notas")}
+          className="w-full mt-3 py-2 rounded-xl border border-border text-xs font-semibold text-foreground hover:bg-accent transition-colors"
+        >
+          Ver detalhamento de notas
+        </button>
+      </div>
+
+      {/* Distribution pie */}
+      <div className="bg-card rounded-2xl border border-border/50 p-6 shadow-sm">
+        <h3 className="text-sm font-bold text-foreground mb-5">Distribuição Geral</h3>
+        <ResponsiveContainer width="100%" height={240}>
+          <PieChart>
+            <Pie
+              data={distributionData}
+              cx="50%"
+              cy="50%"
+              innerRadius={55}
+              outerRadius={80}
+              paddingAngle={4}
+              dataKey="value"
+              strokeWidth={0}
+              cursor="pointer"
+              onClick={handlePieClick}
+            >
+              {distributionData.map((entry, i) => (
+                <Cell key={i} fill={entry.color} />
+              ))}
+            </Pie>
+            <Tooltip {...tooltipStyle} />
+          </PieChart>
+        </ResponsiveContainer>
+        <div className="flex justify-center gap-4 mt-2">
+          {distributionData.map((d) => (
+            <button
+              key={d.name}
+              onClick={() => handlePieClick(d)}
+              className="flex items-center gap-1.5 hover:opacity-70 transition-opacity"
+            >
+              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
+              <span className="text-[11px] text-muted-foreground font-medium">{d.name} ({d.value})</span>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default DashboardCharts;
