@@ -257,8 +257,8 @@ const CoordinationDashboard = () => {
                       <p className="text-sm font-medium text-foreground truncate">{r.student_name || "Sem aluno"}</p>
                       <p className="text-[10px] text-muted-foreground">{r.request_type}</p>
                     </div>
-                    <Badge variant="secondary" className="text-[10px]">
-                      {r.status === "aberto" ? "Aberto" : "Em andamento"}
+                    <Badge variant="outline" className="text-[10px] bg-warning/10 text-warning-foreground border-warning/30">
+                      ⏳ Aguardando
                     </Badge>
                   </div>
                 ))}
