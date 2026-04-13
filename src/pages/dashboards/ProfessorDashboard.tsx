@@ -103,10 +103,11 @@ const ProfessorDashboard = () => {
   /* ── Mutations ── */
   const updateIntervention = useMutation({
     mutationFn: async ({ id, status, action_type, teacher_notes }: { id: string; status: string; action_type?: string; teacher_notes?: string }) => {
-      const update: Record<string, string> = { status };
-      if (action_type) update.action_type = action_type;
-      if (teacher_notes) update.teacher_notes = teacher_notes;
-      const { error } = await supabase.from("pedagogical_interventions").update(update).eq("id", id);
+      const { error } = await supabase.from("pedagogical_interventions").update({
+        status,
+        ...(action_type ? { action_type } : {}),
+        ...(teacher_notes ? { teacher_notes } : {}),
+      }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
