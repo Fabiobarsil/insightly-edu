@@ -1,21 +1,25 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import RoleLayout from "@/components/layout/RoleLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
 import {
   AlertTriangle, TrendingDown, ShieldAlert, ClipboardList,
   User, ChevronRight, CheckCircle2, Clock, XCircle,
-  BarChart3, Eye
+  BarChart3, Eye, FilePlus2, Bell
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
+import RequestFormModal from "@/components/secretaria/RequestFormModal";
+import PriorityModal from "@/components/secretaria/PriorityModal";
+import { toast } from "sonner";
 
 /* ── mock interventions (no table yet) ── */
 const mockInterventions = [
