@@ -44,12 +44,13 @@ const ProfessorDashboard = () => {
     queryFn: async () => {
       if (!schoolId || !currentTeacher?.id) return [];
       const { data } = await supabase
-        .from("pedagogical_interventions" as any)
+        .from("pedagogical_interventions")
         .select("*")
         .eq("school_id", schoolId)
         .eq("teacher_id", currentTeacher.id)
+        .in("status", ["aberto", "em_andamento"])
         .order("created_at", { ascending: false });
-      return (data as any[]) ?? [];
+      return data ?? [];
     },
     enabled: !!schoolId && !!currentTeacher?.id,
   });
@@ -102,10 +103,10 @@ const ProfessorDashboard = () => {
   /* ── Mutations ── */
   const updateIntervention = useMutation({
     mutationFn: async ({ id, status, action_type, teacher_notes }: { id: string; status: string; action_type?: string; teacher_notes?: string }) => {
-      const update: any = { status, updated_at: new Date().toISOString() };
+      const update: Record<string, string> = { status };
       if (action_type) update.action_type = action_type;
       if (teacher_notes) update.teacher_notes = teacher_notes;
-      const { error } = await supabase.from("pedagogical_interventions" as any).update(update).eq("id", id);
+      const { error } = await supabase.from("pedagogical_interventions").update(update).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -132,8 +133,7 @@ const ProfessorDashboard = () => {
   };
 
   const handleResolve = (id: string, impact: string) => {
-    const update: any = { status: "resolvido", impact, updated_at: new Date().toISOString() };
-    supabase.from("pedagogical_interventions" as any).update(update).eq("id", id).then(({ error }) => {
+    supabase.from("pedagogical_interventions").update({ status: "resolvido", impact }).eq("id", id).then(({ error }) => {
       if (error) {
         toast.error("Erro ao resolver.");
       } else {
