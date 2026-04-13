@@ -81,22 +81,6 @@ const CoordinationDashboard = () => {
     enabled: !!schoolId,
   });
 
-  const classifyMutation = useMutation({
-    mutationFn: async ({ id, priority }: { id: string; priority: string }) => {
-      const { error } = await supabase
-        .from("secretary_requests")
-        .update({ priority, updated_at: new Date().toISOString() })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Solicitação enviada para a secretaria!");
-      queryClient.invalidateQueries({ queryKey: ["coord-open-requests"] });
-      queryClient.invalidateQueries({ queryKey: ["secretary-requests"] });
-      setClassifyId(null);
-    },
-  });
-
   const dismissResolved = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
