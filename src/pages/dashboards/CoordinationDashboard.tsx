@@ -39,9 +39,76 @@ const mockTrend = [
 const CoordinationDashboard = () => {
   const navigate = useNavigate();
   const { schoolId } = useSchoolId();
+  const queryClient = useQueryClient();
   const [alertsModalOpen, setAlertsModalOpen] = useState(false);
   const [riskModalOpen, setRiskModalOpen] = useState(false);
   const [interventionsModalOpen, setInterventionsModalOpen] = useState(false);
+  const [requestModalOpen, setRequestModalOpen] = useState(false);
+  const [classifyId, setClassifyId] = useState<string | null>(null);
+
+  /* ── fetch resolved requests from coordination ── */
+  const { data: resolvedRequests = [] } = useQuery({
+    queryKey: ["coord-resolved-requests", schoolId],
+    queryFn: async () => {
+      if (!schoolId) return [];
+      const { data } = await supabase
+        .from("secretary_requests")
+        .select("*")
+        .eq("school_id", schoolId)
+        .eq("origin", "coordenacao")
+        .eq("status", "concluido")
+        .eq("resolved_notified", false)
+        .order("updated_at", { ascending: false });
+      return data ?? [];
+    },
+    enabled: !!schoolId,
+  });
+
+  /* ── fetch open coordination requests ── */
+  const { data: openCoordRequests = [] } = useQuery({
+    queryKey: ["coord-open-requests", schoolId],
+    queryFn: async () => {
+      if (!schoolId) return [];
+      const { data } = await supabase
+        .from("secretary_requests")
+        .select("*")
+        .eq("school_id", schoolId)
+        .eq("origin", "coordenacao")
+        .neq("status", "concluido")
+        .order("created_at", { ascending: false });
+      return data ?? [];
+    },
+    enabled: !!schoolId,
+  });
+
+  const classifyMutation = useMutation({
+    mutationFn: async ({ id, priority }: { id: string; priority: string }) => {
+      const { error } = await supabase
+        .from("secretary_requests")
+        .update({ priority, updated_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Solicitação enviada para a secretaria!");
+      queryClient.invalidateQueries({ queryKey: ["coord-open-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["secretary-requests"] });
+      setClassifyId(null);
+    },
+  });
+
+  const dismissResolved = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("secretary_requests")
+        .update({ resolved_notified: true })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["coord-resolved-requests"] });
+    },
+  });
 
   /* ── fetch students ── */
   const { data: students = [] } = useQuery({
