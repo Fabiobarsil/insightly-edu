@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import RoleLayout from "@/components/layout/RoleLayout";
 import { supabase } from "@/integrations/supabase/client";
-import useSchoolId from "@/hooks/useSchoolId";
+import { useSchoolId } from "@/hooks/useSchoolId";
 import {
   AlertTriangle, TrendingDown, ShieldAlert, ClipboardList,
   User, ChevronRight, CheckCircle2, Clock, XCircle,
