@@ -46,6 +46,7 @@ const Topbar = ({ title, breadcrumbs }: TopbarProps) => {
         <h2 className="text-2xl font-bold text-primary">
           {getGreeting()}, {firstName} 👋
         </h2>
+        <p className="text-[13px] italic text-muted-foreground/70 mt-1">{motivationalQuote}</p>
         <p className="text-xs text-muted mt-1 capitalize">{today}</p>
       </div>
       <div className="flex items-center gap-3">
