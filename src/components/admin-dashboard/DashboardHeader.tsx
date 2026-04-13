@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { GraduationCap, ChevronDown, Loader2 } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
