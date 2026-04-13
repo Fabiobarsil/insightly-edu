@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { ChevronDown, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { Calendar, Search, FileText, Users, ScrollText, Bell } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -8,8 +8,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 
 interface DashboardHeaderProps {
   selectedYear: number;
@@ -17,65 +22,76 @@ interface DashboardHeaderProps {
   onDataRefresh: () => void;
 }
 
-const DashboardHeader = ({ selectedYear, onYearChange, onDataRefresh }: DashboardHeaderProps) => {
-  const [promoting, setPromoting] = useState(false);
+const PENDING_COUNT = 6; // mock
+
+const DashboardHeader = ({ selectedYear, onYearChange }: DashboardHeaderProps) => {
+  const navigate = useNavigate();
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
-  const handlePromote = async () => {
-    setPromoting(true);
-    try {
-      const { data, error } = await supabase.rpc("promote_students", {
-        p_year: selectedYear,
-      });
-      if (error) throw error;
-      toast.success(`Promoção concluída com sucesso! ${data ?? 0} aluno(s) promovido(s).`);
-      onDataRefresh();
-    } catch (err: any) {
-      toast.error("Erro ao promover alunos: " + (err.message || "Tente novamente."));
-    } finally {
-      setPromoting(false);
-    }
-  };
+  const shortcuts = [
+    { icon: Calendar, label: "Agenda", action: () => navigate("/admin/dashboard") },
+    { icon: FileText, label: "Documentos", action: () => navigate("/admin/documentos") },
+    { icon: Users, label: "Contatos", action: () => navigate("/admin/alunos") },
+    { icon: ScrollText, label: "Declarações", action: () => navigate("/admin/documentos-oficiais") },
+  ];
 
-  const handleCloseYear = () => {
-    toast.info("Funcionalidade de fechamento de ano será habilitada após validação.");
+  const scrollToPriorities = () => {
+    const el = document.getElementById("priorities-section");
+    el?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-3 justify-end">
-      <Select
-        value={String(selectedYear)}
-        onValueChange={(v) => onYearChange(Number(v))}
-      >
-        <SelectTrigger className="w-[140px] rounded-2xl border-border/60 bg-card shadow-sm">
+    <div className="flex flex-wrap items-center gap-2.5">
+      {/* Year selector */}
+      <Select value={String(selectedYear)} onValueChange={(v) => onYearChange(Number(v))}>
+        <SelectTrigger className="w-[120px] h-9 rounded-xl border-border/60 bg-card shadow-sm text-sm">
+          <Calendar className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
           {years.map((y) => (
-            <SelectItem key={y} value={String(y)}>
-              {y}
-            </SelectItem>
+            <SelectItem key={y} value={String(y)}>{y}</SelectItem>
           ))}
         </SelectContent>
       </Select>
 
-      <Button
-        onClick={handlePromote}
-        disabled={promoting}
-        className="rounded-2xl shadow-sm px-5"
-      >
-        {promoting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-        Promover Alunos
-      </Button>
+      {/* Global search */}
+      <div className="relative">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+        <Input
+          placeholder="Buscar aluno, responsável..."
+          className="pl-8 h-9 w-[220px] rounded-xl border-border/60 bg-card shadow-sm text-sm max-[640px]:w-[160px]"
+        />
+      </div>
 
-      <Button
-        variant="outline"
-        onClick={handleCloseYear}
-        className="rounded-2xl shadow-sm px-5 border-destructive/30 text-destructive hover:bg-destructive/5 hover:text-destructive"
+      {/* Quick shortcuts */}
+      <TooltipProvider delayDuration={200}>
+        <div className="flex items-center gap-1">
+          {shortcuts.map((s) => (
+            <Tooltip key={s.label}>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={s.action}
+                  className="h-9 w-9 rounded-xl border border-border/60 bg-card shadow-sm flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors"
+                >
+                  <s.icon className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">{s.label}</TooltipContent>
+            </Tooltip>
+          ))}
+        </div>
+      </TooltipProvider>
+
+      {/* Pending indicator */}
+      <button
+        onClick={scrollToPriorities}
+        className="h-9 px-3 rounded-xl border border-destructive/30 bg-destructive/5 flex items-center gap-1.5 text-destructive hover:bg-destructive/10 transition-colors"
       >
-        Fechar Ano
-      </Button>
+        <Bell className="h-3.5 w-3.5" />
+        <span className="text-xs font-semibold">{PENDING_COUNT} pendências</span>
+      </button>
     </div>
   );
 };
