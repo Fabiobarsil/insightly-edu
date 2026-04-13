@@ -18,7 +18,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
 import RequestFormModal from "@/components/secretaria/RequestFormModal";
-import PriorityModal from "@/components/secretaria/PriorityModal";
+
 import { toast } from "sonner";
 
 /* ── mock interventions (no table yet) ── */
