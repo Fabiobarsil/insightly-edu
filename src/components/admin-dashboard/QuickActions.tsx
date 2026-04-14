@@ -1,4 +1,4 @@
-import { ClipboardList, FileText, Send, BarChart3, FilePlus2 } from "lucide-react";
+import { ClipboardList, FileText, FilePlus2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface QuickActionsProps {
@@ -12,8 +12,6 @@ const QuickActions = ({ onNewRequest }: QuickActionsProps) => {
     { icon: FilePlus2, label: "Nova Solicitação", to: null, onClick: onNewRequest },
     { icon: ClipboardList, label: "Nova Matrícula", to: "/admin/alunos/novo" },
     { icon: FileText, label: "Novo Documento", to: "/admin/documentos" },
-    { icon: Send, label: "Enviar Comunicação", to: "/admin/comunicacao" },
-    { icon: BarChart3, label: "Gerar Relatório", to: null },
   ];
 
   return (
