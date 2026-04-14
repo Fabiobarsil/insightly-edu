@@ -17,7 +17,7 @@ const QuickActions = ({ onNewRequest }: QuickActionsProps) => {
   return (
     <div className="bg-card rounded-2xl border border-border/50 p-5 shadow-sm">
       <h3 className="text-sm font-bold text-foreground mb-4">Ações Rápidas</h3>
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap justify-center gap-3">
         {actions.map((a) => (
           <button
             key={a.label}
