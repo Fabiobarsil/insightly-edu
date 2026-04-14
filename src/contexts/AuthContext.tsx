@@ -19,7 +19,7 @@ export const getDashboardPath = (role: DashboardRole) => {
   const paths: Record<DashboardRole, string> = {
     superadmin: "/superadmin/dashboard",
     admin: "/admin/dashboard",
-    secretaria: "/secretaria/dashboard",
+    secretaria: "/admin/dashboard",
     professor: "/professor/dashboard",
   };
   return paths[role];
