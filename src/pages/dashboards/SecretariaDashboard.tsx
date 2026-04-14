@@ -104,11 +104,29 @@ const SecretariaDashboard = () => {
   const metrics = [
     { label: "Pendentes", value: totalPending, icon: FileText, accent: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
     { label: "Urgentes", value: urgentCount, icon: AlertTriangle, accent: urgentCount > 0 ? "bg-destructive/10 text-destructive" : "bg-muted/50 text-muted-foreground" },
+    { label: "Da Coordenação", value: coordCount, icon: Bell, accent: coordCount > 0 ? "bg-primary/10 text-primary" : "bg-muted/50 text-muted-foreground" },
   ];
 
   return (
     <RoleLayout title="Secretaria">
       <div className="flex flex-col gap-6">
+        {/* Coordenação alert banner */}
+        {coordCount > 0 && (
+          <div className="flex items-center gap-3 bg-primary/10 border border-primary/20 rounded-xl px-4 py-3 animate-in fade-in-0 slide-in-from-top-2 duration-300">
+            <Bell className="h-5 w-5 text-primary shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground">
+                {coordCount} solicitação(ões) da Coordenação Pedagógica
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {activeRequests.filter((r) => r.origin === "coordenacao").map((r) => r.student_name || r.request_type).slice(0, 3).join(", ")}
+                {coordCount > 3 ? ` e mais ${coordCount - 3}...` : ""}
+              </p>
+            </div>
+            <Badge variant="secondary" className="bg-primary/15 text-primary text-[10px] shrink-0">Nova</Badge>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
