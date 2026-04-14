@@ -5,9 +5,10 @@ import { useSchoolId } from "@/hooks/useSchoolId";
 import RoleLayout from "@/components/layout/RoleLayout";
 import RequestFormModal from "@/components/secretaria/RequestFormModal";
 import PriorityModal from "@/components/secretaria/PriorityModal";
-import { Plus, AlertTriangle, FileText, Users, CheckCircle2, Bell } from "lucide-react";
+import { Plus, AlertTriangle, FileText, CheckCircle2, Bell, Clock, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -28,11 +29,14 @@ const NEXT_STATUS: Record<string, string> = {
   "em andamento": "concluido",
 };
 
+type ListModalType = "pendentes" | "resolvidos" | null;
+
 const SecretariaDashboard = () => {
   const { schoolId } = useSchoolId();
   const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
   const [classifyId, setClassifyId] = useState<string | null>(null);
+  const [listModal, setListModal] = useState<ListModalType>(null);
 
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ["secretary-requests", schoolId],
@@ -48,7 +52,7 @@ const SecretariaDashboard = () => {
     enabled: !!schoolId,
   });
 
-  // Real-time: auto-refresh when secretary_requests change
+  // Real-time
   useEffect(() => {
     if (!schoolId) return;
     const channel = supabase
@@ -61,6 +65,7 @@ const SecretariaDashboard = () => {
   }, [schoolId, queryClient]);
 
   const activeRequests = requests.filter((r) => r.status !== "concluido");
+  const resolvedRequests = requests.filter((r) => r.status === "concluido");
   const sorted = [...activeRequests].sort(
     (a, b) => PRIORITY_ORDER.indexOf(a.priority) - PRIORITY_ORDER.indexOf(b.priority)
   );
@@ -68,8 +73,8 @@ const SecretariaDashboard = () => {
   const urgentCount = activeRequests.filter((r) => r.priority === "urgente").length;
   const coordCount = activeRequests.filter((r) => r.origin === "coordenacao").length;
   const totalPending = activeRequests.length;
+  const totalResolved = resolvedRequests.length;
 
-  // Classify priority after creation
   const classifyMutation = useMutation({
     mutationFn: async ({ id, priority }: { id: string; priority: string }) => {
       const { error } = await supabase
@@ -85,7 +90,6 @@ const SecretariaDashboard = () => {
     },
   });
 
-  // Advance status
   const advanceStatus = useMutation({
     mutationFn: async ({ id, newStatus }: { id: string; newStatus: string }) => {
       const { error } = await supabase
@@ -102,18 +106,46 @@ const SecretariaDashboard = () => {
   });
 
   const metrics = [
-    { label: "Pendentes", value: totalPending, icon: FileText, accent: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
-    { label: "Urgentes", value: urgentCount, icon: AlertTriangle, accent: urgentCount > 0 ? "bg-destructive/10 text-destructive" : "bg-muted/50 text-muted-foreground" },
-    { label: "Da Coordenação", value: coordCount, icon: Bell, accent: coordCount > 0 ? "bg-primary/10 text-primary" : "bg-muted/50 text-muted-foreground" },
+    {
+      label: "Pendentes",
+      value: totalPending,
+      icon: Clock,
+      accent: totalPending > 0 ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" : "bg-muted/50 text-muted-foreground",
+      onClick: () => setListModal("pendentes"),
+    },
+    {
+      label: "Resolvidos",
+      value: totalResolved,
+      icon: CheckCircle2,
+      accent: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+      onClick: () => setListModal("resolvidos"),
+    },
+    {
+      label: "Urgentes",
+      value: urgentCount,
+      icon: AlertTriangle,
+      accent: urgentCount > 0 ? "bg-destructive/10 text-destructive" : "bg-muted/50 text-muted-foreground",
+      onClick: () => {},
+    },
+    {
+      label: "Da Coordenação",
+      value: coordCount,
+      icon: Bell,
+      accent: coordCount > 0 ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" : "bg-muted/50 text-muted-foreground",
+      onClick: () => {},
+    },
   ];
+
+  const modalList = listModal === "pendentes" ? activeRequests : resolvedRequests;
+  const modalTitle = listModal === "pendentes" ? "Solicitações Pendentes" : "Solicitações Resolvidas";
 
   return (
     <RoleLayout title="Secretaria">
       <div className="flex flex-col gap-6">
         {/* Coordenação alert banner */}
         {coordCount > 0 && (
-          <div className="flex items-center gap-3 bg-primary/10 border border-primary/20 rounded-xl px-4 py-3 animate-in fade-in-0 slide-in-from-top-2 duration-300">
-            <Bell className="h-5 w-5 text-primary shrink-0" />
+          <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800 rounded-xl px-4 py-3 animate-in fade-in-0 slide-in-from-top-2 duration-300">
+            <Bell className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-foreground">
                 {coordCount} solicitação(ões) da Coordenação Pedagógica
@@ -123,7 +155,7 @@ const SecretariaDashboard = () => {
                 {coordCount > 3 ? ` e mais ${coordCount - 3}...` : ""}
               </p>
             </div>
-            <Badge variant="secondary" className="bg-primary/15 text-primary text-[10px] shrink-0">Nova</Badge>
+            <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 text-[10px] shrink-0">Nova</Badge>
           </div>
         )}
 
@@ -139,10 +171,14 @@ const SecretariaDashboard = () => {
           </Button>
         </div>
 
-        {/* Metrics + Alert */}
-        <div className="flex flex-wrap items-center gap-4">
+        {/* Metrics */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {metrics.map((m) => (
-            <div key={m.label} className="bg-card border border-border/60 rounded-xl p-4 flex items-center gap-3 min-w-[160px]">
+            <button
+              key={m.label}
+              onClick={m.onClick}
+              className="bg-card border border-border/60 rounded-xl p-4 flex items-center gap-3 text-left transition-all hover:shadow-sm hover:-translate-y-0.5 cursor-pointer"
+            >
               <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${m.accent}`}>
                 <m.icon className="h-4 w-4" />
               </div>
@@ -150,18 +186,20 @@ const SecretariaDashboard = () => {
                 <p className="text-xs text-muted-foreground">{m.label}</p>
                 <p className="text-lg font-bold text-foreground">{m.value}</p>
               </div>
-            </div>
+            </button>
           ))}
-          {urgentCount > 0 && (
-            <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-3 flex items-center gap-2 text-sm">
-              <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
-              <span className="font-semibold text-foreground">{urgentCount} urgente(s) na fila</span>
-            </div>
-          )}
         </div>
 
-        {/* Work Queue — Prioridades de Hoje */}
-        <div className="bg-card border border-border/60 rounded-xl overflow-hidden">
+        {/* Urgent alert */}
+        {urgentCount > 0 && (
+          <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-3 flex items-center gap-2 text-sm">
+            <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+            <span className="font-semibold text-foreground">{urgentCount} urgente(s) na fila</span>
+          </div>
+        )}
+
+        {/* Work Queue */}
+        <div id="priorities-section" className="bg-card border border-border/60 rounded-xl overflow-hidden">
           <div className="p-4 border-b border-border/40">
             <h3 className="text-sm font-bold text-foreground">🎯 Prioridades de Hoje — Fila de Trabalho</h3>
           </div>
@@ -196,7 +234,7 @@ const SecretariaDashboard = () => {
                         <td className="px-4 py-3 font-medium text-foreground">{r.student_name || "—"}</td>
                         <td className="px-4 py-3 text-foreground">{r.request_type}</td>
                         <td className="px-4 py-3">
-                          <Badge variant="outline" className={r.origin === "coordenacao" ? "bg-primary/10 text-primary border-primary/20 text-[10px]" : "text-[10px]"}>
+                          <Badge variant="outline" className={r.origin === "coordenacao" ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 text-[10px]" : "text-[10px]"}>
                             {r.origin === "coordenacao" ? "Coordenação" : "Secretaria"}
                           </Badge>
                         </td>
@@ -233,6 +271,49 @@ const SecretariaDashboard = () => {
             </div>
           )}
         </div>
+
+        {/* List Modal (Pendentes / Resolvidos) */}
+        <Dialog open={!!listModal} onOpenChange={(open) => !open && setListModal(null)}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{modalTitle}</DialogTitle>
+            </DialogHeader>
+            {modalList.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-6 text-center">Nenhuma solicitação encontrada.</p>
+            ) : (
+              <div className="space-y-3 mt-2">
+                {modalList.map((r) => {
+                  const pri = PRIORITY_MAP[r.priority] || PRIORITY_MAP.media;
+                  const st = STATUS_MAP[r.status] || STATUS_MAP.aberto;
+                  const next = NEXT_STATUS[r.status];
+                  return (
+                    <div key={r.id} className="border border-border/60 rounded-lg p-3 flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground truncate">{r.student_name || "—"} — {r.request_type}</p>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <Badge variant="secondary" className={pri.class + " text-[10px]"}>{pri.label}</Badge>
+                          <Badge variant="secondary" className={st.class + " text-[10px]"}>{st.label}</Badge>
+                          {r.origin === "coordenacao" && (
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 text-[10px]">Coordenação</Badge>
+                          )}
+                          <span className="text-[10px] text-muted-foreground">{format(new Date(r.created_at), "dd/MM/yyyy")}</span>
+                        </div>
+                      </div>
+                      {next && listModal === "pendentes" && (
+                        <button
+                          onClick={() => advanceStatus.mutate({ id: r.id, newStatus: next })}
+                          className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1 shrink-0"
+                        >
+                          {next === "concluido" ? <><CheckCircle2 className="h-3.5 w-3.5" /> Resolver</> : <>→ {STATUS_MAP[next]?.label}</>}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* Modals */}
         <RequestFormModal
