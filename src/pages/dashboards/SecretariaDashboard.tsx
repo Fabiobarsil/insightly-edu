@@ -30,7 +30,7 @@ const NEXT_STATUS: Record<string, string> = {
   "em andamento": "concluido",
 };
 
-type ListModalType = "pendentes" | "resolvidos" | null;
+type ListModalType = "pendentes" | "resolvidos" | "atrasados" | null;
 
 const SecretariaDashboard = () => {
   const { schoolId } = useSchoolId();
