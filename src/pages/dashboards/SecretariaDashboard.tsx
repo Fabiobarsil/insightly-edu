@@ -148,6 +148,7 @@ const SecretariaDashboard = () => {
                   <tr className="border-b border-border/40">
                     <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Aluno</th>
                     <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Tipo</th>
+                    <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Origem</th>
                     <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Prioridade</th>
                     <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Prazo</th>
                     <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Status</th>
@@ -163,6 +164,11 @@ const SecretariaDashboard = () => {
                       <tr key={r.id} className="border-b border-border/20 hover:bg-accent/40 transition-colors">
                         <td className="px-4 py-3 font-medium text-foreground">{r.student_name || "—"}</td>
                         <td className="px-4 py-3 text-foreground">{r.request_type}</td>
+                        <td className="px-4 py-3">
+                          <Badge variant="outline" className={r.origin === "coordenacao" ? "bg-primary/10 text-primary border-primary/20 text-[10px]" : "text-[10px]"}>
+                            {r.origin === "coordenacao" ? "Coordenação" : "Secretaria"}
+                          </Badge>
+                        </td>
                         <td className="px-4 py-3">
                           <Badge variant="secondary" className={pri.class}>{pri.label}</Badge>
                         </td>

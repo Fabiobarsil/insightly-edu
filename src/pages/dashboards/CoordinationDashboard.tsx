@@ -34,6 +34,9 @@ const CoordinationDashboard = () => {
   const [requestModalOpen, setRequestModalOpen] = useState(false);
   const [focusModalOpen, setFocusModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [requestStudent, setRequestStudent] = useState<{ id: string; full_name: string; class_id: string | null } | null>(null);
+  const [requestDescription, setRequestDescription] = useState("");
+  const [requestType, setRequestType] = useState("");
 
   // Create intervention form state
   const [formStudentId, setFormStudentId] = useState("");
@@ -363,6 +366,38 @@ const CoordinationDashboard = () => {
     }
   };
 
+  /* ── Notificar responsável → cria secretary_request direto ── */
+  const notifyGuardianMutation = useMutation({
+    mutationFn: async (student: typeof atRiskList[0]) => {
+      const desc = student.recommendations.join("; ") || "Acompanhamento solicitado pela coordenação";
+      const { error } = await supabase.from("secretary_requests").insert({
+        school_id: schoolId!,
+        student_id: student.id,
+        student_name: student.full_name,
+        class_id: student.class_id || null,
+        student_status: "ativo",
+        request_type: "Contato com Responsável",
+        description: desc,
+        priority: student.severity === "critica" ? "urgente" : "alta",
+        status: "aberto",
+        origin: "coordenacao",
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Solicitação de contato enviada para a secretaria!");
+      queryClient.invalidateQueries({ queryKey: ["coord-open-requests"] });
+    },
+    onError: () => toast.error("Erro ao enviar solicitação."),
+  });
+
+  const openRequestForStudent = (student: typeof atRiskList[0]) => {
+    setRequestStudent({ id: student.id, full_name: student.full_name, class_id: student.class_id });
+    setRequestDescription(student.recommendations.join("; "));
+    setRequestType("");
+    setRequestModalOpen(true);
+  };
+
   const heroColor = trendDirection === "queda"
     ? "from-destructive/15 to-destructive/5 border-destructive/30"
     : trendDirection === "melhora"
@@ -581,7 +616,16 @@ const CoordinationDashboard = () => {
                             <CheckCircle2 className="h-3 w-3" /> Já notificado
                           </Badge>
                         )}
-                        <Button size="sm" variant="outline" className="text-xs h-8 gap-1" onClick={() => setRequestModalOpen(true)}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs h-8 gap-1"
+                          onClick={() => notifyGuardianMutation.mutate(s)}
+                          disabled={notifyGuardianMutation.isPending}
+                        >
+                          <PhoneCall className="h-3.5 w-3.5" /> Notificar Responsável
+                        </Button>
+                        <Button size="sm" variant="outline" className="text-xs h-8 gap-1" onClick={() => openRequestForStudent(s)}>
                           <FilePlus2 className="h-3.5 w-3.5" /> Solicitar Secretaria
                         </Button>
                         <Button size="sm" variant="ghost" className="text-xs h-8 gap-1" onClick={() => navigate(`/admin/alunos/${s.id}`)}>
@@ -942,13 +986,19 @@ const CoordinationDashboard = () => {
       {/* Request modal */}
       <RequestFormModal
         open={requestModalOpen}
-        onOpenChange={setRequestModalOpen}
+        onOpenChange={(open) => {
+          setRequestModalOpen(open);
+          if (!open) { setRequestStudent(null); setRequestDescription(""); setRequestType(""); }
+        }}
         onCreated={() => {
           toast.success("Solicitação enviada para a secretaria!");
           queryClient.invalidateQueries({ queryKey: ["coord-open-requests"] });
         }}
         origin="coordenacao"
         hideDeadline
+        initialStudent={requestStudent}
+        initialDescription={requestDescription}
+        initialRequestType={requestType}
       />
     </RoleLayout>
   );

@@ -31,9 +31,12 @@ interface Props {
   onCreated: (requestId: string) => void;
   origin?: string;
   hideDeadline?: boolean;
+  initialStudent?: { id: string; full_name: string; class_id: string | null } | null;
+  initialDescription?: string;
+  initialRequestType?: string;
 }
 
-const RequestFormModal = ({ open, onOpenChange, onCreated, origin = "secretaria", hideDeadline = false }: Props) => {
+const RequestFormModal = ({ open, onOpenChange, onCreated, origin = "secretaria", hideDeadline = false, initialStudent, initialDescription, initialRequestType }: Props) => {
   const { schoolId } = useSchoolId();
   const [search, setSearch] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<{ id: string; full_name: string; class_id: string | null } | null>(null);
@@ -43,6 +46,21 @@ const RequestFormModal = ({ open, onOpenChange, onCreated, origin = "secretaria"
   const [startDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [endDate, setEndDate] = useState("");
   const [saving, setSaving] = useState(false);
+  const [initialized, setInitialized] = useState(false);
+
+  // Pre-fill when modal opens with initial data
+  if (open && !initialized) {
+    if (initialStudent) {
+      setSelectedStudent(initialStudent);
+      setSearch(initialStudent.full_name);
+    }
+    if (initialDescription) setDescription(initialDescription);
+    if (initialRequestType) setRequestType(initialRequestType);
+    setInitialized(true);
+  }
+  if (!open && initialized) {
+    setInitialized(false);
+  }
 
   const { data: students = [] } = useQuery({
     queryKey: ["students-search", schoolId, search],
