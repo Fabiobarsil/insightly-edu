@@ -185,6 +185,7 @@ const CoordinationDashboard = () => {
     return () => { supabase.removeChannel(channel); };
   }, [schoolId, queryClient]);
 
+  const dismissResolved = useMutation({
     mutationFn: async (id: string) => {
       await supabase.from("secretary_requests").update({ resolved_notified: true }).eq("id", id);
     },
