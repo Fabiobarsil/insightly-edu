@@ -148,8 +148,8 @@ const SecretariaDashboard = () => {
     },
   ];
 
-  const modalList = listModal === "pendentes" ? activeRequests : resolvedRequests;
-  const modalTitle = listModal === "pendentes" ? "Solicitações Pendentes" : "Solicitações Resolvidas";
+  const modalList = listModal === "pendentes" ? activeRequests : listModal === "atrasados" ? overdueRequests : resolvedRequests;
+  const modalTitle = listModal === "pendentes" ? "Solicitações Pendentes" : listModal === "atrasados" ? "Solicitações Atrasadas" : "Solicitações Resolvidas";
 
   return (
     <RoleLayout title="Secretaria">
