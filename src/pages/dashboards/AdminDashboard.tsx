@@ -81,7 +81,7 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <AdminRecentActivity />
           <AdminHealthScore avgFrequency={86} avgGrade={7.1} pendingCount={18} />
-          <AdminAgenda />
+          <div id="agenda-section"><AdminAgenda /></div>
         </div>
       </div>
 

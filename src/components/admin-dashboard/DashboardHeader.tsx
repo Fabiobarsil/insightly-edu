@@ -1,20 +1,11 @@
 import { useNavigate } from "react-router-dom";
-import { Calendar, Search, FileText, Users, ScrollText, Bell } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Calendar, FileText, Bell, Send } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Badge } from "@/components/ui/badge";
 
 interface DashboardHeaderProps {
   selectedYear: number;
@@ -24,47 +15,27 @@ interface DashboardHeaderProps {
 
 const PENDING_COUNT = 6; // mock
 
-const DashboardHeader = ({ selectedYear, onYearChange }: DashboardHeaderProps) => {
+const DashboardHeader = (_props: DashboardHeaderProps) => {
   const navigate = useNavigate();
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
-  const shortcuts = [
-    { icon: Calendar, label: "Agenda", action: () => navigate("/admin/dashboard") },
-    { icon: FileText, label: "Documentos", action: () => navigate("/admin/documentos") },
-    { icon: Users, label: "Contatos", action: () => navigate("/admin/alunos") },
-    { icon: ScrollText, label: "Declarações", action: () => navigate("/admin/documentos-oficiais") },
-  ];
+  const scrollToAgenda = () => {
+    const el = document.getElementById("agenda-section");
+    el?.scrollIntoView({ behavior: "smooth" });
+  };
 
   const scrollToPriorities = () => {
     const el = document.getElementById("priorities-section");
     el?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const shortcuts = [
+    { icon: Calendar, label: "Agenda", action: scrollToAgenda },
+    { icon: FileText, label: "Documentos", action: () => navigate("/admin/documentos") },
+    { icon: Send, label: "Comunicação", action: () => navigate("/admin/comunicacao") },
+  ];
+
   return (
     <div className="flex flex-wrap items-center gap-2.5">
-      {/* Year selector */}
-      <Select value={String(selectedYear)} onValueChange={(v) => onYearChange(Number(v))}>
-        <SelectTrigger className="w-[120px] h-9 rounded-xl border-border/60 bg-card shadow-sm text-sm">
-          <Calendar className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {years.map((y) => (
-            <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      {/* Global search */}
-      <div className="relative">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-        <Input
-          placeholder="Buscar aluno, responsável..."
-          className="pl-8 h-9 w-[220px] rounded-xl border-border/60 bg-card shadow-sm text-sm max-[640px]:w-[160px]"
-        />
-      </div>
-
       {/* Quick shortcuts */}
       <TooltipProvider delayDuration={200}>
         <div className="flex items-center gap-1">
