@@ -616,7 +616,16 @@ const CoordinationDashboard = () => {
                             <CheckCircle2 className="h-3 w-3" /> Já notificado
                           </Badge>
                         )}
-                        <Button size="sm" variant="outline" className="text-xs h-8 gap-1" onClick={() => setRequestModalOpen(true)}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs h-8 gap-1"
+                          onClick={() => notifyGuardianMutation.mutate(s)}
+                          disabled={notifyGuardianMutation.isPending}
+                        >
+                          <PhoneCall className="h-3.5 w-3.5" /> Notificar Responsável
+                        </Button>
+                        <Button size="sm" variant="outline" className="text-xs h-8 gap-1" onClick={() => openRequestForStudent(s)}>
                           <FilePlus2 className="h-3.5 w-3.5" /> Solicitar Secretaria
                         </Button>
                         <Button size="sm" variant="ghost" className="text-xs h-8 gap-1" onClick={() => navigate(`/admin/alunos/${s.id}`)}>
@@ -977,13 +986,19 @@ const CoordinationDashboard = () => {
       {/* Request modal */}
       <RequestFormModal
         open={requestModalOpen}
-        onOpenChange={setRequestModalOpen}
+        onOpenChange={(open) => {
+          setRequestModalOpen(open);
+          if (!open) { setRequestStudent(null); setRequestDescription(""); setRequestType(""); }
+        }}
         onCreated={() => {
           toast.success("Solicitação enviada para a secretaria!");
           queryClient.invalidateQueries({ queryKey: ["coord-open-requests"] });
         }}
         origin="coordenacao"
         hideDeadline
+        initialStudent={requestStudent}
+        initialDescription={requestDescription}
+        initialRequestType={requestType}
       />
     </RoleLayout>
   );
