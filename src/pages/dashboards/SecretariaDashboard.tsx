@@ -67,6 +67,8 @@ const SecretariaDashboard = () => {
 
   const activeRequests = requests.filter((r) => r.status !== "concluido");
   const resolvedRequests = requests.filter((r) => r.status === "concluido");
+  const today = new Date().toISOString().split("T")[0];
+  const overdueRequests = activeRequests.filter((r) => r.deadline && r.deadline < today);
   const sorted = [...activeRequests].sort(
     (a, b) => PRIORITY_ORDER.indexOf(a.priority) - PRIORITY_ORDER.indexOf(b.priority)
   );
@@ -75,6 +77,15 @@ const SecretariaDashboard = () => {
   const coordCount = activeRequests.filter((r) => r.origin === "coordenacao").length;
   const totalPending = activeRequests.length;
   const totalResolved = resolvedRequests.length;
+  const totalOverdue = overdueRequests.length;
+
+  const healthData = useMemo(() => [
+    { name: "Pendentes", value: totalPending - totalOverdue, color: "#EAB308" },
+    { name: "Resolvidos", value: totalResolved, color: "#22C55E" },
+    { name: "Atrasados", value: totalOverdue, color: "#EF4444" },
+  ].filter((d) => d.value > 0), [totalPending, totalResolved, totalOverdue]);
+
+  const healthTotal = totalPending + totalResolved;
 
   const classifyMutation = useMutation({
     mutationFn: async ({ id, priority }: { id: string; priority: string }) => {
