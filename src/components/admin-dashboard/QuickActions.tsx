@@ -1,4 +1,4 @@
-import { ClipboardList, FileText, Send, BarChart3, FilePlus2 } from "lucide-react";
+import { ClipboardList, FileText, FilePlus2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface QuickActionsProps {
@@ -12,14 +12,12 @@ const QuickActions = ({ onNewRequest }: QuickActionsProps) => {
     { icon: FilePlus2, label: "Nova Solicitação", to: null, onClick: onNewRequest },
     { icon: ClipboardList, label: "Nova Matrícula", to: "/admin/alunos/novo" },
     { icon: FileText, label: "Novo Documento", to: "/admin/documentos" },
-    { icon: Send, label: "Enviar Comunicação", to: "/admin/comunicacao" },
-    { icon: BarChart3, label: "Gerar Relatório", to: null },
   ];
 
   return (
     <div className="bg-card rounded-2xl border border-border/50 p-5 shadow-sm">
       <h3 className="text-sm font-bold text-foreground mb-4">Ações Rápidas</h3>
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap justify-center gap-3">
         {actions.map((a) => (
           <button
             key={a.label}
