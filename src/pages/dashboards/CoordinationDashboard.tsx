@@ -366,6 +366,38 @@ const CoordinationDashboard = () => {
     }
   };
 
+  /* ── Notificar responsável → cria secretary_request direto ── */
+  const notifyGuardianMutation = useMutation({
+    mutationFn: async (student: typeof atRiskList[0]) => {
+      const desc = student.recommendations.join("; ") || "Acompanhamento solicitado pela coordenação";
+      const { error } = await supabase.from("secretary_requests").insert({
+        school_id: schoolId!,
+        student_id: student.id,
+        student_name: student.full_name,
+        class_id: student.class_id || null,
+        student_status: "ativo",
+        request_type: "Contato com Responsável",
+        description: desc,
+        priority: student.severity === "critica" ? "urgente" : "alta",
+        status: "aberto",
+        origin: "coordenacao",
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Solicitação de contato enviada para a secretaria!");
+      queryClient.invalidateQueries({ queryKey: ["coord-open-requests"] });
+    },
+    onError: () => toast.error("Erro ao enviar solicitação."),
+  });
+
+  const openRequestForStudent = (student: typeof atRiskList[0]) => {
+    setRequestStudent({ id: student.id, full_name: student.full_name, class_id: student.class_id });
+    setRequestDescription(student.recommendations.join("; "));
+    setRequestType("");
+    setRequestModalOpen(true);
+  };
+
   const heroColor = trendDirection === "queda"
     ? "from-destructive/15 to-destructive/5 border-destructive/30"
     : trendDirection === "melhora"
