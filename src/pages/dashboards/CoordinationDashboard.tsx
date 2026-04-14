@@ -596,102 +596,67 @@ const CoordinationDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* 📊 4. INTERVENÇÕES COM RESULTADO */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="rounded-2xl border-border/50">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-bold flex items-center gap-2">
-                <BarChart3 className="h-4 w-4 text-primary" />
-                Resultado das Intervenções
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-xl bg-secondary/10 border border-secondary/20 p-3 text-center">
-                  <ArrowUpRight className="h-4 w-4 text-secondary mx-auto mb-1" />
-                  <p className="text-lg font-extrabold text-secondary">{improvedCount}</p>
-                  <p className="text-[9px] text-muted-foreground font-medium">Melhoraram</p>
-                </div>
-                <div className="rounded-xl bg-muted/30 border border-border/50 p-3 text-center">
-                  <Minus className="h-4 w-4 text-muted-foreground mx-auto mb-1" />
-                  <p className="text-lg font-extrabold text-foreground">{unchangedCount}</p>
-                  <p className="text-[9px] text-muted-foreground font-medium">Sem mudança</p>
-                </div>
-                <div className="rounded-xl bg-destructive/10 border border-destructive/20 p-3 text-center">
-                  <ArrowDownRight className="h-4 w-4 text-destructive mx-auto mb-1" />
-                  <p className="text-lg font-extrabold text-destructive">{worsenedCount}</p>
-                  <p className="text-[9px] text-muted-foreground font-medium">Pioraram</p>
-                </div>
+        {/* 📊 4. INTERVENÇÕES + GRÁFICO — Mais compactos */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Resultado discreto */}
+          <div className="lg:col-span-1 rounded-lg border border-border/40 bg-muted/30 p-4">
+            <p className="text-xs font-medium text-muted-foreground mb-3 flex items-center gap-1.5">
+              <BarChart3 className="h-3.5 w-3.5" /> Resultado das Intervenções
+            </p>
+            <div className="flex gap-3">
+              <div className="flex-1 text-center">
+                <p className="text-lg font-bold text-secondary">{improvedCount}</p>
+                <p className="text-[10px] text-muted-foreground">Melhoraram</p>
               </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1.5 text-muted-foreground"><Clock className="h-3 w-3" /> Aguardando</span>
-                  <span className="font-bold text-foreground">{openInterventions.length}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1.5 text-muted-foreground"><Activity className="h-3 w-3" /> Em andamento</span>
-                  <span className="font-bold text-foreground">{inProgressInterventions.length}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1.5 text-muted-foreground"><CheckCircle2 className="h-3 w-3" /> Resolvidas</span>
-                  <span className="font-bold text-foreground">{resolvedInterventions.length}</span>
-                </div>
+              <div className="flex-1 text-center">
+                <p className="text-lg font-bold text-foreground">{unchangedCount}</p>
+                <p className="text-[10px] text-muted-foreground">Inalterado</p>
               </div>
-
-              {resolvedInterventions.length > 0 && (
-                <div className="rounded-lg bg-secondary/5 border border-secondary/10 p-3">
-                  <p className="text-[10px] font-bold text-foreground mb-1">Taxa de Eficácia</p>
-                  <div className="flex items-center gap-2">
-                    <Progress value={(improvedCount / resolvedInterventions.length) * 100} className="h-2 flex-1" />
-                    <span className="text-xs font-bold text-secondary">
-                      {Math.round((improvedCount / resolvedInterventions.length) * 100)}%
-                    </span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* 📉 5. GRÁFICO */}
-          <Card className="rounded-2xl border-border/50">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-bold flex items-center gap-2">
-                <Activity className="h-4 w-4 text-primary" />
-                Evolução do Desempenho
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={220}>
-                <AreaChart data={trendData}>
-                  <defs>
-                    <linearGradient id="gradPerf" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <ReferenceArea y1={0} y2={4} fill="hsl(var(--destructive))" fillOpacity={0.06} />
-                  <ReferenceArea y1={4} y2={6} fill="hsl(var(--warning))" fillOpacity={0.06} />
-                  <ReferenceArea y1={6} y2={10} fill="hsl(var(--secondary))" fillOpacity={0.04} />
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                  <YAxis domain={[0, 10]} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                  <ReferenceLine y={6} stroke="hsl(var(--destructive))" strokeDasharray="5 5" label={{ value: "Mín. 6.0", fill: "hsl(var(--destructive))", fontSize: 9 }} />
-                  <ReferenceLine y={4} stroke="hsl(var(--destructive))" strokeDasharray="2 4" strokeOpacity={0.4} />
-                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }} />
-                  <Area type="monotone" dataKey="media" stroke="hsl(var(--primary))" fill="url(#gradPerf)" strokeWidth={2.5} dot={{ r: 5, fill: "hsl(var(--primary))", strokeWidth: 2, stroke: "hsl(var(--card))" }} name="Média Geral" />
-                </AreaChart>
-              </ResponsiveContainer>
-              <div className="flex items-center gap-3 mt-3">
-                <div className="flex items-center gap-1.5 text-[9px]"><div className="w-3 h-2 rounded-sm bg-secondary/20" /> Saudável (≥6)</div>
-                <div className="flex items-center gap-1.5 text-[9px]"><div className="w-3 h-2 rounded-sm bg-warning/20" /> Atenção (4-6)</div>
-                <div className="flex items-center gap-1.5 text-[9px]"><div className="w-3 h-2 rounded-sm bg-destructive/20" /> Crítico (&lt;4)</div>
-                <span className={`text-[10px] font-bold ml-auto ${variation < 0 ? "text-destructive" : variation > 0 ? "text-secondary" : "text-muted-foreground"}`}>
-                  {variation >= 0 ? "+" : ""}{variation.toFixed(1)} pts no período
-                </span>
+              <div className="flex-1 text-center">
+                <p className="text-lg font-bold text-destructive">{worsenedCount}</p>
+                <p className="text-[10px] text-muted-foreground">Pioraram</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            <div className="mt-3 pt-3 border-t border-border/30 space-y-1.5 text-[10px] text-muted-foreground">
+              <div className="flex justify-between"><span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Aguardando</span><span className="font-medium text-foreground">{openInterventions.length}</span></div>
+              <div className="flex justify-between"><span className="flex items-center gap-1"><Activity className="h-3 w-3" /> Em andamento</span><span className="font-medium text-foreground">{inProgressInterventions.length}</span></div>
+              <div className="flex justify-between"><span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Resolvidas</span><span className="font-medium text-foreground">{resolvedInterventions.length}</span></div>
+            </div>
+          </div>
+
+          {/* Gráfico compacto */}
+          <div className="lg:col-span-2 rounded-lg border border-border/40 bg-card p-4">
+            <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+              <Activity className="h-3.5 w-3.5" /> Evolução do Desempenho
+            </p>
+            <ResponsiveContainer width="100%" height={140}>
+              <AreaChart data={trendData}>
+                <defs>
+                  <linearGradient id="gradPerf" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <ReferenceArea y1={0} y2={4} fill="hsl(var(--destructive))" fillOpacity={0.06} />
+                <ReferenceArea y1={4} y2={6} fill="hsl(var(--warning))" fillOpacity={0.06} />
+                <ReferenceArea y1={6} y2={10} fill="hsl(var(--secondary))" fillOpacity={0.04} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="month" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                <YAxis domain={[0, 10]} tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                <ReferenceLine y={6} stroke="hsl(var(--destructive))" strokeDasharray="5 5" label={{ value: "Mín. 6.0", fill: "hsl(var(--destructive))", fontSize: 9 }} />
+                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "11px" }} />
+                <Area type="monotone" dataKey="media" stroke="hsl(var(--primary))" fill="url(#gradPerf)" strokeWidth={2} dot={{ r: 4, fill: "hsl(var(--primary))", strokeWidth: 2, stroke: "hsl(var(--card))" }} name="Média Geral" />
+              </AreaChart>
+            </ResponsiveContainer>
+            <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-1 text-[9px] text-muted-foreground"><div className="w-2.5 h-1.5 rounded-sm bg-secondary/30" /> ≥6 Saudável</div>
+              <div className="flex items-center gap-1 text-[9px] text-muted-foreground"><div className="w-2.5 h-1.5 rounded-sm bg-warning/30" /> 4-6 Atenção</div>
+              <div className="flex items-center gap-1 text-[9px] text-muted-foreground"><div className="w-2.5 h-1.5 rounded-sm bg-destructive/30" /> &lt;4 Crítico</div>
+              <span className={`text-[10px] font-medium ml-auto ${variation < 0 ? "text-destructive" : variation > 0 ? "text-secondary" : "text-muted-foreground"}`}>
+                {variation >= 0 ? "+" : ""}{variation.toFixed(1)} pts
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* ── INTERVENÇÕES — ABERTAS ── */}
