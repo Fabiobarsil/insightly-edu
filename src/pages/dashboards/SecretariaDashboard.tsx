@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
@@ -9,6 +9,7 @@ import { Plus, AlertTriangle, FileText, CheckCircle2, Bell, Clock, X } from "luc
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -29,7 +30,7 @@ const NEXT_STATUS: Record<string, string> = {
   "em andamento": "concluido",
 };
 
-type ListModalType = "pendentes" | "resolvidos" | null;
+type ListModalType = "pendentes" | "resolvidos" | "atrasados" | null;
 
 const SecretariaDashboard = () => {
   const { schoolId } = useSchoolId();
@@ -66,6 +67,8 @@ const SecretariaDashboard = () => {
 
   const activeRequests = requests.filter((r) => r.status !== "concluido");
   const resolvedRequests = requests.filter((r) => r.status === "concluido");
+  const today = new Date().toISOString().split("T")[0];
+  const overdueRequests = activeRequests.filter((r) => r.deadline && r.deadline < today);
   const sorted = [...activeRequests].sort(
     (a, b) => PRIORITY_ORDER.indexOf(a.priority) - PRIORITY_ORDER.indexOf(b.priority)
   );
@@ -74,6 +77,15 @@ const SecretariaDashboard = () => {
   const coordCount = activeRequests.filter((r) => r.origin === "coordenacao").length;
   const totalPending = activeRequests.length;
   const totalResolved = resolvedRequests.length;
+  const totalOverdue = overdueRequests.length;
+
+  const healthData = useMemo(() => [
+    { name: "Pendentes", value: totalPending - totalOverdue, color: "#EAB308" },
+    { name: "Resolvidos", value: totalResolved, color: "#22C55E" },
+    { name: "Atrasados", value: totalOverdue, color: "#EF4444" },
+  ].filter((d) => d.value > 0), [totalPending, totalResolved, totalOverdue]);
+
+  const healthTotal = totalPending + totalResolved;
 
   const classifyMutation = useMutation({
     mutationFn: async ({ id, priority }: { id: string; priority: string }) => {
@@ -136,8 +148,8 @@ const SecretariaDashboard = () => {
     },
   ];
 
-  const modalList = listModal === "pendentes" ? activeRequests : resolvedRequests;
-  const modalTitle = listModal === "pendentes" ? "Solicitações Pendentes" : "Solicitações Resolvidas";
+  const modalList = listModal === "pendentes" ? activeRequests : listModal === "atrasados" ? overdueRequests : resolvedRequests;
+  const modalTitle = listModal === "pendentes" ? "Solicitações Pendentes" : listModal === "atrasados" ? "Solicitações Atrasadas" : "Solicitações Resolvidas";
 
   return (
     <RoleLayout title="Secretaria">
@@ -272,7 +284,66 @@ const SecretariaDashboard = () => {
           )}
         </div>
 
-        {/* List Modal (Pendentes / Resolvidos) */}
+        {/* Saúde da Secretaria - Donut Chart */}
+        <div className="bg-card border border-border/60 rounded-xl p-5">
+          <h3 className="text-sm font-bold text-foreground mb-4">📊 Saúde da Secretaria</h3>
+          {healthTotal === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">Nenhuma solicitação registrada.</p>
+          ) : (
+            <div className="flex items-center gap-6">
+              <div className="w-[180px] h-[180px] shrink-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={healthData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={80}
+                      paddingAngle={3}
+                      dataKey="value"
+                      stroke="none"
+                      style={{ cursor: "pointer" }}
+                      onClick={(_, index) => {
+                        const segment = healthData[index]?.name;
+                        if (segment === "Pendentes") setListModal("pendentes");
+                        else if (segment === "Resolvidos") setListModal("resolvidos");
+                        else if (segment === "Atrasados") setListModal("atrasados");
+                      }}
+                    >
+                      {healthData.map((entry, index) => (
+                        <Cell key={index} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value: number, name: string) => [`${value}`, name]}
+                      contentStyle={{ borderRadius: "8px", fontSize: "12px", border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex flex-col gap-3">
+                {[
+                  { label: "Pendentes", value: totalPending - totalOverdue, color: "bg-yellow-500", modal: "pendentes" as ListModalType },
+                  { label: "Resolvidos", value: totalResolved, color: "bg-emerald-500", modal: "resolvidos" as ListModalType },
+                  { label: "Atrasados", value: totalOverdue, color: "bg-red-500", modal: "atrasados" as ListModalType },
+                ].map((item) => (
+                  <button
+                    key={item.label}
+                    onClick={() => setListModal(item.modal)}
+                    className="flex items-center gap-2 text-left hover:opacity-80 transition-opacity"
+                  >
+                    <span className={`w-3 h-3 rounded-full ${item.color} shrink-0`} />
+                    <span className="text-sm text-foreground font-medium">{item.label}</span>
+                    <span className="text-sm font-bold text-foreground">{item.value}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+
         <Dialog open={!!listModal} onOpenChange={(open) => !open && setListModal(null)}>
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
@@ -299,7 +370,7 @@ const SecretariaDashboard = () => {
                           <span className="text-[10px] text-muted-foreground">{format(new Date(r.created_at), "dd/MM/yyyy")}</span>
                         </div>
                       </div>
-                      {next && listModal === "pendentes" && (
+                      {next && (listModal === "pendentes" || listModal === "atrasados") && (
                         <button
                           onClick={() => advanceStatus.mutate({ id: r.id, newStatus: next })}
                           className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1 shrink-0"
