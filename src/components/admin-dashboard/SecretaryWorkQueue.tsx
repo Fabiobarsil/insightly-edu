@@ -254,22 +254,23 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
         )}
       </div>
 
-      {/* Saúde da Secretaria - Donut Chart */}
-      <div className="bg-card border border-border/60 rounded-xl p-5">
-        <h3 className="text-sm font-bold text-foreground mb-4">📊 Saúde da Secretaria</h3>
+      {/* Saúde da Secretaria */}
+      <div className="bg-card border border-border/60 rounded-xl p-6">
+        <h3 className="text-sm font-bold text-foreground mb-5">📊 Saúde da Secretaria</h3>
         {healthTotal === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-6">Nenhuma solicitação registrada.</p>
         ) : (
-          <div className="flex items-center gap-6">
-            <div className="w-[180px] h-[180px] shrink-0">
+          <div className="flex items-center gap-8">
+            {/* Donut - compact */}
+            <div className="w-[120px] h-[120px] shrink-0 relative">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={healthData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={50}
-                    outerRadius={80}
+                    innerRadius={38}
+                    outerRadius={55}
                     paddingAngle={3}
                     dataKey="value"
                     stroke="none"
@@ -291,17 +292,26 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
                   />
                 </PieChart>
               </ResponsiveContainer>
+              <span className="absolute inset-0 flex items-center justify-center text-lg font-bold text-foreground pointer-events-none">
+                {healthTotal}
+              </span>
             </div>
-            <div className="flex flex-col gap-3">
+
+            {/* Stat cards */}
+            <div className="grid grid-cols-3 gap-3 flex-1">
               {[
-                { label: "Pendentes", value: totalPending - totalOverdue, color: "bg-yellow-500", modal: "pendentes" as ListModalType },
-                { label: "Resolvidos", value: totalResolved, color: "bg-emerald-500", modal: "resolvidos" as ListModalType },
-                { label: "Atrasados", value: totalOverdue, color: "bg-red-500", modal: "atrasados" as ListModalType },
+                { label: "Pendentes", value: totalPending - totalOverdue, color: "border-yellow-400 bg-yellow-50 dark:bg-yellow-900/10", textColor: "text-yellow-600 dark:text-yellow-400", desc: "Aguardando ação", modal: "pendentes" as ListModalType },
+                { label: "Resolvidos", value: totalResolved, color: "border-emerald-400 bg-emerald-50 dark:bg-emerald-900/10", textColor: "text-emerald-600 dark:text-emerald-400", desc: "Concluídos com sucesso", modal: "resolvidos" as ListModalType },
+                { label: "Atrasados", value: totalOverdue, color: "border-red-400 bg-red-50 dark:bg-red-900/10", textColor: "text-red-600 dark:text-red-400", desc: "Prazo vencido", modal: "atrasados" as ListModalType },
               ].map((item) => (
-                <button key={item.label} onClick={() => setListModal(item.modal)} className="flex items-center gap-2 text-left hover:opacity-80 transition-opacity">
-                  <span className={`w-3 h-3 rounded-full ${item.color} shrink-0`} />
-                  <span className="text-sm text-foreground font-medium">{item.label}</span>
-                  <span className="text-sm font-bold text-foreground">{item.value}</span>
+                <button
+                  key={item.label}
+                  onClick={() => setListModal(item.modal)}
+                  className={`border-l-[3px] ${item.color} rounded-lg p-4 text-left transition-all hover:shadow-sm hover:-translate-y-0.5`}
+                >
+                  <p className={`text-2xl font-bold ${item.textColor}`}>{item.value}</p>
+                  <p className="text-xs font-semibold text-foreground mt-1">{item.label}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{item.desc}</p>
                 </button>
               ))}
             </div>
