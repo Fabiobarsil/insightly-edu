@@ -1,52 +1,21 @@
 import { useState, useCallback } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import RoleLayout from "@/components/layout/RoleLayout";
 import DashboardHeader from "@/components/admin-dashboard/DashboardHeader";
-import MetricCards, { type DashboardMetrics } from "@/components/admin-dashboard/MetricCards";
 import QuickAccessCards from "@/components/admin-dashboard/QuickAccessCards";
-import OperationalPriorities from "@/components/admin-dashboard/OperationalPriorities";
-import SmartAlerts from "@/components/admin-dashboard/SmartAlerts";
-import DashboardCharts from "@/components/admin-dashboard/DashboardCharts";
 import QuickActions from "@/components/admin-dashboard/QuickActions";
+import DashboardCharts from "@/components/admin-dashboard/DashboardCharts";
 import AdminRecentActivity from "@/components/admin-dashboard/AdminRecentActivity";
 import AdminHealthScore from "@/components/admin-dashboard/AdminHealthScore";
 import AdminAgenda from "@/components/admin-dashboard/AdminAgenda";
-import RequestFormModal from "@/components/secretaria/RequestFormModal";
-import PriorityModal from "@/components/secretaria/PriorityModal";
-import { toast } from "sonner";
-
-const MOCK_METRICS: DashboardMetrics = {
-  activeStudents: 188,
-  avgFrequency: 86,
-  pendingStudents: 18,
-  pendingDocuments: 8,
-};
+import SecretaryWorkQueue from "@/components/admin-dashboard/SecretaryWorkQueue";
 
 const AdminDashboard = () => {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [refreshKey, setRefreshKey] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
-  const [classifyId, setClassifyId] = useState<string | null>(null);
-  const queryClient = useQueryClient();
 
   const handleRefresh = useCallback(() => setRefreshKey((k) => k + 1), []);
-
-  const classifyMutation = useMutation({
-    mutationFn: async ({ id, priority }: { id: string; priority: string }) => {
-      const { error } = await supabase
-        .from("secretary_requests")
-        .update({ priority, updated_at: new Date().toISOString() })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Solicitação classificada e adicionada à fila!");
-      queryClient.invalidateQueries({ queryKey: ["secretary-requests"] });
-      setClassifyId(null);
-    },
-  });
 
   return (
     <RoleLayout title="Secretaria Digital">
@@ -65,16 +34,12 @@ const AdminDashboard = () => {
 
         <QuickAccessCards />
         <QuickActions onNewRequest={() => setModalOpen(true)} />
-        <MetricCards metrics={MOCK_METRICS} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-          <div className="lg:col-span-3">
-            <OperationalPriorities />
-          </div>
-          <div className="lg:col-span-2">
-            <SmartAlerts />
-          </div>
-        </div>
+        {/* Secretary dynamic content: metrics, alerts, work queue, health chart */}
+        <SecretaryWorkQueue
+          externalModalOpen={modalOpen}
+          onExternalModalChange={setModalOpen}
+        />
 
         <DashboardCharts />
 
@@ -84,17 +49,6 @@ const AdminDashboard = () => {
           <div id="agenda-section"><AdminAgenda /></div>
         </div>
       </div>
-
-      <RequestFormModal
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        onCreated={(id) => setClassifyId(id)}
-      />
-      <PriorityModal
-        open={!!classifyId}
-        onConfirm={(priority) => classifyId && classifyMutation.mutate({ id: classifyId, priority })}
-        onCancel={() => setClassifyId(null)}
-      />
     </RoleLayout>
   );
 };
