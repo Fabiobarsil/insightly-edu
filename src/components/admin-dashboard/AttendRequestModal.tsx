@@ -46,16 +46,16 @@ const AttendRequestModal = ({ open, onOpenChange, request }: AttendRequestModalP
   const updateStatus = useMutation({
     mutationFn: async (newStatus: string) => {
       if (!request) return;
-      const updateData: Record<string, string> = {
-        status: newStatus,
-        updated_at: new Date().toISOString(),
-      };
-      if (observation.trim()) {
-        updateData.description = [request.description, `[Obs: ${observation.trim()}]`].filter(Boolean).join(" — ");
-      }
+      const desc = observation.trim()
+        ? [request.description, `[Obs: ${observation.trim()}]`].filter(Boolean).join(" — ")
+        : undefined;
       const { error } = await supabase
         .from("secretary_requests")
-        .update(updateData)
+        .update({
+          status: newStatus,
+          updated_at: new Date().toISOString(),
+          ...(desc ? { description: desc } : {}),
+        })
         .eq("id", request.id);
       if (error) throw error;
     },
