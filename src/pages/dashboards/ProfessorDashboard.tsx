@@ -1,17 +1,18 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import RoleLayout from "@/components/layout/RoleLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  AlertTriangle, BookOpen, BarChart3, CheckCircle2,
+  AlertTriangle, BookOpen, CheckCircle2,
   Clock, MessageSquare, PhoneCall, Activity, User, Send
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
@@ -20,7 +21,10 @@ const ProfessorDashboard = () => {
   const { session } = useAuth();
   const queryClient = useQueryClient();
   const [actionModal, setActionModal] = useState<{ intervention: any; type: string } | null>(null);
+  const [resolveModal, setResolveModal] = useState<any | null>(null);
   const [notes, setNotes] = useState("");
+  const [resolveNotes, setResolveNotes] = useState("");
+  const [resolveImpact, setResolveImpact] = useState("");
 
   /* ── Find teacher record for current user ── */
   const { data: currentTeacher } = useQuery({
@@ -38,7 +42,7 @@ const ProfessorDashboard = () => {
     enabled: !!schoolId && !!session?.user?.id,
   });
 
-  /* ── Fetch interventions for this teacher ── */
+  /* ── Fetch interventions — only where teacher_id is set (never null) ── */
   const { data: interventions = [] } = useQuery({
     queryKey: ["professor-interventions", schoolId, currentTeacher?.id],
     queryFn: async () => {
@@ -118,6 +122,27 @@ const ProfessorDashboard = () => {
     onError: () => toast.error("Erro ao registrar ação."),
   });
 
+  const resolveIntervention = useMutation({
+    mutationFn: async ({ id, impact, teacher_notes }: { id: string; impact: string; teacher_notes: string }) => {
+      if (!teacher_notes.trim()) throw new Error("Informe suas observações antes de concluir.");
+      if (!impact) throw new Error("Selecione o impacto.");
+      const { error } = await supabase.from("pedagogical_interventions").update({
+        status: "resolvido",
+        impact,
+        teacher_notes,
+      }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Intervenção marcada como resolvida!");
+      queryClient.invalidateQueries({ queryKey: ["professor-interventions"] });
+      setResolveModal(null);
+      setResolveNotes("");
+      setResolveImpact("");
+    },
+    onError: (err: any) => toast.error(err.message || "Erro ao resolver."),
+  });
+
   const openAlerts = interventions.filter((i: any) => i.status === "aberto");
   const inProgress = interventions.filter((i: any) => i.status === "em_andamento");
   const resolved = interventions.filter((i: any) => i.status === "resolvido");
@@ -129,17 +154,6 @@ const ProfessorDashboard = () => {
       status: "em_andamento",
       action_type: type,
       teacher_notes: notes || undefined,
-    });
-  };
-
-  const handleResolve = (id: string, impact: string) => {
-    supabase.from("pedagogical_interventions").update({ status: "resolvido", impact }).eq("id", id).then(({ error }) => {
-      if (error) {
-        toast.error("Erro ao resolver.");
-      } else {
-        toast.success("Intervenção marcada como resolvida!");
-        queryClient.invalidateQueries({ queryKey: ["professor-interventions"] });
-      }
     });
   };
 
@@ -201,7 +215,7 @@ const ProfessorDashboard = () => {
           </Card>
         </div>
 
-        {/* ── PONTOS DE ATENÇÃO ── */}
+        {/* ── PONTOS DE ATENÇÃO (status = aberto) ── */}
         {openAlerts.length > 0 && (
           <Card className="rounded-2xl border-destructive/30 border-2">
             <CardHeader className="pb-3">
@@ -228,7 +242,7 @@ const ProfessorDashboard = () => {
                           </div>
                           <div>
                             <p className="text-sm font-semibold text-foreground">{student?.full_name || "Aluno"}</p>
-                            <p className="text-[11px] text-muted-foreground">{subject?.name || "Disciplina"}</p>
+                            {subject && <p className="text-[11px] text-muted-foreground">{subject.name}</p>}
                           </div>
                         </div>
                         <Badge variant={item.severity === "critica" ? "destructive" : "outline"} className="text-[9px]">
@@ -253,10 +267,10 @@ const ProfessorDashboard = () => {
 
                       <div className="flex gap-2 flex-wrap">
                         <Button size="sm" className="text-[11px] h-7 gap-1.5" onClick={() => { setActionModal({ intervention: item, type: "intervencao" }); setNotes(""); }}>
-                          <CheckCircle2 className="h-3 w-3" /> Marcar Intervenção
+                          <CheckCircle2 className="h-3 w-3" /> Registrar Ação
                         </Button>
                         <Button size="sm" variant="outline" className="text-[11px] h-7 gap-1.5" onClick={() => { setActionModal({ intervention: item, type: "observacao" }); setNotes(""); }}>
-                          <MessageSquare className="h-3 w-3" /> Registrar Observação
+                          <MessageSquare className="h-3 w-3" /> Observação
                         </Button>
                         <Button size="sm" variant="outline" className="text-[11px] h-7 gap-1.5" onClick={() => { setActionModal({ intervention: item, type: "contato_responsavel" }); setNotes(""); }}>
                           <PhoneCall className="h-3 w-3" /> Contato Responsável
@@ -285,7 +299,7 @@ const ProfessorDashboard = () => {
                   const student = students.find((st) => st.id === item.student_id);
                   return (
                     <div key={item.id} className="flex items-center gap-3 rounded-xl bg-muted/30 px-4 py-3">
-                      <Clock className="h-4 w-4 text-warning-foreground" />
+                      <Clock className="h-4 w-4 text-warning-foreground shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{student?.full_name || "Aluno"}</p>
                         <p className="text-[10px] text-muted-foreground truncate">{item.reason}</p>
@@ -294,18 +308,19 @@ const ProfessorDashboard = () => {
                             {item.action_type === "intervencao" ? "Intervenção" : item.action_type === "observacao" ? "Observação" : "Contato Resp."}
                           </Badge>
                         )}
+                        {item.teacher_notes && <p className="text-[10px] text-foreground mt-1">📝 {item.teacher_notes}</p>}
                       </div>
-                      <div className="flex gap-1">
-                        <Button size="sm" variant="outline" className="text-[10px] h-6 px-2" onClick={() => handleResolve(item.id, "melhorou")}>
-                          ↑ Melhorou
-                        </Button>
-                        <Button size="sm" variant="outline" className="text-[10px] h-6 px-2" onClick={() => handleResolve(item.id, "sem_mudanca")}>
-                          — Igual
-                        </Button>
-                        <Button size="sm" variant="outline" className="text-[10px] h-6 px-2 text-destructive" onClick={() => handleResolve(item.id, "piorou")}>
-                          ↓ Piorou
-                        </Button>
-                      </div>
+                      <Button
+                        size="sm"
+                        className="text-[10px] h-7 gap-1 shrink-0"
+                        onClick={() => {
+                          setResolveModal(item);
+                          setResolveNotes(item.teacher_notes || "");
+                          setResolveImpact("");
+                        }}
+                      >
+                        <CheckCircle2 className="h-3 w-3" /> Concluir
+                      </Button>
                     </div>
                   );
                 })}
@@ -329,18 +344,26 @@ const ProfessorDashboard = () => {
                   const student = students.find((st) => st.id === item.student_id);
                   return (
                     <div key={item.id} className="flex items-center gap-3 rounded-xl bg-muted/30 px-4 py-3">
-                      <CheckCircle2 className="h-4 w-4 text-secondary" />
+                      <CheckCircle2 className="h-4 w-4 text-secondary shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{student?.full_name || "Aluno"}</p>
                         <p className="text-[10px] text-muted-foreground truncate">{item.reason}</p>
+                        {item.teacher_notes && <p className="text-[10px] text-foreground mt-1">📝 {item.teacher_notes}</p>}
                       </div>
-                      {item.impact && (
-                        <span className={`text-[10px] font-semibold ${
-                          item.impact === "melhorou" ? "text-secondary" : item.impact === "piorou" ? "text-destructive" : "text-muted-foreground"
-                        }`}>
-                          {item.impact === "melhorou" ? "↑ Melhorou" : item.impact === "piorou" ? "↓ Piorou" : "— Sem mudança"}
-                        </span>
-                      )}
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        {item.impact && (
+                          <span className={`text-[10px] font-semibold ${
+                            item.impact === "melhorou" ? "text-secondary" : item.impact === "piorou" ? "text-destructive" : "text-muted-foreground"
+                          }`}>
+                            {item.impact === "melhorou" ? "↑ Melhorou" : item.impact === "piorou" ? "↓ Piorou" : "— Sem mudança"}
+                          </span>
+                        )}
+                        {item.action_type && (
+                          <Badge variant="outline" className="text-[8px]">
+                            {item.action_type === "intervencao" ? "Intervenção" : item.action_type === "observacao" ? "Observação" : "Contato Resp."}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
@@ -383,7 +406,7 @@ const ProfessorDashboard = () => {
         </Card>
       </div>
 
-      {/* ── Action Modal ── */}
+      {/* ── Action Modal (aberto → em_andamento) ── */}
       <Dialog open={!!actionModal} onOpenChange={() => { setActionModal(null); setNotes(""); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -420,6 +443,67 @@ const ProfessorDashboard = () => {
             >
               <Send className="h-4 w-4" />
               Confirmar e Registrar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Resolve Modal (em_andamento → resolvido) ── */}
+      <Dialog open={!!resolveModal} onOpenChange={() => { setResolveModal(null); setResolveNotes(""); setResolveImpact(""); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-sm font-bold flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-secondary" />
+              Concluir Intervenção
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {resolveModal && (
+              <div className="bg-muted/30 rounded-lg p-3">
+                <p className="text-xs font-medium text-foreground">
+                  {students.find((s) => s.id === resolveModal.student_id)?.full_name || "Aluno"}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-1">{resolveModal.reason}</p>
+              </div>
+            )}
+            <div>
+              <label className="text-xs font-medium text-foreground mb-1.5 block">Suas observações finais *</label>
+              <Textarea
+                value={resolveNotes}
+                onChange={(e) => setResolveNotes(e.target.value)}
+                placeholder="Descreva o que foi feito e o resultado observado..."
+                className="text-sm"
+                rows={3}
+                maxLength={500}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-foreground mb-1.5 block">Impacto observado *</label>
+              <Select value={resolveImpact} onValueChange={setResolveImpact}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o impacto" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="melhorou">↑ Melhorou</SelectItem>
+                  <SelectItem value="sem_mudanca">— Sem mudança</SelectItem>
+                  <SelectItem value="piorou">↓ Piorou</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              className="w-full gap-2"
+              onClick={() => {
+                if (!resolveModal) return;
+                resolveIntervention.mutate({
+                  id: resolveModal.id,
+                  impact: resolveImpact,
+                  teacher_notes: resolveNotes,
+                });
+              }}
+              disabled={resolveIntervention.isPending || !resolveNotes.trim() || !resolveImpact}
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              Concluir Intervenção
             </Button>
           </div>
         </DialogContent>

@@ -9,7 +9,7 @@ import {
   User, CheckCircle2, Clock, XCircle, Send,
   BarChart3, Eye, FilePlus2, Bell, Activity, Zap,
   PhoneCall, ArrowUpRight, ArrowDownRight, Minus,
-  Target, Flame, Shield
+  Target, Flame, Shield, Plus
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   ReferenceLine, Area, AreaChart, ReferenceArea
@@ -30,6 +33,22 @@ const CoordinationDashboard = () => {
   const queryClient = useQueryClient();
   const [requestModalOpen, setRequestModalOpen] = useState(false);
   const [focusModalOpen, setFocusModalOpen] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+
+  // Create intervention form state
+  const [formStudentId, setFormStudentId] = useState("");
+  const [formTeacherId, setFormTeacherId] = useState("");
+  const [formReason, setFormReason] = useState("");
+  const [formRecommendation, setFormRecommendation] = useState("");
+  const [formSeverity, setFormSeverity] = useState("media");
+
+  const resetForm = () => {
+    setFormStudentId("");
+    setFormTeacherId("");
+    setFormReason("");
+    setFormRecommendation("");
+    setFormSeverity("media");
+  };
 
   /* ── Data fetching ── */
   const { data: students = [] } = useQuery({
@@ -153,11 +172,13 @@ const CoordinationDashboard = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["coord-resolved-requests"] }),
   });
 
+  /* ── Send intervention from "Ações Recomendadas" (auto) ── */
   const sendIntervention = useMutation({
     mutationFn: async (params: {
       studentId: string; teacherId: string; subjectId: string; classId: string;
       reason: string; recommendation: string; severity: string; avgGrade: number | null; freqPercent: number;
     }) => {
+      if (!params.teacherId) throw new Error("teacher_id obrigatório");
       const { error } = await supabase.from("pedagogical_interventions").insert({
         school_id: schoolId!,
         student_id: params.studentId,
@@ -179,6 +200,34 @@ const CoordinationDashboard = () => {
       queryClient.invalidateQueries({ queryKey: ["coord-interventions"] });
     },
     onError: () => toast.error("Erro ao enviar ponto de atenção."),
+  });
+
+  /* ── Create intervention manually ── */
+  const createIntervention = useMutation({
+    mutationFn: async () => {
+      if (!formTeacherId) throw new Error("Selecione um professor");
+      if (!formReason.trim()) throw new Error("Informe o motivo");
+      if (!formStudentId) throw new Error("Selecione um aluno");
+
+      const { error } = await supabase.from("pedagogical_interventions").insert({
+        school_id: schoolId!,
+        student_id: formStudentId,
+        teacher_id: formTeacherId,
+        reason: formReason.trim(),
+        recommendation: formRecommendation.trim() || null,
+        severity: formSeverity,
+        status: "aberto",
+        created_role: "coordenacao",
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Intervenção criada com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ["coord-interventions"] });
+      setCreateModalOpen(false);
+      resetForm();
+    },
+    onError: (err: any) => toast.error(err.message || "Erro ao criar intervenção."),
   });
 
   /* ── Computed analytics ── */
@@ -346,9 +395,7 @@ const CoordinationDashboard = () => {
           </div>
         )}
 
-        {/* ══════════════════════════════════════════════════
-            🔴 1. HERO — SITUAÇÃO DA ESCOLA HOJE
-           ══════════════════════════════════════════════════ */}
+        {/* 🔴 1. HERO */}
         <div className={`rounded-2xl border bg-gradient-to-br ${heroColor} p-6`}>
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div className="space-y-2">
@@ -386,10 +433,12 @@ const CoordinationDashboard = () => {
             </div>
           </div>
 
-          {/* Quick actions */}
           <div className="flex gap-2 mt-4 flex-wrap">
             <Button size="sm" className="text-xs gap-1.5" onClick={() => setFocusModalOpen(true)}>
               <Target className="h-3.5 w-3.5" /> Ver Ações Recomendadas
+            </Button>
+            <Button size="sm" variant="secondary" className="text-xs gap-1.5" onClick={() => { resetForm(); setCreateModalOpen(true); }}>
+              <Plus className="h-3.5 w-3.5" /> Criar Intervenção
             </Button>
             <Button size="sm" variant="outline" className="text-xs gap-1.5" onClick={() => setRequestModalOpen(true)}>
               <FilePlus2 className="h-3.5 w-3.5" /> Solicitar à Secretaria
@@ -397,9 +446,7 @@ const CoordinationDashboard = () => {
           </div>
         </div>
 
-        {/* ══════════════════════════════════════════════════
-            🧠 2. CAUSAS DE RISCO (INTELIGENTE)
-           ══════════════════════════════════════════════════ */}
+        {/* 🧠 2. CAUSAS DE RISCO */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <Card className="rounded-2xl border-border/50">
             <CardContent className="p-5 space-y-3">
@@ -474,9 +521,7 @@ const CoordinationDashboard = () => {
           </Card>
         </div>
 
-        {/* ══════════════════════════════════════════════════
-            🎯 3. AÇÕES RECOMENDADAS HOJE
-           ══════════════════════════════════════════════════ */}
+        {/* 🎯 3. AÇÕES RECOMENDADAS */}
         <Card className="rounded-2xl border-border/50">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -515,7 +560,6 @@ const CoordinationDashboard = () => {
                           ? "border-warning/30 bg-warning/[0.02]"
                           : "border-border/50"
                     }`}>
-                      {/* Student header */}
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
@@ -551,7 +595,6 @@ const CoordinationDashboard = () => {
                         </Badge>
                       </div>
 
-                      {/* Recommendation */}
                       <div className="bg-primary/5 rounded-lg px-3 py-2.5 border border-primary/10">
                         {s.recommendations.map((r, i) => (
                           <p key={i} className="text-[11px] text-primary font-medium flex items-start gap-1.5">
@@ -560,7 +603,6 @@ const CoordinationDashboard = () => {
                         ))}
                       </div>
 
-                      {/* Actions */}
                       <div className="flex gap-2 flex-wrap">
                         {!alreadySent ? (
                           <Button
@@ -591,9 +633,7 @@ const CoordinationDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* ══════════════════════════════════════════════════
-            📊 4. INTERVENÇÕES COM RESULTADO
-           ══════════════════════════════════════════════════ */}
+        {/* 📊 4. INTERVENÇÕES COM RESULTADO */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="rounded-2xl border-border/50">
             <CardHeader className="pb-3">
@@ -603,7 +643,6 @@ const CoordinationDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Summary boxes */}
               <div className="grid grid-cols-3 gap-3">
                 <div className="rounded-xl bg-secondary/10 border border-secondary/20 p-3 text-center">
                   <ArrowUpRight className="h-4 w-4 text-secondary mx-auto mb-1" />
@@ -622,29 +661,21 @@ const CoordinationDashboard = () => {
                 </div>
               </div>
 
-              {/* Pipeline */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1.5 text-muted-foreground">
-                    <Clock className="h-3 w-3" /> Aguardando
-                  </span>
+                  <span className="flex items-center gap-1.5 text-muted-foreground"><Clock className="h-3 w-3" /> Aguardando</span>
                   <span className="font-bold text-foreground">{openInterventions.length}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1.5 text-muted-foreground">
-                    <Activity className="h-3 w-3" /> Em andamento
-                  </span>
+                  <span className="flex items-center gap-1.5 text-muted-foreground"><Activity className="h-3 w-3" /> Em andamento</span>
                   <span className="font-bold text-foreground">{inProgressInterventions.length}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1.5 text-muted-foreground">
-                    <CheckCircle2 className="h-3 w-3" /> Resolvidas
-                  </span>
+                  <span className="flex items-center gap-1.5 text-muted-foreground"><CheckCircle2 className="h-3 w-3" /> Resolvidas</span>
                   <span className="font-bold text-foreground">{resolvedInterventions.length}</span>
                 </div>
               </div>
 
-              {/* Effectiveness */}
               {resolvedInterventions.length > 0 && (
                 <div className="rounded-lg bg-secondary/5 border border-secondary/10 p-3">
                   <p className="text-[10px] font-bold text-foreground mb-1">Taxa de Eficácia</p>
@@ -659,9 +690,7 @@ const CoordinationDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* ══════════════════════════════════════════════════
-              📉 5. GRÁFICO DE DESEMPENHO COM ZONAS
-             ══════════════════════════════════════════════════ */}
+          {/* 📉 5. GRÁFICO */}
           <Card className="rounded-2xl border-border/50">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-bold flex items-center gap-2">
@@ -678,7 +707,6 @@ const CoordinationDashboard = () => {
                       <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  {/* Zone colors */}
                   <ReferenceArea y1={0} y2={4} fill="hsl(var(--destructive))" fillOpacity={0.06} />
                   <ReferenceArea y1={4} y2={6} fill="hsl(var(--warning))" fillOpacity={0.06} />
                   <ReferenceArea y1={6} y2={10} fill="hsl(var(--secondary))" fillOpacity={0.04} />
@@ -687,38 +715,15 @@ const CoordinationDashboard = () => {
                   <YAxis domain={[0, 10]} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
                   <ReferenceLine y={6} stroke="hsl(var(--destructive))" strokeDasharray="5 5" label={{ value: "Mín. 6.0", fill: "hsl(var(--destructive))", fontSize: 9 }} />
                   <ReferenceLine y={4} stroke="hsl(var(--destructive))" strokeDasharray="2 4" strokeOpacity={0.4} />
-                  <Tooltip
-                    contentStyle={{
-                      background: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                      fontSize: "12px",
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="media"
-                    stroke="hsl(var(--primary))"
-                    fill="url(#gradPerf)"
-                    strokeWidth={2.5}
-                    dot={{ r: 5, fill: "hsl(var(--primary))", strokeWidth: 2, stroke: "hsl(var(--card))" }}
-                    name="Média Geral"
-                  />
+                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }} />
+                  <Area type="monotone" dataKey="media" stroke="hsl(var(--primary))" fill="url(#gradPerf)" strokeWidth={2.5} dot={{ r: 5, fill: "hsl(var(--primary))", strokeWidth: 2, stroke: "hsl(var(--card))" }} name="Média Geral" />
                 </AreaChart>
               </ResponsiveContainer>
               <div className="flex items-center gap-3 mt-3">
-                <div className="flex items-center gap-1.5 text-[9px]">
-                  <div className="w-3 h-2 rounded-sm bg-secondary/20" /> Saudável (≥6)
-                </div>
-                <div className="flex items-center gap-1.5 text-[9px]">
-                  <div className="w-3 h-2 rounded-sm bg-warning/20" /> Atenção (4-6)
-                </div>
-                <div className="flex items-center gap-1.5 text-[9px]">
-                  <div className="w-3 h-2 rounded-sm bg-destructive/20" /> Crítico (&lt;4)
-                </div>
-                <span className={`text-[10px] font-bold ml-auto ${
-                  variation < 0 ? "text-destructive" : variation > 0 ? "text-secondary" : "text-muted-foreground"
-                }`}>
+                <div className="flex items-center gap-1.5 text-[9px]"><div className="w-3 h-2 rounded-sm bg-secondary/20" /> Saudável (≥6)</div>
+                <div className="flex items-center gap-1.5 text-[9px]"><div className="w-3 h-2 rounded-sm bg-warning/20" /> Atenção (4-6)</div>
+                <div className="flex items-center gap-1.5 text-[9px]"><div className="w-3 h-2 rounded-sm bg-destructive/20" /> Crítico (&lt;4)</div>
+                <span className={`text-[10px] font-bold ml-auto ${variation < 0 ? "text-destructive" : variation > 0 ? "text-secondary" : "text-muted-foreground"}`}>
                   {variation >= 0 ? "+" : ""}{variation.toFixed(1)} pts no período
                 </span>
               </div>
@@ -726,37 +731,108 @@ const CoordinationDashboard = () => {
           </Card>
         </div>
 
-        {/* ── Active intervention details ── */}
-        {(openInterventions.length > 0 || inProgressInterventions.length > 0) && (
-          <Card className="rounded-2xl border-border/50">
+        {/* ── INTERVENÇÕES — ABERTAS ── */}
+        {openInterventions.length > 0 && (
+          <Card className="rounded-2xl border-warning/30">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-bold flex items-center gap-2">
-                <ShieldAlert className="h-4 w-4 text-primary" />
-                Intervenções Ativas ({openInterventions.length + inProgressInterventions.length})
+                <Clock className="h-4 w-4 text-warning-foreground" />
+                Intervenções Abertas ({openInterventions.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col gap-2">
-                {[...openInterventions, ...inProgressInterventions].slice(0, 8).map((item) => {
+                {openInterventions.map((item) => {
                   const student = students.find((st) => st.id === item.student_id);
                   const teacher = teachers.find((t) => t.id === item.teacher_id);
                   return (
-                    <div key={item.id} className="flex items-center gap-3 rounded-xl bg-muted/30 px-4 py-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        item.status === "aberto" ? "bg-warning/10" : "bg-primary/10"
-                      }`}>
-                        {item.status === "aberto"
-                          ? <Clock className="h-4 w-4 text-warning-foreground" />
-                          : <Activity className="h-4 w-4 text-primary" />}
-                      </div>
+                    <div key={item.id} className="flex items-center gap-3 rounded-xl bg-warning/5 border border-warning/20 px-4 py-3">
+                      <Clock className="h-4 w-4 text-warning-foreground shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{student?.full_name || "Aluno"}</p>
                         <p className="text-[10px] text-muted-foreground truncate">{item.reason}</p>
                         {teacher && <p className="text-[10px] text-primary">Prof. {teacher.full_name}</p>}
                       </div>
-                      <Badge variant="outline" className="text-[9px] shrink-0">
-                        {item.status === "aberto" ? "⏳ Aguardando" : "🔄 Em Andamento"}
+                      <Badge variant="outline" className="text-[9px] shrink-0 border-warning/30 text-warning-foreground">
+                        ⏳ Aguardando professor
                       </Badge>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ── INTERVENÇÕES — EM ANDAMENTO ── */}
+        {inProgressInterventions.length > 0 && (
+          <Card className="rounded-2xl border-primary/30">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-bold flex items-center gap-2">
+                <Activity className="h-4 w-4 text-primary" />
+                Em Andamento ({inProgressInterventions.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-2">
+                {inProgressInterventions.map((item) => {
+                  const student = students.find((st) => st.id === item.student_id);
+                  const teacher = teachers.find((t) => t.id === item.teacher_id);
+                  return (
+                    <div key={item.id} className="flex items-center gap-3 rounded-xl bg-primary/5 border border-primary/20 px-4 py-3">
+                      <Activity className="h-4 w-4 text-primary shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{student?.full_name || "Aluno"}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{item.reason}</p>
+                        {teacher && <p className="text-[10px] text-primary">Prof. {teacher.full_name}</p>}
+                        {item.teacher_notes && <p className="text-[10px] text-foreground mt-1">📝 {item.teacher_notes}</p>}
+                      </div>
+                      <Badge variant="outline" className="text-[9px] shrink-0">🔄 Em Andamento</Badge>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ── INTERVENÇÕES — RESOLVIDAS ── */}
+        {resolvedInterventions.length > 0 && (
+          <Card className="rounded-2xl border-border/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-bold flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-secondary" />
+                Resolvidas ({resolvedInterventions.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-2">
+                {resolvedInterventions.slice(0, 10).map((item) => {
+                  const student = students.find((st) => st.id === item.student_id);
+                  const teacher = teachers.find((t) => t.id === item.teacher_id);
+                  return (
+                    <div key={item.id} className="flex items-center gap-3 rounded-xl bg-muted/30 px-4 py-3">
+                      <CheckCircle2 className="h-4 w-4 text-secondary shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{student?.full_name || "Aluno"}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{item.reason}</p>
+                        {teacher && <p className="text-[10px] text-primary">Prof. {teacher.full_name}</p>}
+                        {item.teacher_notes && <p className="text-[10px] text-foreground mt-1">📝 {item.teacher_notes}</p>}
+                      </div>
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        {item.impact && (
+                          <span className={`text-[10px] font-semibold ${
+                            item.impact === "melhorou" ? "text-secondary" : item.impact === "piorou" ? "text-destructive" : "text-muted-foreground"
+                          }`}>
+                            {item.impact === "melhorou" ? "↑ Melhorou" : item.impact === "piorou" ? "↓ Piorou" : "— Sem mudança"}
+                          </span>
+                        )}
+                        {item.action_type && (
+                          <Badge variant="outline" className="text-[8px]">
+                            {item.action_type === "intervencao" ? "Intervenção" : item.action_type === "observacao" ? "Observação" : "Contato Resp."}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
@@ -792,7 +868,7 @@ const CoordinationDashboard = () => {
         )}
       </div>
 
-      {/* ── Focus modal — all at-risk students ── */}
+      {/* ── Focus modal ── */}
       <Dialog open={focusModalOpen} onOpenChange={setFocusModalOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -846,6 +922,92 @@ const CoordinationDashboard = () => {
               })}
             </div>
           </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Create Intervention Modal ── */}
+      <Dialog open={createModalOpen} onOpenChange={(open) => { setCreateModalOpen(open); if (!open) resetForm(); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5 text-primary" />
+              Criar Intervenção Pedagógica
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-medium text-foreground mb-1.5 block">Aluno *</label>
+              <Select value={formStudentId} onValueChange={setFormStudentId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o aluno" />
+                </SelectTrigger>
+                <SelectContent>
+                  {students.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-foreground mb-1.5 block">Professor responsável *</label>
+              <Select value={formTeacherId} onValueChange={setFormTeacherId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o professor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {teachers.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.full_name || "Professor"}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-foreground mb-1.5 block">Motivo *</label>
+              <Textarea
+                value={formReason}
+                onChange={(e) => setFormReason(e.target.value)}
+                placeholder="Descreva o motivo da intervenção..."
+                rows={3}
+                maxLength={500}
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-foreground mb-1.5 block">Recomendação (opcional)</label>
+              <Input
+                value={formRecommendation}
+                onChange={(e) => setFormRecommendation(e.target.value)}
+                placeholder="Sugestão de ação para o professor"
+                maxLength={300}
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-foreground mb-1.5 block">Severidade</label>
+              <Select value={formSeverity} onValueChange={setFormSeverity}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="baixa">🟢 Baixa</SelectItem>
+                  <SelectItem value="media">🟡 Média</SelectItem>
+                  <SelectItem value="alta">🟠 Alta</SelectItem>
+                  <SelectItem value="critica">🔴 Crítica</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              className="w-full gap-2"
+              onClick={() => createIntervention.mutate()}
+              disabled={createIntervention.isPending || !formStudentId || !formTeacherId || !formReason.trim()}
+            >
+              <Send className="h-4 w-4" />
+              Criar e Enviar ao Professor
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
