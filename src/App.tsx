@@ -21,6 +21,7 @@ import StudentsList from "./pages/students/StudentsList.tsx";
 import StudentsCreate from "./pages/students/StudentsCreate.tsx";
 import StudentsEdit from "./pages/students/StudentsEdit.tsx";
 import StudentsDetail from "./pages/students/StudentsDetail.tsx";
+import StudentRecord from "./pages/students/StudentRecord.tsx";
 
 import GuardiansList from "./pages/guardians/GuardiansList.tsx";
 import GuardiansCreate from "./pages/guardians/GuardiansCreate.tsx";
