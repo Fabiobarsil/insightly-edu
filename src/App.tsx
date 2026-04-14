@@ -135,7 +135,7 @@ const App = () => (
             <Route path="/admin/configuracoes" element={<RoleRoute allowedRoles={["admin"]}><Settings /></RoleRoute>} />
 
             {/* Secretaria routes */}
-            <Route path="/secretaria/dashboard" element={<RoleRoute allowedRoles={["secretaria"]}><SecretariaDashboard /></RoleRoute>} />
+            <Route path="/secretaria/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="/secretaria/alunos" element={<RoleRoute allowedRoles={["secretaria"]}><StudentsList /></RoleRoute>} />
             <Route path="/secretaria/responsaveis" element={<RoleRoute allowedRoles={["secretaria"]}><GuardiansList /></RoleRoute>} />
             <Route path="/secretaria/turmas" element={<RoleRoute allowedRoles={["secretaria"]}><ClassesList /></RoleRoute>} />

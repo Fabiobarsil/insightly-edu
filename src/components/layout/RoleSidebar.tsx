@@ -30,7 +30,7 @@ const menusByRole: Record<DashboardRole, NavItem[]> = {
     { icon: "ri-settings-3-line", label: "Administração", to: "/admin/configuracoes" },
   ],
   secretaria: [
-    { icon: "ri-dashboard-3-line", label: "Dashboard", to: "/secretaria/dashboard" },
+    { icon: "ri-dashboard-3-line", label: "Dashboard", to: "/admin/dashboard" },
     { icon: "ri-group-line", label: "Alunos", to: "/secretaria/alunos" },
     { icon: "ri-book-open-line", label: "Turmas", to: "/secretaria/turmas" },
     { icon: "ri-booklet-line", label: "Disciplinas", to: "/secretaria/disciplinas" },
