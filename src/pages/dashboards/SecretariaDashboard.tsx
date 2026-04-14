@@ -284,7 +284,66 @@ const SecretariaDashboard = () => {
           )}
         </div>
 
-        {/* List Modal (Pendentes / Resolvidos) */}
+        {/* Saúde da Secretaria - Donut Chart */}
+        <div className="bg-card border border-border/60 rounded-xl p-5">
+          <h3 className="text-sm font-bold text-foreground mb-4">📊 Saúde da Secretaria</h3>
+          {healthTotal === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">Nenhuma solicitação registrada.</p>
+          ) : (
+            <div className="flex items-center gap-6">
+              <div className="w-[180px] h-[180px] shrink-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={healthData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={80}
+                      paddingAngle={3}
+                      dataKey="value"
+                      stroke="none"
+                      style={{ cursor: "pointer" }}
+                      onClick={(_, index) => {
+                        const segment = healthData[index]?.name;
+                        if (segment === "Pendentes") setListModal("pendentes");
+                        else if (segment === "Resolvidos") setListModal("resolvidos");
+                        else if (segment === "Atrasados") setListModal("atrasados");
+                      }}
+                    >
+                      {healthData.map((entry, index) => (
+                        <Cell key={index} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value: number, name: string) => [`${value}`, name]}
+                      contentStyle={{ borderRadius: "8px", fontSize: "12px", border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex flex-col gap-3">
+                {[
+                  { label: "Pendentes", value: totalPending - totalOverdue, color: "bg-yellow-500", modal: "pendentes" as ListModalType },
+                  { label: "Resolvidos", value: totalResolved, color: "bg-emerald-500", modal: "resolvidos" as ListModalType },
+                  { label: "Atrasados", value: totalOverdue, color: "bg-red-500", modal: "atrasados" as ListModalType },
+                ].map((item) => (
+                  <button
+                    key={item.label}
+                    onClick={() => setListModal(item.modal)}
+                    className="flex items-center gap-2 text-left hover:opacity-80 transition-opacity"
+                  >
+                    <span className={`w-3 h-3 rounded-full ${item.color} shrink-0`} />
+                    <span className="text-sm text-foreground font-medium">{item.label}</span>
+                    <span className="text-sm font-bold text-foreground">{item.value}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+
         <Dialog open={!!listModal} onOpenChange={(open) => !open && setListModal(null)}>
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
