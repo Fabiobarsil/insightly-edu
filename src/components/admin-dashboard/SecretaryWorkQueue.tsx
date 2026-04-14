@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import RequestFormModal from "@/components/secretaria/RequestFormModal";
 import PriorityModal from "@/components/secretaria/PriorityModal";
+import AttendRequestModal from "@/components/admin-dashboard/AttendRequestModal";
 
 const PRIORITY_ORDER = ["urgente", "alta", "media", "baixa"];
 const PRIORITY_MAP: Record<string, { label: string; class: string }> = {
