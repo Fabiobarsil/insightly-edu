@@ -404,7 +404,80 @@ const StudentRecord = () => {
 
             {/* Actions */}
             <div className="flex flex-col gap-2 shrink-0">
-              <Button size="sm" onClick={() => setReportOpen(true)} className="gap-2">
+              <Button size="sm" onClick={() => {
+                // Generate HTML report in new tab for printing/PDF
+                const studentData = {
+                  name: student.full_name,
+                  class_name: s.classes?.name || "-",
+                  avg: mediaGeral.toFixed(1),
+                  freq: freqPercent.toFixed(0),
+                  status: situation.label,
+                  status_class: situation.level === "critico" ? "status-critical" : situation.level === "atencao" ? "status-warning" : "status-good",
+                  diagnosis: diagnosticInsight,
+                  conclusion: recommendations[0]?.text || "Manter acompanhamento regular.",
+                };
+                
+                const interventionsHtml = interventions.length > 0 
+                  ? `<ul>${interventions.map(i => `<li><strong>${i.reason}</strong> (${i.status}) - ${i.teacher_notes || "Sem observações"}</li>`).join("")}</ul>`
+                  : "<p>Nenhuma intervenção registrada.</p>";
+                
+                const html = `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Relatório - ${studentData.name}</title>
+<style>
+body { font-family: Arial, sans-serif; padding: 40px; color: #2c2c2c; line-height: 1.6; }
+.header { display: flex; border-bottom: 2px solid #1e3a5f; padding-bottom: 20px; margin-bottom: 30px; }
+.school-info { flex: 1; }
+.title { text-align: center; font-size: 24px; margin: 30px 0; color: #1e3a5f; }
+.cards { display: flex; gap: 20px; margin: 30px 0; }
+.card { flex: 1; padding: 20px; background: #f5f7fa; border-radius: 8px; text-align: center; }
+.card strong { display: block; font-size: 28px; margin-top: 8px; }
+.status-critical { color: #dc2626; }
+.status-warning { color: #f59e0b; }
+.status-good { color: #16a34a; }
+h3 { color: #1e3a5f; margin-top: 30px; border-left: 4px solid #1e3a5f; padding-left: 12px; }
+p { margin: 12px 0; }
+ul { padding-left: 20px; }
+li { margin: 8px 0; }
+.footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #6b7280; text-align: center; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="school-info">
+    <strong style="font-size: 18px;">Escola</strong><br>
+    Relatório de Evolução do Aluno
+  </div>
+</div>
+<h2 class="title">${studentData.name}</h2>
+<p><strong>Turma:</strong> ${studentData.class_name}</p>
+<div class="cards">
+  <div class="card">Média<br><strong class="${studentData.status_class}">${studentData.avg}</strong></div>
+  <div class="card">Frequência<br><strong class="${studentData.status_class}">${studentData.freq}%</strong></div>
+  <div class="card">Status<br><strong class="${studentData.status_class}">${studentData.status}</strong></div>
+</div>
+<h3>Diagnóstico</h3>
+<p>${studentData.diagnosis}</p>
+<h3>Intervenções</h3>
+${interventionsHtml}
+<h3>Conclusão</h3>
+<p>${studentData.conclusion}</p>
+<div class="footer">
+  <p>Documento gerado em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR")}</p>
+</div>
+</body>
+</html>`;
+                
+                const newWindow = window.open("", "_blank");
+                if (newWindow) {
+                  newWindow.document.write(html);
+                  newWindow.document.close();
+                  setTimeout(() => newWindow.print(), 250);
+                }
+              }} className="gap-2">
                 <i className="ri-file-chart-line" /> Gerar Relatório
               </Button>
               <Link to={`/admin/alunos/${id}`}>
@@ -732,8 +805,85 @@ const StudentRecord = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setReportOpen(false)}>Fechar</Button>
-            <Button onClick={() => { window.print(); toast.success("Preparando impressão..."); }}>
-              <i className="ri-printer-line mr-2" /> Imprimir
+            <Button onClick={() => {
+              // Generate HTML report in new tab for printing/PDF
+              const studentData = {
+                name: student.full_name,
+                class_name: s.classes?.name || "-",
+                avg: mediaGeral.toFixed(1),
+                freq: freqPercent.toFixed(0),
+                status: situation.label,
+                status_class: situation.level === "critico" ? "status-critical" : situation.level === "atencao" ? "status-warning" : "status-good",
+                diagnosis: diagnosticInsight,
+                interventions: interventions,
+                conclusion: recommendations[0]?.text || "Manter acompanhamento regular.",
+                school_logo: "",
+                school_name: "Escola",
+              };
+              
+              const interventionsHtml = interventions.length > 0 
+                ? `<ul>${interventions.map(i => `<li><strong>${i.reason}</strong> (${i.status}) - ${i.teacher_notes || "Sem observações"}</li>`).join("")}</ul>`
+                : "<p>Nenhuma intervenção registrada.</p>";
+              
+              const html = `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Relatório - ${studentData.name}</title>
+<style>
+body { font-family: Arial, sans-serif; padding: 40px; color: #2c2c2c; line-height: 1.6; }
+.header { display: flex; border-bottom: 2px solid #1e3a5f; padding-bottom: 20px; margin-bottom: 30px; }
+.logo { width: 80px; height: 80px; margin-right: 20px; object-fit: contain; }
+.school-info { flex: 1; }
+.title { text-align: center; font-size: 24px; margin: 30px 0; color: #1e3a5f; }
+.cards { display: flex; gap: 20px; margin: 30px 0; }
+.card { flex: 1; padding: 20px; background: #f5f7fa; border-radius: 8px; text-align: center; }
+.card strong { display: block; font-size: 28px; margin-top: 8px; }
+.status-critical { color: #dc2626; }
+.status-warning { color: #f59e0b; }
+.status-good { color: #16a34a; }
+h3 { color: #1e3a5f; margin-top: 30px; border-left: 4px solid #1e3a5f; padding-left: 12px; }
+p { margin: 12px 0; }
+ul { padding-left: 20px; }
+li { margin: 8px 0; }
+.footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #6b7280; text-align: center; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="school-info">
+    <strong style="font-size: 18px;">${studentData.school_name}</strong><br>
+    Relatório de Evolução do Aluno
+  </div>
+</div>
+<h2 class="title">${studentData.name}</h2>
+<p><strong>Turma:</strong> ${studentData.class_name}</p>
+<div class="cards">
+  <div class="card">Média<br><strong class="${studentData.status_class}">${studentData.avg}</strong></div>
+  <div class="card">Frequência<br><strong class="${studentData.status_class}">${studentData.freq}%</strong></div>
+  <div class="card">Status<br><strong class="${studentData.status_class}">${studentData.status}</strong></div>
+</div>
+<h3>Diagnóstico</h3>
+<p>${studentData.diagnosis}</p>
+<h3>Intervenções</h3>
+${interventionsHtml}
+<h3>Conclusão</h3>
+<p>${studentData.conclusion}</p>
+<div class="footer">
+  <p>Documento gerado em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR")}</p>
+</div>
+</body>
+</html>`;
+              
+              const newWindow = window.open("", "_blank");
+              if (newWindow) {
+                newWindow.document.write(html);
+                newWindow.document.close();
+                setTimeout(() => newWindow.print(), 250);
+              }
+            }}>
+              <i className="ri-printer-line mr-2" /> Gerar Relatório
             </Button>
           </DialogFooter>
         </DialogContent>
