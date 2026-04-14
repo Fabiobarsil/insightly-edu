@@ -370,6 +370,11 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
         onConfirm={(priority) => classifyId && classifyMutation.mutate({ id: classifyId, priority })}
         onCancel={() => setClassifyId(null)}
       />
+      <AttendRequestModal
+        open={!!attendRequest}
+        onOpenChange={(open) => !open && setAttendRequest(null)}
+        request={attendRequest}
+      />
     </>
   );
 };
