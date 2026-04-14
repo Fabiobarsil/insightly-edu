@@ -44,6 +44,7 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
   const [modalOpen, setModalOpen] = useState(false);
   const [classifyId, setClassifyId] = useState<string | null>(null);
   const [listModal, setListModal] = useState<ListModalType>(null);
+  const [attendRequest, setAttendRequest] = useState<typeof requests[0] | null>(null);
 
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ["secretary-requests", schoolId],
