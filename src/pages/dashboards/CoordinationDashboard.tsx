@@ -395,151 +395,114 @@ const CoordinationDashboard = () => {
           </div>
         )}
 
-        {/* 🔴 1. HERO */}
-        <div className={`rounded-2xl border bg-gradient-to-br ${heroColor} p-6`}>
-          <div className="flex items-start justify-between flex-wrap gap-4">
-            <div className="space-y-2">
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Situação da Escola Hoje</p>
-              <div className="flex items-center gap-3">
-                {heroIcon}
-                <div>
-                  <p className="text-3xl font-extrabold text-foreground leading-none">
-                    {trendDirection === "queda" ? "Em Queda" : trendDirection === "melhora" ? "Evoluindo" : "Estável"}
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-0.5">
-                    Variação recente:{" "}
-                    <span className={`font-bold ${variation < 0 ? "text-destructive" : variation > 0 ? "text-secondary" : "text-muted-foreground"}`}>
-                      {variation >= 0 ? "+" : ""}{variation.toFixed(1)} pts
-                    </span>
-                    {" · "}Média geral: <span className="font-bold text-foreground">{avgGrade.toFixed(1)}</span>
-                  </p>
-                </div>
+        {/* 🔴 1. HERO — Compacto, foco em risco */}
+        <div className={`rounded-xl border bg-gradient-to-br ${heroColor} p-4`}>
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              {heroIcon}
+              <div>
+                <p className="text-sm font-bold text-foreground">
+                  {trendDirection === "queda" ? "Em Queda" : trendDirection === "melhora" ? "Evoluindo" : "Estável"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Var: <span className={`font-semibold ${variation < 0 ? "text-destructive" : variation > 0 ? "text-secondary" : ""}`}>
+                    {variation >= 0 ? "+" : ""}{variation.toFixed(1)}
+                  </span>
+                  {" · "}Média: <span className="text-muted-foreground">{avgGrade.toFixed(1)}</span>
+                </p>
               </div>
             </div>
 
-            <div className="flex gap-3 flex-wrap">
-              <div className="rounded-xl bg-card border border-border/50 px-5 py-3 text-center min-w-[90px]">
-                <p className="text-2xl font-extrabold text-foreground">{totalStudents}</p>
-                <p className="text-[10px] text-muted-foreground font-medium">Alunos Ativos</p>
+            <div className="flex gap-2 flex-wrap">
+              <div className="rounded-lg bg-card border border-border/50 px-3 py-2 text-center min-w-[70px]">
+                <p className="text-lg font-bold text-foreground">{totalStudents}</p>
+                <p className="text-[10px] text-muted-foreground">Ativos</p>
               </div>
-              <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-5 py-3 text-center min-w-[90px]">
-                <p className="text-2xl font-extrabold text-destructive">{criticalCount}</p>
-                <p className="text-[10px] text-destructive font-medium">Risco Crítico</p>
+              <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-2 text-center min-w-[70px]">
+                <p className="text-lg font-bold text-destructive">{criticalCount}</p>
+                <p className="text-[10px] text-destructive font-medium">Crítico</p>
               </div>
-              <div className="rounded-xl bg-warning/10 border border-warning/20 px-5 py-3 text-center min-w-[90px]">
-                <p className="text-2xl font-extrabold text-warning-foreground">{atRiskList.length}</p>
-                <p className="text-[10px] text-warning-foreground font-medium">Em Risco Total</p>
+              <div className="rounded-lg bg-warning/10 border border-warning/20 px-3 py-2 text-center min-w-[70px]">
+                <p className="text-lg font-bold text-warning-foreground">{atRiskList.length}</p>
+                <p className="text-[10px] text-warning-foreground font-medium">Em Risco</p>
               </div>
             </div>
           </div>
 
-          <div className="flex gap-2 mt-4 flex-wrap">
-            <Button size="sm" className="text-xs gap-1.5" onClick={() => setFocusModalOpen(true)}>
-              <Target className="h-3.5 w-3.5" /> Ver Ações Recomendadas
+          <div className="flex gap-2 mt-3 flex-wrap">
+            <Button size="sm" className="text-xs gap-1.5 h-8" onClick={() => setFocusModalOpen(true)}>
+              <Target className="h-3.5 w-3.5" /> Ações Recomendadas
             </Button>
-            <Button size="sm" variant="secondary" className="text-xs gap-1.5" onClick={() => { resetForm(); setCreateModalOpen(true); }}>
-              <Plus className="h-3.5 w-3.5" /> Criar Intervenção
+            <Button size="sm" variant="outline" className="text-xs gap-1.5 h-8" onClick={() => { resetForm(); setCreateModalOpen(true); }}>
+              <Plus className="h-3.5 w-3.5" /> Nova Intervenção
             </Button>
-            <Button size="sm" variant="outline" className="text-xs gap-1.5" onClick={() => setRequestModalOpen(true)}>
-              <FilePlus2 className="h-3.5 w-3.5" /> Solicitar à Secretaria
+            <Button size="sm" variant="ghost" className="text-xs gap-1.5 h-8" onClick={() => setRequestModalOpen(true)}>
+              <FilePlus2 className="h-3.5 w-3.5" /> Solicitar Secretaria
             </Button>
           </div>
         </div>
 
-        {/* 🧠 2. CAUSAS DE RISCO */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <Card className="rounded-2xl border-border/50">
-            <CardContent className="p-5 space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center">
-                  <XCircle className="h-4 w-4 text-destructive" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-foreground">Baixa Frequência</p>
-                  <p className="text-[10px] text-muted-foreground">{onlyFreq} alunos afetados exclusivamente</p>
-                </div>
+        {/* 🧠 2. CAUSAS DE RISCO — Compacto */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-lg border border-border/50 bg-card p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 rounded-md bg-destructive/10 flex items-center justify-center">
+                <XCircle className="h-3.5 w-3.5 text-destructive" />
               </div>
-              <div className="space-y-1">
-                <div className="flex justify-between text-[10px]">
-                  <span className="text-muted-foreground">Impacto no risco total</span>
-                  <span className="font-bold text-foreground">{Math.round((onlyFreq / riskTotal) * 100)}%</span>
-                </div>
-                <Progress value={(onlyFreq / riskTotal) * 100} className="h-1.5" />
+              <div>
+                <p className="text-xs font-semibold text-foreground">Frequência</p>
+                <p className="text-[10px] text-muted-foreground">{onlyFreq} alunos</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            <p className="text-[10px] text-muted-foreground">{Math.round((onlyFreq / riskTotal) * 100)}% do risco</p>
+          </div>
 
-          <Card className="rounded-2xl border-border/50">
-            <CardContent className="p-5 space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-warning/10 flex items-center justify-center">
-                  <TrendingDown className="h-4 w-4 text-warning-foreground" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-foreground">Notas Baixas</p>
-                  <p className="text-[10px] text-muted-foreground">{onlyGrade} alunos afetados exclusivamente</p>
-                </div>
+          <div className="rounded-lg border border-border/50 bg-card p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 rounded-md bg-warning/10 flex items-center justify-center">
+                <TrendingDown className="h-3.5 w-3.5 text-warning-foreground" />
               </div>
-              <div className="space-y-1">
-                <div className="flex justify-between text-[10px]">
-                  <span className="text-muted-foreground">Impacto no risco total</span>
-                  <span className="font-bold text-foreground">{Math.round((onlyGrade / riskTotal) * 100)}%</span>
-                </div>
-                <Progress value={(onlyGrade / riskTotal) * 100} className="h-1.5" />
+              <div>
+                <p className="text-xs font-semibold text-foreground">Notas</p>
+                <p className="text-[10px] text-muted-foreground">{onlyGrade} alunos</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            <p className="text-[10px] text-muted-foreground">{Math.round((onlyGrade / riskTotal) * 100)}% do risco</p>
+          </div>
 
-          <Card className="rounded-2xl border-destructive/20 bg-destructive/[0.02]">
-            <CardContent className="p-5 space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center">
-                  <Flame className="h-4 w-4 text-destructive" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-destructive">Dupla Causa</p>
-                  <p className="text-[10px] text-muted-foreground">{bothCount} alunos com faltas + notas baixas</p>
-                </div>
+          <div className="rounded-lg border border-destructive/20 bg-destructive/[0.02] p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 rounded-md bg-destructive/10 flex items-center justify-center">
+                <Flame className="h-3.5 w-3.5 text-destructive" />
               </div>
-              <div className="space-y-1">
-                <div className="flex justify-between text-[10px]">
-                  <span className="text-muted-foreground">Impacto no risco total</span>
-                  <span className="font-bold text-destructive">{Math.round((bothCount / riskTotal) * 100)}%</span>
-                </div>
-                <Progress value={(bothCount / riskTotal) * 100} className="h-1.5" />
+              <div>
+                <p className="text-xs font-semibold text-destructive">Dupla Causa</p>
+                <p className="text-[10px] text-muted-foreground">{bothCount} alunos</p>
               </div>
-              {subjectWeakness.length > 0 && (
-                <div className="flex flex-wrap gap-1 pt-1">
-                  {subjectWeakness.slice(0, 3).map((s) => (
-                    <Badge key={s.name} variant="outline" className="text-[9px] border-destructive/30 text-destructive">
-                      {s.name} ({s.count})
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            </div>
+            <p className="text-[10px] text-muted-foreground">{Math.round((bothCount / riskTotal) * 100)}% do risco</p>
+          </div>
         </div>
 
-        {/* 🎯 3. AÇÕES RECOMENDADAS */}
-        <Card className="rounded-2xl border-border/50">
-          <CardHeader className="pb-3">
+        {/* 🎯 3. AÇÕES RECOMENDADAS — Destaque principal */}
+        <Card className="rounded-xl border-border/60 shadow-sm">
+          <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-bold flex items-center gap-2">
-                <Target className="h-4 w-4 text-primary" />
+              <CardTitle className="text-base font-bold flex items-center gap-2">
+                <Target className="h-5 w-5 text-primary" />
                 Ações Recomendadas Hoje
                 {atRiskList.length > 0 && (
-                  <Badge variant="destructive" className="text-[9px] ml-1">{atRiskList.length} alunos</Badge>
+                  <Badge variant="destructive" className="text-[10px] ml-1">{atRiskList.length} alunos</Badge>
                 )}
               </CardTitle>
               {atRiskList.length > 4 && (
-                <Button variant="ghost" size="sm" onClick={() => setFocusModalOpen(true)} className="text-xs gap-1">
+                <Button variant="ghost" size="sm" onClick={() => setFocusModalOpen(true)} className="text-xs gap-1 h-8">
                   Ver todos <ArrowUpRight className="h-3 w-3" />
                 </Button>
               )}
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             {atRiskList.length === 0 ? (
               <div className="text-center py-8 space-y-2">
                 <Shield className="h-10 w-10 text-secondary mx-auto opacity-60" />
@@ -547,13 +510,13 @@ const CoordinationDashboard = () => {
                 <p className="text-xs text-muted-foreground">Nenhuma ação de intervenção necessária no momento.</p>
               </div>
             ) : (
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-4">
                 {atRiskList.slice(0, 5).map((s) => {
                   const alreadySent = interventions.some(
                     (i) => i.student_id === s.id && (i.status === "aberto" || i.status === "em_andamento")
                   );
                   return (
-                    <div key={s.id} className={`rounded-xl border p-4 space-y-3 transition-colors ${
+                    <div key={s.id} className={`rounded-lg border p-4 space-y-3 transition-colors ${
                       s.severity === "critica"
                         ? "border-destructive/30 bg-destructive/[0.03]"
                         : s.severity === "alta"
@@ -590,14 +553,14 @@ const CoordinationDashboard = () => {
                             </div>
                           </div>
                         </div>
-                        <Badge variant={s.severity === "critica" ? "destructive" : "outline"} className="text-[9px] shrink-0">
+                        <Badge variant={s.severity === "critica" ? "destructive" : "outline"} className="text-[10px] shrink-0">
                           {s.severity === "critica" ? "🔴 Crítico" : s.severity === "alta" ? "🟠 Alto" : "🟡 Médio"}
                         </Badge>
                       </div>
 
-                      <div className="bg-primary/5 rounded-lg px-3 py-2.5 border border-primary/10">
+                      <div className="bg-primary/5 rounded-md px-3 py-2.5 border border-primary/10">
                         {s.recommendations.map((r, i) => (
-                          <p key={i} className="text-[11px] text-primary font-medium flex items-start gap-1.5">
+                          <p key={i} className="text-xs text-primary font-medium flex items-start gap-1.5">
                             <Zap className="h-3 w-3 shrink-0 mt-0.5" /> {r}
                           </p>
                         ))}
@@ -607,22 +570,22 @@ const CoordinationDashboard = () => {
                         {!alreadySent ? (
                           <Button
                             size="sm"
-                            className="text-[11px] h-7 gap-1.5"
+                            className="text-xs h-8 gap-1.5 font-semibold"
                             onClick={() => handleSendAlert(s)}
                             disabled={sendIntervention.isPending}
                           >
-                            <Send className="h-3 w-3" /> Notificar Professor
+                            <Send className="h-3.5 w-3.5" /> Notificar Professor
                           </Button>
                         ) : (
-                          <Badge variant="secondary" className="text-[10px] gap-1">
+                          <Badge variant="secondary" className="text-[10px] h-8 gap-1 px-3">
                             <CheckCircle2 className="h-3 w-3" /> Já notificado
                           </Badge>
                         )}
-                        <Button size="sm" variant="outline" className="text-[11px] h-7 gap-1" onClick={() => setRequestModalOpen(true)}>
-                          <FilePlus2 className="h-3 w-3" /> Solicitar Secretaria
+                        <Button size="sm" variant="outline" className="text-xs h-8 gap-1" onClick={() => setRequestModalOpen(true)}>
+                          <FilePlus2 className="h-3.5 w-3.5" /> Solicitar Secretaria
                         </Button>
-                        <Button size="sm" variant="ghost" className="text-[11px] h-7 gap-1" onClick={() => navigate(`/admin/alunos/${s.id}`)}>
-                          <Eye className="h-3 w-3" /> Histórico
+                        <Button size="sm" variant="ghost" className="text-xs h-8 gap-1" onClick={() => navigate(`/admin/alunos/${s.id}`)}>
+                          <Eye className="h-3.5 w-3.5" /> Histórico
                         </Button>
                       </div>
                     </div>
@@ -633,102 +596,67 @@ const CoordinationDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* 📊 4. INTERVENÇÕES COM RESULTADO */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="rounded-2xl border-border/50">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-bold flex items-center gap-2">
-                <BarChart3 className="h-4 w-4 text-primary" />
-                Resultado das Intervenções
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-xl bg-secondary/10 border border-secondary/20 p-3 text-center">
-                  <ArrowUpRight className="h-4 w-4 text-secondary mx-auto mb-1" />
-                  <p className="text-lg font-extrabold text-secondary">{improvedCount}</p>
-                  <p className="text-[9px] text-muted-foreground font-medium">Melhoraram</p>
-                </div>
-                <div className="rounded-xl bg-muted/30 border border-border/50 p-3 text-center">
-                  <Minus className="h-4 w-4 text-muted-foreground mx-auto mb-1" />
-                  <p className="text-lg font-extrabold text-foreground">{unchangedCount}</p>
-                  <p className="text-[9px] text-muted-foreground font-medium">Sem mudança</p>
-                </div>
-                <div className="rounded-xl bg-destructive/10 border border-destructive/20 p-3 text-center">
-                  <ArrowDownRight className="h-4 w-4 text-destructive mx-auto mb-1" />
-                  <p className="text-lg font-extrabold text-destructive">{worsenedCount}</p>
-                  <p className="text-[9px] text-muted-foreground font-medium">Pioraram</p>
-                </div>
+        {/* 📊 4. INTERVENÇÕES + GRÁFICO — Mais compactos */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Resultado discreto */}
+          <div className="lg:col-span-1 rounded-lg border border-border/40 bg-muted/30 p-4">
+            <p className="text-xs font-medium text-muted-foreground mb-3 flex items-center gap-1.5">
+              <BarChart3 className="h-3.5 w-3.5" /> Resultado das Intervenções
+            </p>
+            <div className="flex gap-3">
+              <div className="flex-1 text-center">
+                <p className="text-lg font-bold text-secondary">{improvedCount}</p>
+                <p className="text-[10px] text-muted-foreground">Melhoraram</p>
               </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1.5 text-muted-foreground"><Clock className="h-3 w-3" /> Aguardando</span>
-                  <span className="font-bold text-foreground">{openInterventions.length}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1.5 text-muted-foreground"><Activity className="h-3 w-3" /> Em andamento</span>
-                  <span className="font-bold text-foreground">{inProgressInterventions.length}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1.5 text-muted-foreground"><CheckCircle2 className="h-3 w-3" /> Resolvidas</span>
-                  <span className="font-bold text-foreground">{resolvedInterventions.length}</span>
-                </div>
+              <div className="flex-1 text-center">
+                <p className="text-lg font-bold text-foreground">{unchangedCount}</p>
+                <p className="text-[10px] text-muted-foreground">Inalterado</p>
               </div>
-
-              {resolvedInterventions.length > 0 && (
-                <div className="rounded-lg bg-secondary/5 border border-secondary/10 p-3">
-                  <p className="text-[10px] font-bold text-foreground mb-1">Taxa de Eficácia</p>
-                  <div className="flex items-center gap-2">
-                    <Progress value={(improvedCount / resolvedInterventions.length) * 100} className="h-2 flex-1" />
-                    <span className="text-xs font-bold text-secondary">
-                      {Math.round((improvedCount / resolvedInterventions.length) * 100)}%
-                    </span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* 📉 5. GRÁFICO */}
-          <Card className="rounded-2xl border-border/50">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-bold flex items-center gap-2">
-                <Activity className="h-4 w-4 text-primary" />
-                Evolução do Desempenho
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={220}>
-                <AreaChart data={trendData}>
-                  <defs>
-                    <linearGradient id="gradPerf" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <ReferenceArea y1={0} y2={4} fill="hsl(var(--destructive))" fillOpacity={0.06} />
-                  <ReferenceArea y1={4} y2={6} fill="hsl(var(--warning))" fillOpacity={0.06} />
-                  <ReferenceArea y1={6} y2={10} fill="hsl(var(--secondary))" fillOpacity={0.04} />
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                  <YAxis domain={[0, 10]} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                  <ReferenceLine y={6} stroke="hsl(var(--destructive))" strokeDasharray="5 5" label={{ value: "Mín. 6.0", fill: "hsl(var(--destructive))", fontSize: 9 }} />
-                  <ReferenceLine y={4} stroke="hsl(var(--destructive))" strokeDasharray="2 4" strokeOpacity={0.4} />
-                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }} />
-                  <Area type="monotone" dataKey="media" stroke="hsl(var(--primary))" fill="url(#gradPerf)" strokeWidth={2.5} dot={{ r: 5, fill: "hsl(var(--primary))", strokeWidth: 2, stroke: "hsl(var(--card))" }} name="Média Geral" />
-                </AreaChart>
-              </ResponsiveContainer>
-              <div className="flex items-center gap-3 mt-3">
-                <div className="flex items-center gap-1.5 text-[9px]"><div className="w-3 h-2 rounded-sm bg-secondary/20" /> Saudável (≥6)</div>
-                <div className="flex items-center gap-1.5 text-[9px]"><div className="w-3 h-2 rounded-sm bg-warning/20" /> Atenção (4-6)</div>
-                <div className="flex items-center gap-1.5 text-[9px]"><div className="w-3 h-2 rounded-sm bg-destructive/20" /> Crítico (&lt;4)</div>
-                <span className={`text-[10px] font-bold ml-auto ${variation < 0 ? "text-destructive" : variation > 0 ? "text-secondary" : "text-muted-foreground"}`}>
-                  {variation >= 0 ? "+" : ""}{variation.toFixed(1)} pts no período
-                </span>
+              <div className="flex-1 text-center">
+                <p className="text-lg font-bold text-destructive">{worsenedCount}</p>
+                <p className="text-[10px] text-muted-foreground">Pioraram</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            <div className="mt-3 pt-3 border-t border-border/30 space-y-1.5 text-[10px] text-muted-foreground">
+              <div className="flex justify-between"><span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Aguardando</span><span className="font-medium text-foreground">{openInterventions.length}</span></div>
+              <div className="flex justify-between"><span className="flex items-center gap-1"><Activity className="h-3 w-3" /> Em andamento</span><span className="font-medium text-foreground">{inProgressInterventions.length}</span></div>
+              <div className="flex justify-between"><span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Resolvidas</span><span className="font-medium text-foreground">{resolvedInterventions.length}</span></div>
+            </div>
+          </div>
+
+          {/* Gráfico compacto */}
+          <div className="lg:col-span-2 rounded-lg border border-border/40 bg-card p-4">
+            <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+              <Activity className="h-3.5 w-3.5" /> Evolução do Desempenho
+            </p>
+            <ResponsiveContainer width="100%" height={140}>
+              <AreaChart data={trendData}>
+                <defs>
+                  <linearGradient id="gradPerf" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <ReferenceArea y1={0} y2={4} fill="hsl(var(--destructive))" fillOpacity={0.06} />
+                <ReferenceArea y1={4} y2={6} fill="hsl(var(--warning))" fillOpacity={0.06} />
+                <ReferenceArea y1={6} y2={10} fill="hsl(var(--secondary))" fillOpacity={0.04} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="month" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                <YAxis domain={[0, 10]} tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                <ReferenceLine y={6} stroke="hsl(var(--destructive))" strokeDasharray="5 5" label={{ value: "Mín. 6.0", fill: "hsl(var(--destructive))", fontSize: 9 }} />
+                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "11px" }} />
+                <Area type="monotone" dataKey="media" stroke="hsl(var(--primary))" fill="url(#gradPerf)" strokeWidth={2} dot={{ r: 4, fill: "hsl(var(--primary))", strokeWidth: 2, stroke: "hsl(var(--card))" }} name="Média Geral" />
+              </AreaChart>
+            </ResponsiveContainer>
+            <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-1 text-[9px] text-muted-foreground"><div className="w-2.5 h-1.5 rounded-sm bg-secondary/30" /> ≥6 Saudável</div>
+              <div className="flex items-center gap-1 text-[9px] text-muted-foreground"><div className="w-2.5 h-1.5 rounded-sm bg-warning/30" /> 4-6 Atenção</div>
+              <div className="flex items-center gap-1 text-[9px] text-muted-foreground"><div className="w-2.5 h-1.5 rounded-sm bg-destructive/30" /> &lt;4 Crítico</div>
+              <span className={`text-[10px] font-medium ml-auto ${variation < 0 ? "text-destructive" : variation > 0 ? "text-secondary" : "text-muted-foreground"}`}>
+                {variation >= 0 ? "+" : ""}{variation.toFixed(1)} pts
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* ── INTERVENÇÕES — ABERTAS ── */}
