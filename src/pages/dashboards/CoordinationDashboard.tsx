@@ -34,6 +34,9 @@ const CoordinationDashboard = () => {
   const [requestModalOpen, setRequestModalOpen] = useState(false);
   const [focusModalOpen, setFocusModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [requestStudent, setRequestStudent] = useState<{ id: string; full_name: string; class_id: string | null } | null>(null);
+  const [requestDescription, setRequestDescription] = useState("");
+  const [requestType, setRequestType] = useState("");
 
   // Create intervention form state
   const [formStudentId, setFormStudentId] = useState("");
