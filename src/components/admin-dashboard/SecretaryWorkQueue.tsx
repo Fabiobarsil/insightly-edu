@@ -229,7 +229,7 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
                   const st = STATUS_MAP[r.status] || STATUS_MAP.aberto;
                   const next = NEXT_STATUS[r.status];
                   return (
-                    <tr key={r.id} className="border-b border-border/20 hover:bg-accent/40 transition-colors">
+                    <tr key={r.id} className="border-b border-border/20 hover:bg-accent/40 transition-colors cursor-pointer" onClick={() => setAttendRequest(r)}>
                       <td className="px-4 py-3 font-medium text-foreground">{r.student_name || "—"}</td>
                       <td className="px-4 py-3 text-foreground">{r.request_type}</td>
                       <td className="px-4 py-3">
@@ -241,11 +241,9 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
                       <td className="px-4 py-3 text-muted-foreground">{r.deadline ? format(new Date(r.deadline), "dd/MM/yyyy") : "—"}</td>
                       <td className="px-4 py-3"><Badge variant="secondary" className={st.class}>{st.label}</Badge></td>
                       <td className="px-4 py-3 text-right">
-                        {next ? (
-                          <button onClick={() => advanceStatus.mutate({ id: r.id, newStatus: next })} className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1">
-                            {next === "concluido" ? <><CheckCircle2 className="h-3.5 w-3.5" /> Resolver</> : <>→ {STATUS_MAP[next]?.label}</>}
-                          </button>
-                        ) : <span className="text-xs text-muted-foreground">✓</span>}
+                        <span className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1">
+                          Atender
+                        </span>
                       </td>
                     </tr>
                   );
