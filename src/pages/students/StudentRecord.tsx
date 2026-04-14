@@ -7,9 +7,9 @@ import { useSchoolId } from "@/hooks/useSchoolId";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
   ReferenceLine, ReferenceArea, Area, AreaChart,
+  CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from "recharts";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
@@ -57,17 +57,40 @@ const impactIcon: Record<string, string> = { melhorou: "ri-arrow-up-line", pioro
 const statusLabel: Record<string, string> = { aberto: "Aberto", em_andamento: "Em andamento", resolvido: "Resolvido" };
 
 function getSituation(media: number, freq: number) {
-  if (media < 5 || freq < 60) return { label: "Em risco crítico", color: "text-destructive", bg: "bg-destructive/10", icon: "ri-alert-fill" };
-  if (media < 6 || freq < 75) return { label: "Em recuperação", color: "text-warning-foreground", bg: "bg-warning/10", icon: "ri-error-warning-line" };
-  return { label: "Saudável", color: "text-secondary", bg: "bg-secondary/10", icon: "ri-heart-pulse-line" };
+  if (media < 5 || freq < 60) return { label: "Em risco crítico", color: "text-destructive", bg: "bg-destructive/10", icon: "ri-alert-fill", level: "critico" };
+  if (media < 6 || freq < 75) return { label: "Em recuperação", color: "text-warning-foreground", bg: "bg-warning/10", icon: "ri-error-warning-line", level: "atencao" };
+  return { label: "Saudável", color: "text-secondary", bg: "bg-secondary/10", icon: "ri-heart-pulse-line", level: "saudavel" };
 }
 
-function generateInsight(media: number, freq: number): string {
-  if (freq < 60 && media < 5) return "A frequência muito baixa combinada com notas críticas indica necessidade de intervenção urgente com a família.";
-  if (freq < 75 && media < 6) return "A baixa frequência está impactando diretamente o desempenho acadêmico. Recomenda-se acompanhamento pedagógico.";
-  if (freq < 75) return "A frequência abaixo do esperado pode comprometer o rendimento nos próximos bimestres.";
-  if (media < 6) return "O desempenho acadêmico está abaixo da média. Considere reforço nas disciplinas mais críticas.";
-  return "O aluno apresenta desempenho satisfatório. Manter acompanhamento regular.";
+function generateHeroNarrative(name: string, media: number, freq: number, hasGrades: boolean, hasAttendance: boolean): string {
+  const firstName = name.split(" ")[0];
+  if (!hasGrades && !hasAttendance) return `Ainda não há dados suficientes para gerar uma análise sobre ${firstName}. Registre notas e frequência para ativar o diagnóstico.`;
+  if (freq < 60 && media < 5) return `${firstName} apresenta risco crítico: a frequência de ${freq.toFixed(0)}% está muito abaixo do mínimo e a média de ${media.toFixed(1)} compromete a aprovação. É necessária intervenção imediata com a família e equipe pedagógica.`;
+  if (freq < 75 && media < 6) return `${firstName} está em situação de atenção. A baixa frequência (${freq.toFixed(0)}%) está impactando diretamente o desempenho acadêmico (média ${media.toFixed(1)}). Acompanhamento pedagógico é recomendado.`;
+  if (freq < 75) return `A frequência de ${firstName} (${freq.toFixed(0)}%) está abaixo do esperado e pode comprometer o rendimento nos próximos bimestres, mesmo com média atual de ${media.toFixed(1)}.`;
+  if (media < 6 && hasGrades) return `${firstName} mantém boa frequência (${freq.toFixed(0)}%), porém o desempenho acadêmico (média ${media.toFixed(1)}) precisa de atenção. Considere reforço nas disciplinas mais críticas.`;
+  return `${firstName} apresenta desempenho satisfatório com média ${media.toFixed(1)} e frequência de ${freq.toFixed(0)}%. Manter o acompanhamento regular para garantir a continuidade do bom rendimento.`;
+}
+
+function generateDiagnosticInsight(media: number, freq: number, hasGrades: boolean): string {
+  if (freq < 60 && media < 5) return "A ausência frequente está comprometendo gravemente o aprendizado. A correlação entre faltas e notas baixas indica um ciclo que precisa ser interrompido com urgência.";
+  if (freq < 75 && media < 6) return "A baixa frequência está prejudicando o acompanhamento das aulas, refletindo diretamente nas notas. O aluno perde conteúdo essencial a cada ausência.";
+  if (freq < 75) return "A frequência abaixo do esperado é um sinal de alerta. Mesmo com notas razoáveis, a tendência é de queda se o padrão de ausências continuar.";
+  if (media < 6 && hasGrades) return "O desempenho acadêmico está abaixo da média esperada. Identificar as disciplinas mais afetadas é o primeiro passo para um plano de recuperação eficaz.";
+  return "Os indicadores estão dentro dos parâmetros esperados. Não há fatores de risco identificados no momento.";
+}
+
+function generateRadarInsight(data: { dimension: string; value: number }[]): string {
+  const weak = data.filter(d => d.value < 60).map(d => d.dimension.toLowerCase());
+  if (weak.length === 0) return "O perfil de competências está equilibrado, sem dimensões em nível crítico.";
+  if (weak.length === 1) return `Atenção ao indicador de ${weak[0]}, que está abaixo do esperado e pode impactar o desempenho geral.`;
+  return `Baixo desempenho em ${weak.slice(0, -1).join(", ")} e ${weak[weak.length - 1]}. Essas dimensões precisam de atenção prioritária.`;
+}
+
+function getMetricColor(value: number, thresholds: [number, number]): string {
+  if (value < thresholds[0]) return "destructive";
+  if (value < thresholds[1]) return "warning";
+  return "secondary";
 }
 
 // ─── Component ───────────────────────────────────────────────────────
@@ -182,7 +205,7 @@ const StudentRecord = () => {
   const freqPercent = totalAttendance > 0 ? (presentCount / totalAttendance) * 100 : 0;
 
   const situation = getSituation(mediaGeral, freqPercent);
-  const insight = generateInsight(mediaGeral, freqPercent);
+  const heroNarrative = student ? generateHeroNarrative(student.full_name, mediaGeral, freqPercent, gradeValues.length > 0, totalAttendance > 0) : "";
 
   // Timeline data
   const termOrder = ["1º Bimestre", "2º Bimestre", "3º Bimestre", "4º Bimestre"];
@@ -217,7 +240,6 @@ const StudentRecord = () => {
   const radarData = useMemo(() => {
     const normMedia = Math.min(mediaGeral / 10, 1) * 100;
     const normFreq = Math.min(freqPercent, 100);
-    // Mock behavior and participation since no table exists
     const behaviorScore = selectedBehaviors.some(b => ["Indisciplinado", "Distraído"].includes(b)) ? 40 : 80;
     const participationScore = selectedBehaviors.includes("Participativo") ? 85 : selectedBehaviors.includes("Colaborativo") ? 90 : 50;
     return [
@@ -228,13 +250,15 @@ const StudentRecord = () => {
     ];
   }, [mediaGeral, freqPercent, selectedBehaviors]);
 
+  const radarInsight = useMemo(() => generateRadarInsight(radarData), [radarData]);
+
   // Risk factors
   const riskFactors = useMemo(() => {
-    const factors: { label: string; percent: number; color: string }[] = [];
-    if (freqPercent < 75) factors.push({ label: "Baixa Frequência", percent: Math.round(100 - freqPercent), color: "bg-destructive" });
-    if (mediaGeral < 6 && gradeValues.length > 0) factors.push({ label: "Notas Baixas", percent: Math.round((1 - mediaGeral / 10) * 100), color: "bg-warning" });
+    const factors: { label: string; description: string; percent: number; color: string }[] = [];
+    if (freqPercent < 75) factors.push({ label: "Baixa Frequência", description: "Ausências frequentes comprometem o acompanhamento das aulas", percent: Math.round(100 - freqPercent), color: "bg-destructive" });
+    if (mediaGeral < 6 && gradeValues.length > 0) factors.push({ label: "Notas Baixas", description: "Desempenho acadêmico abaixo do mínimo esperado", percent: Math.round((1 - mediaGeral / 10) * 100), color: "bg-warning" });
     const hasDisc = selectedBehaviors.some(b => ["Indisciplinado", "Distraído"].includes(b));
-    if (hasDisc) factors.push({ label: "Comportamento", percent: 60, color: "bg-destructive/70" });
+    if (hasDisc) factors.push({ label: "Comportamento", description: "Padrões comportamentais que dificultam o aprendizado", percent: 60, color: "bg-destructive/70" });
     return factors;
   }, [freqPercent, mediaGeral, gradeValues.length, selectedBehaviors]);
 
@@ -250,16 +274,24 @@ const StudentRecord = () => {
     };
   }, [interventions]);
 
-  // Recommended actions
+  // Recommended actions — more direct and decision-oriented
   const recommendations = useMemo(() => {
-    const recs: { text: string; type: string }[] = [];
-    if (freqPercent < 75) recs.push({ text: "Convocar responsável para discutir frequência", type: "secretaria" });
-    if (mediaGeral < 6 && gradeValues.length > 0) recs.push({ text: "Solicitar reforço nas disciplinas críticas", type: "professor" });
-    if (freqPercent < 60 && mediaGeral < 5) recs.push({ text: "Encaminhar para conselho de classe urgente", type: "coordenacao" });
-    if (interventionStats.aberto > 0) recs.push({ text: `${interventionStats.aberto} intervenção(ões) aguardando ação do professor`, type: "professor" });
-    if (recs.length === 0) recs.push({ text: "Manter acompanhamento regular — situação estável", type: "info" });
+    const recs: { text: string; detail: string; type: string; urgency: string }[] = [];
+    if (freqPercent < 60) recs.push({ text: "Contato imediato com responsável é necessário", detail: `Frequência de ${freqPercent.toFixed(0)}% está muito abaixo do mínimo de 75%`, type: "secretaria", urgency: "critico" });
+    else if (freqPercent < 75) recs.push({ text: "Agendar reunião com responsável sobre frequência", detail: `${(100 - freqPercent).toFixed(0)}% de ausências registradas`, type: "secretaria", urgency: "atencao" });
+    if (mediaGeral < 5 && gradeValues.length > 0) recs.push({ text: "Reforço escolar urgente nas disciplinas críticas", detail: `Média ${mediaGeral.toFixed(1)} — risco de reprovação`, type: "professor", urgency: "critico" });
+    else if (mediaGeral < 6 && gradeValues.length > 0) recs.push({ text: "Solicitar plano de recuperação ao professor", detail: `Média ${mediaGeral.toFixed(1)} — abaixo do mínimo para aprovação`, type: "professor", urgency: "atencao" });
+    if (freqPercent < 60 && mediaGeral < 5) recs.push({ text: "Encaminhar para conselho de classe com urgência", detail: "Combinação de faltas e notas indica necessidade de ação coletiva", type: "coordenacao", urgency: "critico" });
+    if (interventionStats.aberto > 0) recs.push({ text: `${interventionStats.aberto} intervenção(ões) aguardando resposta do professor`, detail: "Acompanhar para garantir que as ações sejam executadas", type: "professor", urgency: "atencao" });
+    if (recs.length === 0) recs.push({ text: "Situação estável — manter acompanhamento regular", detail: "Todos os indicadores dentro dos parâmetros esperados", type: "info", urgency: "ok" });
     return recs;
   }, [freqPercent, mediaGeral, gradeValues.length, interventionStats.aberto]);
+
+  const diagnosticInsight = generateDiagnosticInsight(mediaGeral, freqPercent, gradeValues.length > 0);
+
+  // Metric color helpers
+  const mediaColor = getMetricColor(mediaGeral, [5, 6]);
+  const freqColor = getMetricColor(freqPercent, [60, 75]);
 
   // ─── Render ──────────────────────────────────────────────────────
   if (isLoading || !student) return (
@@ -283,43 +315,89 @@ const StudentRecord = () => {
         {/* ═══ 1. HERO ═══════════════════════════════════════════════ */}
         <section className={cn("rounded-2xl border p-6 md:p-8 relative overflow-hidden", situation.bg, "border-border/40")}>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-            {/* Photo */}
+            {/* Photo — destaque circular */}
             {student.photo_url ? (
               <img src={student.photo_url} alt={student.full_name}
-                className="w-20 h-20 rounded-full object-cover border-4 border-card shadow-lg" />
+                className="w-24 h-24 rounded-full object-cover border-4 border-card shadow-xl ring-2 ring-border/20" />
             ) : (
-              <div className="w-20 h-20 rounded-full bg-card/80 border-4 border-card shadow-lg flex items-center justify-center">
-                <i className="ri-user-line text-3xl text-muted-foreground" />
+              <div className="w-24 h-24 rounded-full bg-card/80 border-4 border-card shadow-xl ring-2 ring-border/20 flex items-center justify-center">
+                <i className="ri-user-line text-4xl text-muted-foreground" />
               </div>
             )}
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 flex-wrap mb-1">
                 <h1 className="text-2xl font-bold text-primary truncate">{student.full_name}</h1>
-                <span className={cn("inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold", situation.bg, situation.color)}>
+                <span className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold", situation.bg, situation.color)}>
                   <i className={situation.icon} /> {situation.label}
                 </span>
               </div>
-              <p className="text-sm text-muted-foreground mb-3">
+              <p className="text-sm text-muted-foreground mb-4">
                 {s.classes?.name || "Sem turma"} · {s.classes?.grade || ""} · {s.classes?.shift || ""}
               </p>
 
-              <div className="flex flex-wrap gap-6">
-                <div>
-                  <div className="text-xs font-bold text-muted-foreground">Média Geral</div>
-                  <div className={cn("text-2xl font-bold", mediaGeral >= 6 ? "text-secondary" : "text-destructive")}>
-                    {gradeValues.length > 0 ? mediaGeral.toFixed(1) : "—"}
+              {/* ── Metric Cards ── */}
+              <div className="flex flex-wrap gap-3">
+                <div className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-xl border shadow-sm",
+                  mediaColor === "destructive" ? "bg-destructive/10 border-destructive/20" :
+                  mediaColor === "warning" ? "bg-warning/10 border-warning/20" :
+                  "bg-secondary/10 border-secondary/20"
+                )}>
+                  <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center",
+                    mediaColor === "destructive" ? "bg-destructive/20" :
+                    mediaColor === "warning" ? "bg-warning/20" : "bg-secondary/20"
+                  )}>
+                    <i className={cn("ri-bar-chart-box-line text-lg",
+                      mediaColor === "destructive" ? "text-destructive" :
+                      mediaColor === "warning" ? "text-warning-foreground" : "text-secondary"
+                    )} />
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Média Geral</div>
+                    <div className={cn("text-xl font-bold",
+                      mediaColor === "destructive" ? "text-destructive" :
+                      mediaColor === "warning" ? "text-warning-foreground" : "text-secondary"
+                    )}>
+                      {gradeValues.length > 0 ? mediaGeral.toFixed(1) : "—"}
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <div className="text-xs font-bold text-muted-foreground">Frequência</div>
-                  <div className={cn("text-2xl font-bold", freqPercent >= 75 ? "text-secondary" : "text-destructive")}>
-                    {totalAttendance > 0 ? `${freqPercent.toFixed(0)}%` : "—"}
+
+                <div className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-xl border shadow-sm",
+                  freqColor === "destructive" ? "bg-destructive/10 border-destructive/20" :
+                  freqColor === "warning" ? "bg-warning/10 border-warning/20" :
+                  "bg-secondary/10 border-secondary/20"
+                )}>
+                  <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center",
+                    freqColor === "destructive" ? "bg-destructive/20" :
+                    freqColor === "warning" ? "bg-warning/20" : "bg-secondary/20"
+                  )}>
+                    <i className={cn("ri-calendar-check-line text-lg",
+                      freqColor === "destructive" ? "text-destructive" :
+                      freqColor === "warning" ? "text-warning-foreground" : "text-secondary"
+                    )} />
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Frequência</div>
+                    <div className={cn("text-xl font-bold",
+                      freqColor === "destructive" ? "text-destructive" :
+                      freqColor === "warning" ? "text-warning-foreground" : "text-secondary"
+                    )}>
+                      {totalAttendance > 0 ? `${freqPercent.toFixed(0)}%` : "—"}
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <div className="text-xs font-bold text-muted-foreground">Intervenções</div>
-                  <div className="text-2xl font-bold text-primary">{interventions.length}</div>
+
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl border bg-muted/5 border-border/30 shadow-sm">
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-primary/10">
+                    <i className="ri-shield-check-line text-lg text-primary" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Intervenções</div>
+                    <div className="text-xl font-bold text-primary">{interventions.length}</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -337,11 +415,15 @@ const StudentRecord = () => {
             </div>
           </div>
 
-          {/* Narrative sentence */}
-          <div className="mt-4 p-3 rounded-xl bg-card/60 border border-border/30">
-            <p className="text-sm text-muted-foreground italic leading-relaxed">
-              <i className="ri-lightbulb-line mr-1 text-warning" />
-              {insight}
+          {/* Narrative sentence — humanized */}
+          <div className="mt-5 p-4 rounded-xl bg-card/70 border border-border/30">
+            <p className="text-sm text-foreground leading-relaxed">
+              <i className={cn("mr-2",
+                situation.level === "critico" ? "ri-alarm-warning-line text-destructive" :
+                situation.level === "atencao" ? "ri-error-warning-line text-warning-foreground" :
+                "ri-lightbulb-line text-secondary"
+              )} />
+              {heroNarrative}
             </p>
           </div>
         </section>
@@ -395,7 +477,7 @@ const StudentRecord = () => {
             </h2>
 
             {riskFactors.length > 0 ? (
-              <div className="space-y-3 mb-5">
+              <div className="space-y-4 mb-5">
                 {riskFactors.map(f => (
                   <div key={f.label}>
                     <div className="flex justify-between text-xs font-bold mb-1">
@@ -405,6 +487,7 @@ const StudentRecord = () => {
                     <div className="h-2 rounded-full bg-muted/20 overflow-hidden">
                       <div className={cn("h-full rounded-full transition-all", f.color)} style={{ width: `${f.percent}%` }} />
                     </div>
+                    <p className="text-[11px] text-muted-foreground mt-1">{f.description}</p>
                   </div>
                 ))}
               </div>
@@ -412,9 +495,17 @@ const StudentRecord = () => {
               <p className="text-sm text-muted-foreground mb-5">Nenhum fator de risco identificado.</p>
             )}
 
+            {/* Diagnostic insight */}
+            <div className="p-3 rounded-xl bg-muted/5 border border-border/20">
+              <p className="text-xs text-muted-foreground leading-relaxed italic">
+                <i className="ri-lightbulb-flash-line mr-1 text-warning" />
+                {diagnosticInsight}
+              </p>
+            </div>
+
             {/* Subject performance */}
             {subjectMap.length > 0 && (
-              <>
+              <div className="mt-5">
                 <h3 className="text-xs font-bold text-muted-foreground uppercase mb-2">Desempenho por Disciplina</h3>
                 <div className="space-y-2">
                   {subjectMap.map(s => (
@@ -429,7 +520,7 @@ const StudentRecord = () => {
                     </div>
                   ))}
                 </div>
-              </>
+              </div>
             )}
           </section>
 
@@ -438,7 +529,7 @@ const StudentRecord = () => {
             <h2 className="text-base font-bold text-primary mb-4 flex items-center gap-2">
               <i className="ri-compass-3-line text-secondary" /> Radar de Competências
             </h2>
-            <ResponsiveContainer width="100%" height={260}>
+            <ResponsiveContainer width="100%" height={240}>
               <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="75%">
                 <PolarGrid stroke="hsl(var(--border))" />
                 <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
@@ -446,6 +537,13 @@ const StudentRecord = () => {
                 <Radar dataKey="value" stroke="hsl(var(--secondary))" fill="hsl(var(--secondary))" fillOpacity={0.2} strokeWidth={2} />
               </RadarChart>
             </ResponsiveContainer>
+            {/* Radar interpretation */}
+            <div className="mt-3 p-3 rounded-xl bg-muted/5 border border-border/20">
+              <p className="text-xs text-muted-foreground leading-relaxed italic">
+                <i className="ri-focus-3-line mr-1 text-secondary" />
+                {radarInsight}
+              </p>
+            </div>
           </section>
         </div>
 
@@ -455,15 +553,32 @@ const StudentRecord = () => {
             <h2 className="text-base font-bold text-primary flex items-center gap-2">
               <i className="ri-shield-check-line text-secondary" /> Intervenções Pedagógicas
             </h2>
-            <div className="flex gap-4 text-xs font-bold">
-              <span className="text-secondary"><i className="ri-arrow-up-circle-line mr-1" />{interventionStats.melhorou} melhorou</span>
-              <span className="text-muted-foreground"><i className="ri-subtract-line mr-1" />{interventionStats.sem_mudanca} sem mudança</span>
-              <span className="text-destructive"><i className="ri-arrow-down-circle-line mr-1" />{interventionStats.piorou} piorou</span>
-            </div>
+            {interventions.length > 0 && (
+              <div className="flex gap-4 text-xs font-bold">
+                <span className="text-secondary"><i className="ri-arrow-up-circle-line mr-1" />{interventionStats.melhorou} melhorou</span>
+                <span className="text-muted-foreground"><i className="ri-subtract-line mr-1" />{interventionStats.sem_mudanca} sem mudança</span>
+                <span className="text-destructive"><i className="ri-arrow-down-circle-line mr-1" />{interventionStats.piorou} piorou</span>
+              </div>
+            )}
           </div>
 
           {interventions.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">Nenhuma intervenção registrada.</p>
+            <div className="text-center py-10 space-y-3">
+              <div className="w-14 h-14 rounded-full bg-warning/10 flex items-center justify-center mx-auto">
+                <i className="ri-alert-line text-2xl text-warning-foreground" />
+              </div>
+              <p className="text-sm font-medium text-primary">Nenhuma intervenção registrada</p>
+              <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                {situation.level === "critico"
+                  ? "Este aluno apresenta indicadores críticos. Recomenda-se registrar uma intervenção imediatamente."
+                  : situation.level === "atencao"
+                  ? "O aluno está em situação de atenção. Considere registrar uma intervenção preventiva."
+                  : "Nenhuma intervenção necessária no momento. Continue monitorando os indicadores."}
+              </p>
+              <Button variant="outline" size="sm" className="gap-2 mt-2" onClick={() => setInterventionOpen(true)}>
+                <i className="ri-add-line" /> Registrar Intervenção
+              </Button>
+            </div>
           ) : (
             <div className="space-y-3">
               {interventions.slice(0, 5).map(i => (
@@ -481,7 +596,12 @@ const StudentRecord = () => {
                         {statusLabel[i.status] || i.status}
                       </span>
                     </div>
-                    {i.teacher_notes && <p className="text-xs text-muted-foreground mt-1">"{i.teacher_notes}"</p>}
+                    {i.teachers?.full_name && (
+                      <p className="text-[11px] text-muted-foreground">
+                        <i className="ri-user-star-line mr-1" /> Prof. {i.teachers.full_name}
+                      </p>
+                    )}
+                    {i.teacher_notes && <p className="text-xs text-muted-foreground mt-1 italic">"{i.teacher_notes}"</p>}
                     {i.impact && (
                       <span className={cn("inline-flex items-center gap-1 text-xs font-bold mt-1",
                         i.impact === "melhorou" ? "text-secondary" : i.impact === "piorou" ? "text-destructive" : "text-muted-foreground"
@@ -506,17 +626,25 @@ const StudentRecord = () => {
           </h2>
           <div className="space-y-3">
             {recommendations.map((r, i) => (
-              <div key={i} className="flex items-center justify-between p-4 rounded-xl border border-border/30 bg-background/50">
-                <div className="flex items-center gap-3">
-                  <i className={cn("text-lg",
+              <div key={i} className={cn(
+                "flex items-center justify-between p-4 rounded-xl border",
+                r.urgency === "critico" ? "bg-destructive/5 border-destructive/20" :
+                r.urgency === "atencao" ? "bg-warning/5 border-warning/20" :
+                "bg-background/50 border-border/30"
+              )}>
+                <div className="flex items-start gap-3">
+                  <i className={cn("text-lg mt-0.5",
                     r.type === "secretaria" ? "ri-building-line text-primary" :
                     r.type === "professor" ? "ri-user-star-line text-secondary" :
                     r.type === "coordenacao" ? "ri-alarm-warning-line text-destructive" :
                     "ri-checkbox-circle-line text-secondary"
                   )} />
-                  <span className="text-sm text-primary">{r.text}</span>
+                  <div>
+                    <span className="text-sm font-semibold text-primary block">{r.text}</span>
+                    <span className="text-[11px] text-muted-foreground">{r.detail}</span>
+                  </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 shrink-0">
                   {r.type === "professor" && (
                     <Button size="sm" variant="outline" className="text-xs gap-1" onClick={() => toast.success("Notificação enviada ao professor")}>
                       <i className="ri-notification-line" /> Notificar
@@ -576,11 +704,7 @@ const StudentRecord = () => {
           <div className="space-y-4 text-sm">
             <div>
               <h4 className="font-bold text-primary mb-1">Situação Atual</h4>
-              <p className="text-muted-foreground">
-                {student.full_name} está classificado como <strong className={situation.color}>{situation.label}</strong>.
-                {gradeValues.length > 0 && ` Média geral: ${mediaGeral.toFixed(1)}.`}
-                {totalAttendance > 0 && ` Frequência: ${freqPercent.toFixed(0)}%.`}
-              </p>
+              <p className="text-muted-foreground">{heroNarrative}</p>
             </div>
             <div>
               <h4 className="font-bold text-primary mb-1">Evolução</h4>
@@ -591,15 +715,19 @@ const StudentRecord = () => {
               ) : <p className="text-muted-foreground">Dados insuficientes para análise de evolução.</p>}
             </div>
             <div>
+              <h4 className="font-bold text-primary mb-1">Diagnóstico</h4>
+              <p className="text-muted-foreground">{diagnosticInsight}</p>
+            </div>
+            <div>
               <h4 className="font-bold text-primary mb-1">Intervenções</h4>
               <p className="text-muted-foreground">
-                {interventions.length === 0 ? "Nenhuma intervenção registrada." :
-                  `${interventions.length} intervenção(ões). ${interventionStats.melhorou} com melhora, ${interventionStats.piorou} com piora, ${interventionStats.sem_mudanca} sem mudança.`}
+                {interventions.length === 0 ? "Nenhuma intervenção registrada até o momento." :
+                  `${interventions.length} intervenção(ões) registrada(s). ${interventionStats.melhorou} com melhora, ${interventionStats.piorou} com piora, ${interventionStats.sem_mudanca} sem mudança.`}
               </p>
             </div>
             <div>
               <h4 className="font-bold text-primary mb-1">Recomendação</h4>
-              <p className="text-muted-foreground">{insight}</p>
+              <p className="text-muted-foreground">{recommendations[0]?.text || "Manter acompanhamento regular."}</p>
             </div>
           </div>
           <DialogFooter>
