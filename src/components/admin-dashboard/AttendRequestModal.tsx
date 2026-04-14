@@ -1,11 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle2, PlayCircle, User, FileText, MapPin, AlertTriangle, Clock } from "lucide-react";
+import { CheckCircle2, PlayCircle, User, FileText, MapPin, Clock, ExternalLink, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -22,6 +23,28 @@ const STATUS_MAP: Record<string, { label: string; class: string }> = {
   concluido: { label: "Concluído", class: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" },
 };
 
+// Map request types to routing behavior
+const DOC_TYPES = ["Boletim", "Histórico Escolar", "Declaração", "Certificado de Conclusão"];
+
+type RouteType = "documento" | "comunicacao" | "manual";
+
+function getRouteType(requestType: string): RouteType {
+  if (DOC_TYPES.some((t) => requestType.toLowerCase().includes(t.toLowerCase()))) return "documento";
+  if (requestType.toLowerCase().includes("contato") || requestType.toLowerCase().includes("responsável") || requestType.toLowerCase().includes("comunicação")) return "comunicacao";
+  return "manual";
+}
+
+function getRouteLabel(type: RouteType): { label: string; icon: typeof FileText; desc: string } {
+  switch (type) {
+    case "documento":
+      return { label: "Ir para Documentos", icon: FileText, desc: "Abrir módulo de documentos para gerar o documento solicitado" };
+    case "comunicacao":
+      return { label: "Ir para Comunicação", icon: MessageCircle, desc: "Abrir módulo de comunicação para contatar responsável" };
+    default:
+      return { label: "", icon: FileText, desc: "" };
+  }
+}
+
 interface AttendRequestModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -36,10 +59,12 @@ interface AttendRequestModalProps {
     deadline: string | null;
     student_status: string;
     created_at: string;
+    student_id?: string | null;
   } | null;
 }
 
 const AttendRequestModal = ({ open, onOpenChange, request }: AttendRequestModalProps) => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [observation, setObservation] = useState("");
 
@@ -68,12 +93,30 @@ const AttendRequestModal = ({ open, onOpenChange, request }: AttendRequestModalP
     onError: () => toast.error("Erro ao atualizar solicitação."),
   });
 
+  const handleStartAndRoute = async () => {
+    if (!request) return;
+    const routeType = getRouteType(request.request_type);
+
+    // Update status to "em andamento"
+    await updateStatus.mutateAsync("em andamento");
+
+    // Route based on type
+    if (routeType === "documento") {
+      navigate("/admin/documentos");
+    } else if (routeType === "comunicacao") {
+      navigate("/admin/comunicacao");
+    }
+    // "manual" stays closed (modal already closed by updateStatus onSuccess)
+  };
+
   if (!request) return null;
 
   const pri = PRIORITY_MAP[request.priority] || PRIORITY_MAP.media;
   const st = STATUS_MAP[request.status] || STATUS_MAP.aberto;
   const canStart = request.status === "aberto";
   const canResolve = request.status === "aberto" || request.status === "em andamento";
+  const routeType = getRouteType(request.request_type);
+  const routeInfo = getRouteLabel(routeType);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -133,6 +176,17 @@ const AttendRequestModal = ({ open, onOpenChange, request }: AttendRequestModalP
             )}
           </div>
 
+          {/* Smart routing indicator */}
+          {canStart && routeType !== "manual" && (
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 flex items-start gap-3">
+              <ExternalLink className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+              <div>
+                <p className="text-xs font-semibold text-foreground">Roteamento inteligente</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">{routeInfo.desc}</p>
+              </div>
+            </div>
+          )}
+
           {/* Description */}
           {request.description && (
             <div className="bg-muted/50 rounded-lg p-3">
@@ -157,15 +211,28 @@ const AttendRequestModal = ({ open, onOpenChange, request }: AttendRequestModalP
 
         <DialogFooter className="gap-2 sm:gap-2">
           {canStart && (
-            <Button
-              variant="outline"
-              onClick={() => updateStatus.mutate("em andamento")}
-              disabled={updateStatus.isPending}
-              className="gap-2"
-            >
-              <PlayCircle className="h-4 w-4" />
-              Iniciar Atendimento
-            </Button>
+            <>
+              {routeType !== "manual" ? (
+                <Button
+                  onClick={handleStartAndRoute}
+                  disabled={updateStatus.isPending}
+                  className="gap-2"
+                >
+                  <routeInfo.icon className="h-4 w-4" />
+                  {routeInfo.label}
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={() => updateStatus.mutate("em andamento")}
+                  disabled={updateStatus.isPending}
+                  className="gap-2"
+                >
+                  <PlayCircle className="h-4 w-4" />
+                  Iniciar Atendimento
+                </Button>
+              )}
+            </>
           )}
           {canResolve && (
             <Button
