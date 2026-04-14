@@ -442,100 +442,67 @@ const CoordinationDashboard = () => {
           </div>
         </div>
 
-        {/* 🧠 2. CAUSAS DE RISCO */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <Card className="rounded-2xl border-border/50">
-            <CardContent className="p-5 space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center">
-                  <XCircle className="h-4 w-4 text-destructive" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-foreground">Baixa Frequência</p>
-                  <p className="text-[10px] text-muted-foreground">{onlyFreq} alunos afetados exclusivamente</p>
-                </div>
+        {/* 🧠 2. CAUSAS DE RISCO — Compacto */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-lg border border-border/50 bg-card p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 rounded-md bg-destructive/10 flex items-center justify-center">
+                <XCircle className="h-3.5 w-3.5 text-destructive" />
               </div>
-              <div className="space-y-1">
-                <div className="flex justify-between text-[10px]">
-                  <span className="text-muted-foreground">Impacto no risco total</span>
-                  <span className="font-bold text-foreground">{Math.round((onlyFreq / riskTotal) * 100)}%</span>
-                </div>
-                <Progress value={(onlyFreq / riskTotal) * 100} className="h-1.5" />
+              <div>
+                <p className="text-xs font-semibold text-foreground">Frequência</p>
+                <p className="text-[10px] text-muted-foreground">{onlyFreq} alunos</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            <p className="text-[10px] text-muted-foreground">{Math.round((onlyFreq / riskTotal) * 100)}% do risco</p>
+          </div>
 
-          <Card className="rounded-2xl border-border/50">
-            <CardContent className="p-5 space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-warning/10 flex items-center justify-center">
-                  <TrendingDown className="h-4 w-4 text-warning-foreground" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-foreground">Notas Baixas</p>
-                  <p className="text-[10px] text-muted-foreground">{onlyGrade} alunos afetados exclusivamente</p>
-                </div>
+          <div className="rounded-lg border border-border/50 bg-card p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 rounded-md bg-warning/10 flex items-center justify-center">
+                <TrendingDown className="h-3.5 w-3.5 text-warning-foreground" />
               </div>
-              <div className="space-y-1">
-                <div className="flex justify-between text-[10px]">
-                  <span className="text-muted-foreground">Impacto no risco total</span>
-                  <span className="font-bold text-foreground">{Math.round((onlyGrade / riskTotal) * 100)}%</span>
-                </div>
-                <Progress value={(onlyGrade / riskTotal) * 100} className="h-1.5" />
+              <div>
+                <p className="text-xs font-semibold text-foreground">Notas</p>
+                <p className="text-[10px] text-muted-foreground">{onlyGrade} alunos</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            <p className="text-[10px] text-muted-foreground">{Math.round((onlyGrade / riskTotal) * 100)}% do risco</p>
+          </div>
 
-          <Card className="rounded-2xl border-destructive/20 bg-destructive/[0.02]">
-            <CardContent className="p-5 space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center">
-                  <Flame className="h-4 w-4 text-destructive" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-destructive">Dupla Causa</p>
-                  <p className="text-[10px] text-muted-foreground">{bothCount} alunos com faltas + notas baixas</p>
-                </div>
+          <div className="rounded-lg border border-destructive/20 bg-destructive/[0.02] p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 rounded-md bg-destructive/10 flex items-center justify-center">
+                <Flame className="h-3.5 w-3.5 text-destructive" />
               </div>
-              <div className="space-y-1">
-                <div className="flex justify-between text-[10px]">
-                  <span className="text-muted-foreground">Impacto no risco total</span>
-                  <span className="font-bold text-destructive">{Math.round((bothCount / riskTotal) * 100)}%</span>
-                </div>
-                <Progress value={(bothCount / riskTotal) * 100} className="h-1.5" />
+              <div>
+                <p className="text-xs font-semibold text-destructive">Dupla Causa</p>
+                <p className="text-[10px] text-muted-foreground">{bothCount} alunos</p>
               </div>
-              {subjectWeakness.length > 0 && (
-                <div className="flex flex-wrap gap-1 pt-1">
-                  {subjectWeakness.slice(0, 3).map((s) => (
-                    <Badge key={s.name} variant="outline" className="text-[9px] border-destructive/30 text-destructive">
-                      {s.name} ({s.count})
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            </div>
+            <p className="text-[10px] text-muted-foreground">{Math.round((bothCount / riskTotal) * 100)}% do risco</p>
+          </div>
         </div>
 
-        {/* 🎯 3. AÇÕES RECOMENDADAS */}
-        <Card className="rounded-2xl border-border/50">
-          <CardHeader className="pb-3">
+        {/* 🎯 3. AÇÕES RECOMENDADAS — Destaque principal */}
+        <Card className="rounded-xl border-border/60 shadow-sm">
+          <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-bold flex items-center gap-2">
-                <Target className="h-4 w-4 text-primary" />
+              <CardTitle className="text-base font-bold flex items-center gap-2">
+                <Target className="h-5 w-5 text-primary" />
                 Ações Recomendadas Hoje
                 {atRiskList.length > 0 && (
-                  <Badge variant="destructive" className="text-[9px] ml-1">{atRiskList.length} alunos</Badge>
+                  <Badge variant="destructive" className="text-[10px] ml-1">{atRiskList.length} alunos</Badge>
                 )}
               </CardTitle>
               {atRiskList.length > 4 && (
-                <Button variant="ghost" size="sm" onClick={() => setFocusModalOpen(true)} className="text-xs gap-1">
+                <Button variant="ghost" size="sm" onClick={() => setFocusModalOpen(true)} className="text-xs gap-1 h-8">
                   Ver todos <ArrowUpRight className="h-3 w-3" />
                 </Button>
               )}
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             {atRiskList.length === 0 ? (
               <div className="text-center py-8 space-y-2">
                 <Shield className="h-10 w-10 text-secondary mx-auto opacity-60" />
@@ -543,13 +510,13 @@ const CoordinationDashboard = () => {
                 <p className="text-xs text-muted-foreground">Nenhuma ação de intervenção necessária no momento.</p>
               </div>
             ) : (
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-4">
                 {atRiskList.slice(0, 5).map((s) => {
                   const alreadySent = interventions.some(
                     (i) => i.student_id === s.id && (i.status === "aberto" || i.status === "em_andamento")
                   );
                   return (
-                    <div key={s.id} className={`rounded-xl border p-4 space-y-3 transition-colors ${
+                    <div key={s.id} className={`rounded-lg border p-4 space-y-3 transition-colors ${
                       s.severity === "critica"
                         ? "border-destructive/30 bg-destructive/[0.03]"
                         : s.severity === "alta"
@@ -586,14 +553,14 @@ const CoordinationDashboard = () => {
                             </div>
                           </div>
                         </div>
-                        <Badge variant={s.severity === "critica" ? "destructive" : "outline"} className="text-[9px] shrink-0">
+                        <Badge variant={s.severity === "critica" ? "destructive" : "outline"} className="text-[10px] shrink-0">
                           {s.severity === "critica" ? "🔴 Crítico" : s.severity === "alta" ? "🟠 Alto" : "🟡 Médio"}
                         </Badge>
                       </div>
 
-                      <div className="bg-primary/5 rounded-lg px-3 py-2.5 border border-primary/10">
+                      <div className="bg-primary/5 rounded-md px-3 py-2.5 border border-primary/10">
                         {s.recommendations.map((r, i) => (
-                          <p key={i} className="text-[11px] text-primary font-medium flex items-start gap-1.5">
+                          <p key={i} className="text-xs text-primary font-medium flex items-start gap-1.5">
                             <Zap className="h-3 w-3 shrink-0 mt-0.5" /> {r}
                           </p>
                         ))}
@@ -603,22 +570,22 @@ const CoordinationDashboard = () => {
                         {!alreadySent ? (
                           <Button
                             size="sm"
-                            className="text-[11px] h-7 gap-1.5"
+                            className="text-xs h-8 gap-1.5 font-semibold"
                             onClick={() => handleSendAlert(s)}
                             disabled={sendIntervention.isPending}
                           >
-                            <Send className="h-3 w-3" /> Notificar Professor
+                            <Send className="h-3.5 w-3.5" /> Notificar Professor
                           </Button>
                         ) : (
-                          <Badge variant="secondary" className="text-[10px] gap-1">
+                          <Badge variant="secondary" className="text-[10px] h-8 gap-1 px-3">
                             <CheckCircle2 className="h-3 w-3" /> Já notificado
                           </Badge>
                         )}
-                        <Button size="sm" variant="outline" className="text-[11px] h-7 gap-1" onClick={() => setRequestModalOpen(true)}>
-                          <FilePlus2 className="h-3 w-3" /> Solicitar Secretaria
+                        <Button size="sm" variant="outline" className="text-xs h-8 gap-1" onClick={() => setRequestModalOpen(true)}>
+                          <FilePlus2 className="h-3.5 w-3.5" /> Solicitar Secretaria
                         </Button>
-                        <Button size="sm" variant="ghost" className="text-[11px] h-7 gap-1" onClick={() => navigate(`/admin/alunos/${s.id}`)}>
-                          <Eye className="h-3 w-3" /> Histórico
+                        <Button size="sm" variant="ghost" className="text-xs h-8 gap-1" onClick={() => navigate(`/admin/alunos/${s.id}`)}>
+                          <Eye className="h-3.5 w-3.5" /> Histórico
                         </Button>
                       </div>
                     </div>
