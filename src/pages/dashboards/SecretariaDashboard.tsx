@@ -370,7 +370,7 @@ const SecretariaDashboard = () => {
                           <span className="text-[10px] text-muted-foreground">{format(new Date(r.created_at), "dd/MM/yyyy")}</span>
                         </div>
                       </div>
-                      {next && listModal === "pendentes" && (
+                      {next && (listModal === "pendentes" || listModal === "atrasados") && (
                         <button
                           onClick={() => advanceStatus.mutate({ id: r.id, newStatus: next })}
                           className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1 shrink-0"
