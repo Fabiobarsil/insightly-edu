@@ -48,12 +48,25 @@ const SecretariaDashboard = () => {
     enabled: !!schoolId,
   });
 
+  // Real-time: auto-refresh when secretary_requests change
+  useEffect(() => {
+    if (!schoolId) return;
+    const channel = supabase
+      .channel("secretary-requests-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "secretary_requests", filter: `school_id=eq.${schoolId}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ["secretary-requests", schoolId] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [schoolId, queryClient]);
+
   const activeRequests = requests.filter((r) => r.status !== "concluido");
   const sorted = [...activeRequests].sort(
     (a, b) => PRIORITY_ORDER.indexOf(a.priority) - PRIORITY_ORDER.indexOf(b.priority)
   );
 
   const urgentCount = activeRequests.filter((r) => r.priority === "urgente").length;
+  const coordCount = activeRequests.filter((r) => r.origin === "coordenacao").length;
   const totalPending = activeRequests.length;
 
   // Classify priority after creation
