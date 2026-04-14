@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import RoleLayout from "@/components/layout/RoleLayout";
@@ -167,6 +167,23 @@ const CoordinationDashboard = () => {
     },
     enabled: !!schoolId,
   });
+
+  // Real-time: auto-refresh when coordenação requests are resolved
+  useEffect(() => {
+    if (!schoolId) return;
+    const channel = supabase
+      .channel("coord-requests-realtime")
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "secretary_requests", filter: `school_id=eq.${schoolId}` }, (payload) => {
+        const newRecord = payload.new as any;
+        if (newRecord.origin === "coordenacao" && newRecord.status === "concluido") {
+          toast.success(`Solicitação resolvida: ${newRecord.request_type} — ${newRecord.student_name || ""}`, { duration: 6000 });
+        }
+        queryClient.invalidateQueries({ queryKey: ["coord-resolved-requests"] });
+        queryClient.invalidateQueries({ queryKey: ["coord-open-requests"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [schoolId, queryClient]);
 
   const dismissResolved = useMutation({
     mutationFn: async (id: string) => {

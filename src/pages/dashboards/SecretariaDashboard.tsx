@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
 import RoleLayout from "@/components/layout/RoleLayout";
 import RequestFormModal from "@/components/secretaria/RequestFormModal";
 import PriorityModal from "@/components/secretaria/PriorityModal";
-import { Plus, AlertTriangle, FileText, Users, CheckCircle2 } from "lucide-react";
+import { Plus, AlertTriangle, FileText, Users, CheckCircle2, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -48,12 +48,25 @@ const SecretariaDashboard = () => {
     enabled: !!schoolId,
   });
 
+  // Real-time: auto-refresh when secretary_requests change
+  useEffect(() => {
+    if (!schoolId) return;
+    const channel = supabase
+      .channel("secretary-requests-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "secretary_requests", filter: `school_id=eq.${schoolId}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ["secretary-requests", schoolId] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [schoolId, queryClient]);
+
   const activeRequests = requests.filter((r) => r.status !== "concluido");
   const sorted = [...activeRequests].sort(
     (a, b) => PRIORITY_ORDER.indexOf(a.priority) - PRIORITY_ORDER.indexOf(b.priority)
   );
 
   const urgentCount = activeRequests.filter((r) => r.priority === "urgente").length;
+  const coordCount = activeRequests.filter((r) => r.origin === "coordenacao").length;
   const totalPending = activeRequests.length;
 
   // Classify priority after creation
@@ -91,11 +104,29 @@ const SecretariaDashboard = () => {
   const metrics = [
     { label: "Pendentes", value: totalPending, icon: FileText, accent: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
     { label: "Urgentes", value: urgentCount, icon: AlertTriangle, accent: urgentCount > 0 ? "bg-destructive/10 text-destructive" : "bg-muted/50 text-muted-foreground" },
+    { label: "Da Coordenação", value: coordCount, icon: Bell, accent: coordCount > 0 ? "bg-primary/10 text-primary" : "bg-muted/50 text-muted-foreground" },
   ];
 
   return (
     <RoleLayout title="Secretaria">
       <div className="flex flex-col gap-6">
+        {/* Coordenação alert banner */}
+        {coordCount > 0 && (
+          <div className="flex items-center gap-3 bg-primary/10 border border-primary/20 rounded-xl px-4 py-3 animate-in fade-in-0 slide-in-from-top-2 duration-300">
+            <Bell className="h-5 w-5 text-primary shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground">
+                {coordCount} solicitação(ões) da Coordenação Pedagógica
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {activeRequests.filter((r) => r.origin === "coordenacao").map((r) => r.student_name || r.request_type).slice(0, 3).join(", ")}
+                {coordCount > 3 ? ` e mais ${coordCount - 3}...` : ""}
+              </p>
+            </div>
+            <Badge variant="secondary" className="bg-primary/15 text-primary text-[10px] shrink-0">Nova</Badge>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
