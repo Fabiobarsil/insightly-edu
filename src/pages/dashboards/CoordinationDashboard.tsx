@@ -395,53 +395,49 @@ const CoordinationDashboard = () => {
           </div>
         )}
 
-        {/* 🔴 1. HERO */}
-        <div className={`rounded-2xl border bg-gradient-to-br ${heroColor} p-6`}>
-          <div className="flex items-start justify-between flex-wrap gap-4">
-            <div className="space-y-2">
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Situação da Escola Hoje</p>
-              <div className="flex items-center gap-3">
-                {heroIcon}
-                <div>
-                  <p className="text-3xl font-extrabold text-foreground leading-none">
-                    {trendDirection === "queda" ? "Em Queda" : trendDirection === "melhora" ? "Evoluindo" : "Estável"}
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-0.5">
-                    Variação recente:{" "}
-                    <span className={`font-bold ${variation < 0 ? "text-destructive" : variation > 0 ? "text-secondary" : "text-muted-foreground"}`}>
-                      {variation >= 0 ? "+" : ""}{variation.toFixed(1)} pts
-                    </span>
-                    {" · "}Média geral: <span className="font-bold text-foreground">{avgGrade.toFixed(1)}</span>
-                  </p>
-                </div>
+        {/* 🔴 1. HERO — Compacto, foco em risco */}
+        <div className={`rounded-xl border bg-gradient-to-br ${heroColor} p-4`}>
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              {heroIcon}
+              <div>
+                <p className="text-sm font-bold text-foreground">
+                  {trendDirection === "queda" ? "Em Queda" : trendDirection === "melhora" ? "Evoluindo" : "Estável"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Var: <span className={`font-semibold ${variation < 0 ? "text-destructive" : variation > 0 ? "text-secondary" : ""}`}>
+                    {variation >= 0 ? "+" : ""}{variation.toFixed(1)}
+                  </span>
+                  {" · "}Média: <span className="text-muted-foreground">{avgGrade.toFixed(1)}</span>
+                </p>
               </div>
             </div>
 
-            <div className="flex gap-3 flex-wrap">
-              <div className="rounded-xl bg-card border border-border/50 px-5 py-3 text-center min-w-[90px]">
-                <p className="text-2xl font-extrabold text-foreground">{totalStudents}</p>
-                <p className="text-[10px] text-muted-foreground font-medium">Alunos Ativos</p>
+            <div className="flex gap-2 flex-wrap">
+              <div className="rounded-lg bg-card border border-border/50 px-3 py-2 text-center min-w-[70px]">
+                <p className="text-lg font-bold text-foreground">{totalStudents}</p>
+                <p className="text-[10px] text-muted-foreground">Ativos</p>
               </div>
-              <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-5 py-3 text-center min-w-[90px]">
-                <p className="text-2xl font-extrabold text-destructive">{criticalCount}</p>
-                <p className="text-[10px] text-destructive font-medium">Risco Crítico</p>
+              <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-2 text-center min-w-[70px]">
+                <p className="text-lg font-bold text-destructive">{criticalCount}</p>
+                <p className="text-[10px] text-destructive font-medium">Crítico</p>
               </div>
-              <div className="rounded-xl bg-warning/10 border border-warning/20 px-5 py-3 text-center min-w-[90px]">
-                <p className="text-2xl font-extrabold text-warning-foreground">{atRiskList.length}</p>
-                <p className="text-[10px] text-warning-foreground font-medium">Em Risco Total</p>
+              <div className="rounded-lg bg-warning/10 border border-warning/20 px-3 py-2 text-center min-w-[70px]">
+                <p className="text-lg font-bold text-warning-foreground">{atRiskList.length}</p>
+                <p className="text-[10px] text-warning-foreground font-medium">Em Risco</p>
               </div>
             </div>
           </div>
 
-          <div className="flex gap-2 mt-4 flex-wrap">
-            <Button size="sm" className="text-xs gap-1.5" onClick={() => setFocusModalOpen(true)}>
-              <Target className="h-3.5 w-3.5" /> Ver Ações Recomendadas
+          <div className="flex gap-2 mt-3 flex-wrap">
+            <Button size="sm" className="text-xs gap-1.5 h-8" onClick={() => setFocusModalOpen(true)}>
+              <Target className="h-3.5 w-3.5" /> Ações Recomendadas
             </Button>
-            <Button size="sm" variant="secondary" className="text-xs gap-1.5" onClick={() => { resetForm(); setCreateModalOpen(true); }}>
-              <Plus className="h-3.5 w-3.5" /> Criar Intervenção
+            <Button size="sm" variant="outline" className="text-xs gap-1.5 h-8" onClick={() => { resetForm(); setCreateModalOpen(true); }}>
+              <Plus className="h-3.5 w-3.5" /> Nova Intervenção
             </Button>
-            <Button size="sm" variant="outline" className="text-xs gap-1.5" onClick={() => setRequestModalOpen(true)}>
-              <FilePlus2 className="h-3.5 w-3.5" /> Solicitar à Secretaria
+            <Button size="sm" variant="ghost" className="text-xs gap-1.5 h-8" onClick={() => setRequestModalOpen(true)}>
+              <FilePlus2 className="h-3.5 w-3.5" /> Solicitar Secretaria
             </Button>
           </div>
         </div>
