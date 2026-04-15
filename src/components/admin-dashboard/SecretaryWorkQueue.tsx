@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
-import { useDashboard } from "@/hooks/useDashboard";
+
 import { Plus, AlertTriangle, CheckCircle2, Bell, Clock, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -60,35 +60,28 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
   // Debug: log school_id
   console.log("school_id:", schoolId);
 
-  // ── Cards: valores da view v_dashboard_main (pedagogical_interventions) ──
-  const { data: dashData } = useDashboard(schoolId);
-  const totalPending = dashData?.pendentes ?? 0;
-  const totalResolved = dashData?.resolvidos ?? 0;
-  const urgentCount = dashData?.urgentes ?? 0;
-  const coordCount = dashData?.da_coordenacao ?? 0;
-
-  // ── Card filter: query pedagogical_interventions based on card clicked ──
-  const { data: filteredInterventions = [], isLoading: isFilterLoading } = useQuery({
-    queryKey: ["pedagogical-interventions-filtered", schoolId, cardFilter],
+  // ── Cards: valores calculados direto de secretary_requests ──
+  const { data: cardCounts } = useQuery({
+    queryKey: ["dashboard-cards", schoolId],
     queryFn: async () => {
-      if (!schoolId || !cardFilter) return [];
-      let query = supabase.from("pedagogical_interventions").select("*").eq("school_id", schoolId);
-
-      if (cardFilter === "pendentes") {
-        query = query.in("status", ["aberto", "em_andamento"]);
-      } else if (cardFilter === "resolvidos") {
-        query = query.eq("status", "resolvido");
-      } else if (cardFilter === "urgentes") {
-        query = query.eq("severity", "alta").in("status", ["aberto", "em_andamento"]);
-      } else if (cardFilter === "coordenacao") {
-        query = query.eq("created_role", "coordenacao");
-      }
-
-      const { data } = await query.order("created_at", { ascending: false });
-      return data || [];
+      const { data } = await supabase
+        .from("secretary_requests")
+        .select("status, priority, origin")
+        .eq("school_id", schoolId!);
+      const rows = data ?? [];
+      return {
+        pendentes: rows.filter(r => r.status !== "concluido").length,
+        resolvidos: rows.filter(r => r.status === "concluido").length,
+        urgentes: rows.filter(r => r.priority === "urgente" && r.status !== "concluido").length,
+        da_coordenacao: rows.filter(r => r.origin === "coordenacao" && r.status !== "concluido").length,
+      };
     },
-    enabled: !!schoolId && !!cardFilter,
+    enabled: !!schoolId,
   });
+  const totalPending = cardCounts?.pendentes ?? 0;
+  const totalResolved = cardCounts?.resolvidos ?? 0;
+  const urgentCount = cardCounts?.urgentes ?? 0;
+  const coordCount = cardCounts?.da_coordenacao ?? 0;
 
   // ── Secretary work queue (secretary_requests) — kept intact ──
   const { data: requests = [], isLoading } = useQuery({
@@ -447,55 +440,51 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
         )}
       </div>
 
-      {/* Card filter modal (pedagogical_interventions) */}
+      {/* Card filter modal (secretary_requests filtered) */}
       <Dialog open={!!cardFilter} onOpenChange={(open) => !open && setCardFilter(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{cardFilter ? cardFilterTitle[cardFilter] : ""}</DialogTitle>
           </DialogHeader>
-          {isFilterLoading ? (
-            <div className="py-8 text-center">
-              <p className="text-sm text-muted-foreground">Carregando...</p>
-            </div>
-          ) : filteredInterventions.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-6 text-center">Nenhuma intervenção encontrada.</p>
-          ) : (
-            <div className="space-y-3 mt-2">
-              {filteredInterventions.map((iv: any) => {
-                const sev = SEVERITY_MAP[iv.severity] || SEVERITY_MAP.media;
-                const st = STATUS_MAP[iv.status] || STATUS_MAP.aberto;
-                return (
-                  <div key={iv.id} className="border border-border/60 rounded-lg p-3 flex items-center gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground truncate">{iv.reason}</p>
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <Badge variant="secondary" className={sev.class + " text-[10px]"}>
-                          {sev.label}
-                        </Badge>
-                        <Badge variant="secondary" className={st.class + " text-[10px]"}>
-                          {st.label}
-                        </Badge>
-                        {iv.created_role === "coordenacao" && (
-                          <Badge
-                            variant="outline"
-                            className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 text-[10px]"
-                          >
-                            Coordenação
-                          </Badge>
+          {(() => {
+            const filtered = cardFilter === "pendentes" ? activeRequests
+              : cardFilter === "resolvidos" ? resolvedRequests
+              : cardFilter === "urgentes" ? activeRequests.filter(r => r.priority === "urgente")
+              : cardFilter === "coordenacao" ? activeRequests.filter(r => r.origin === "coordenacao")
+              : [];
+            return filtered.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-6 text-center">Nenhuma solicitação encontrada.</p>
+            ) : (
+              <div className="space-y-3 mt-2">
+                {filtered.map((r: any) => {
+                  const pri = PRIORITY_MAP[r.priority] || PRIORITY_MAP.media;
+                  const st = STATUS_MAP[r.status] || STATUS_MAP.aberto;
+                  return (
+                    <div key={r.id} className="border border-border/60 rounded-lg p-3 flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground truncate">{r.student_name || r.request_type}</p>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <Badge variant="secondary" className={pri.class + " text-[10px]"}>{pri.label}</Badge>
+                          <Badge variant="secondary" className={st.class + " text-[10px]"}>{st.label}</Badge>
+                          {r.origin === "coordenacao" && (
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 text-[10px]">
+                              Coordenação
+                            </Badge>
+                          )}
+                          <span className="text-[10px] text-muted-foreground">
+                            {format(new Date(r.created_at), "dd/MM/yyyy")}
+                          </span>
+                        </div>
+                        {r.description && (
+                          <p className="text-xs text-muted-foreground mt-1 truncate">💡 {r.description}</p>
                         )}
-                        <span className="text-[10px] text-muted-foreground">
-                          {format(new Date(iv.created_at), "dd/MM/yyyy")}
-                        </span>
                       </div>
-                      {iv.recommendation && (
-                        <p className="text-xs text-muted-foreground mt-1 truncate">💡 {iv.recommendation}</p>
-                      )}
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            );
+          })()}
         </DialogContent>
       </Dialog>
 
