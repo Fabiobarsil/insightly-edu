@@ -1271,6 +1271,16 @@ export type Database = {
       }
     }
     Views: {
+      v_dashboard_main: {
+        Row: {
+          da_coordenacao: number | null
+          pendentes: number | null
+          resolvidos: number | null
+          school_id: string | null
+          urgentes: number | null
+        }
+        Relationships: []
+      }
       vw_student_performance: {
         Row: {
           full_name: string | null
