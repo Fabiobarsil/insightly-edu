@@ -49,6 +49,7 @@ interface SecretaryWorkQueueProps {
 }
 
 const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalChange }: SecretaryWorkQueueProps) => {
+  const schoolId = "0cd6ed2b-75e0-4fb1-a7ae-ead1bec80d1e";
   const { schoolId } = useSchoolId();
   const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
@@ -72,10 +73,7 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
     queryKey: ["pedagogical-interventions-filtered", schoolId, cardFilter],
     queryFn: async () => {
       if (!schoolId || !cardFilter) return [];
-      let query = supabase
-        .from("pedagogical_interventions")
-        .select("*")
-        .eq("school_id", schoolId);
+      let query = supabase.from("pedagogical_interventions").select("*").eq("school_id", schoolId);
 
       if (cardFilter === "pendentes") {
         query = query.in("status", ["aberto", "em_andamento"]);
@@ -112,11 +110,17 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
     if (!schoolId) return;
     const channel = supabase
       .channel("secretary-requests-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "secretary_requests", filter: `school_id=eq.${schoolId}` }, () => {
-        queryClient.invalidateQueries({ queryKey: ["secretary-requests", schoolId] });
-      })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "secretary_requests", filter: `school_id=eq.${schoolId}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["secretary-requests", schoolId] });
+        },
+      )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [schoolId, queryClient]);
 
   const activeRequests = requests.filter((r) => r.status !== "concluido");
@@ -124,18 +128,22 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
   const today = new Date().toISOString().split("T")[0];
   const overdueRequests = activeRequests.filter((r) => r.deadline && r.deadline < today);
   const sorted = [...activeRequests].sort(
-    (a, b) => PRIORITY_ORDER.indexOf(a.priority) - PRIORITY_ORDER.indexOf(b.priority)
+    (a, b) => PRIORITY_ORDER.indexOf(a.priority) - PRIORITY_ORDER.indexOf(b.priority),
   );
 
   const totalOverdue = overdueRequests.length;
   const secPending = activeRequests.length;
   const secResolved = resolvedRequests.length;
 
-  const healthData = useMemo(() => [
-    { name: "Pendentes", value: secPending - totalOverdue, color: "#EAB308" },
-    { name: "Resolvidos", value: secResolved, color: "#22C55E" },
-    { name: "Atrasados", value: totalOverdue, color: "#EF4444" },
-  ].filter((d) => d.value > 0), [secPending, secResolved, totalOverdue]);
+  const healthData = useMemo(
+    () =>
+      [
+        { name: "Pendentes", value: secPending - totalOverdue, color: "#EAB308" },
+        { name: "Resolvidos", value: secResolved, color: "#22C55E" },
+        { name: "Atrasados", value: totalOverdue, color: "#EF4444" },
+      ].filter((d) => d.value > 0),
+    [secPending, secResolved, totalOverdue],
+  );
 
   const healthTotal = secPending + secResolved;
 
@@ -172,30 +180,50 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
   // ── Dashboard metric cards (values from view, click filters pedagogical_interventions) ──
   const metrics = [
     {
-      label: "Pendentes", value: totalPending, icon: Clock,
-      accent: totalPending > 0 ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" : "bg-muted/50 text-muted-foreground",
+      label: "Pendentes",
+      value: totalPending,
+      icon: Clock,
+      accent:
+        totalPending > 0
+          ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+          : "bg-muted/50 text-muted-foreground",
       onClick: () => setCardFilter("pendentes"),
     },
     {
-      label: "Resolvidos", value: totalResolved, icon: CheckCircle2,
+      label: "Resolvidos",
+      value: totalResolved,
+      icon: CheckCircle2,
       accent: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
       onClick: () => setCardFilter("resolvidos"),
     },
     {
-      label: "Urgentes", value: urgentCount, icon: AlertTriangle,
+      label: "Urgentes",
+      value: urgentCount,
+      icon: AlertTriangle,
       accent: urgentCount > 0 ? "bg-destructive/10 text-destructive" : "bg-muted/50 text-muted-foreground",
       onClick: () => setCardFilter("urgentes"),
     },
     {
-      label: "Da Coordenação", value: coordCount, icon: Bell,
-      accent: coordCount > 0 ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" : "bg-muted/50 text-muted-foreground",
+      label: "Da Coordenação",
+      value: coordCount,
+      icon: Bell,
+      accent:
+        coordCount > 0
+          ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+          : "bg-muted/50 text-muted-foreground",
       onClick: () => setCardFilter("coordenacao"),
     },
   ];
 
   // ── Secretary list modal (for Saúde da Secretaria clicks) ──
-  const secModalList = listModal === "pendentes" ? activeRequests : listModal === "atrasados" ? overdueRequests : resolvedRequests;
-  const secModalTitle = listModal === "pendentes" ? "Solicitações Pendentes" : listModal === "atrasados" ? "Solicitações Atrasadas" : "Solicitações Resolvidas";
+  const secModalList =
+    listModal === "pendentes" ? activeRequests : listModal === "atrasados" ? overdueRequests : resolvedRequests;
+  const secModalTitle =
+    listModal === "pendentes"
+      ? "Solicitações Pendentes"
+      : listModal === "atrasados"
+        ? "Solicitações Atrasadas"
+        : "Solicitações Resolvidas";
 
   const cardFilterTitle: Record<string, string> = {
     pendentes: "Intervenções Pendentes",
@@ -218,7 +246,12 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
               {coordCount} intervenção(ões) da Coordenação Pedagógica
             </p>
           </div>
-          <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 text-[10px] shrink-0">Nova</Badge>
+          <Badge
+            variant="secondary"
+            className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 text-[10px] shrink-0"
+          >
+            Nova
+          </Badge>
         </div>
       )}
 
@@ -280,17 +313,38 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
                   const st = STATUS_MAP[r.status] || STATUS_MAP.aberto;
                   const next = NEXT_STATUS[r.status];
                   return (
-                    <tr key={r.id} className="border-b border-border/20 hover:bg-accent/40 transition-colors cursor-pointer" onClick={() => setAttendRequest(r)}>
+                    <tr
+                      key={r.id}
+                      className="border-b border-border/20 hover:bg-accent/40 transition-colors cursor-pointer"
+                      onClick={() => setAttendRequest(r)}
+                    >
                       <td className="px-4 py-3 font-medium text-foreground">{r.student_name || "—"}</td>
                       <td className="px-4 py-3 text-foreground">{r.request_type}</td>
                       <td className="px-4 py-3">
-                        <Badge variant="outline" className={r.origin === "coordenacao" ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 text-[10px]" : "text-[10px]"}>
+                        <Badge
+                          variant="outline"
+                          className={
+                            r.origin === "coordenacao"
+                              ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 text-[10px]"
+                              : "text-[10px]"
+                          }
+                        >
                           {r.origin === "coordenacao" ? "Coordenação" : "Secretaria"}
                         </Badge>
                       </td>
-                      <td className="px-4 py-3"><Badge variant="secondary" className={pri.class}>{pri.label}</Badge></td>
-                      <td className="px-4 py-3 text-muted-foreground">{r.deadline ? format(new Date(r.deadline), "dd/MM/yyyy") : "—"}</td>
-                      <td className="px-4 py-3"><Badge variant="secondary" className={st.class}>{st.label}</Badge></td>
+                      <td className="px-4 py-3">
+                        <Badge variant="secondary" className={pri.class}>
+                          {pri.label}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {r.deadline ? format(new Date(r.deadline), "dd/MM/yyyy") : "—"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge variant="secondary" className={st.class}>
+                          {st.label}
+                        </Badge>
+                      </td>
                       <td className="px-4 py-3 text-right">
                         <span className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1">
                           Atender
@@ -338,7 +392,12 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
                   </Pie>
                   <Tooltip
                     formatter={(value: number, name: string) => [`${value}`, name]}
-                    contentStyle={{ borderRadius: "8px", fontSize: "12px", border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }}
+                    contentStyle={{
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                      border: "1px solid hsl(var(--border))",
+                      background: "hsl(var(--card))",
+                    }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -349,9 +408,30 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
 
             <div className="grid grid-cols-3 gap-3 flex-1">
               {[
-                { label: "Pendentes", value: secPending - totalOverdue, color: "border-yellow-400 bg-yellow-50 dark:bg-yellow-900/10", textColor: "text-yellow-600 dark:text-yellow-400", desc: "Aguardando ação", modal: "pendentes" as ListModalType },
-                { label: "Resolvidos", value: secResolved, color: "border-emerald-400 bg-emerald-50 dark:bg-emerald-900/10", textColor: "text-emerald-600 dark:text-emerald-400", desc: "Concluídos com sucesso", modal: "resolvidos" as ListModalType },
-                { label: "Atrasados", value: totalOverdue, color: "border-red-400 bg-red-50 dark:bg-red-900/10", textColor: "text-red-600 dark:text-red-400", desc: "Prazo vencido", modal: "atrasados" as ListModalType },
+                {
+                  label: "Pendentes",
+                  value: secPending - totalOverdue,
+                  color: "border-yellow-400 bg-yellow-50 dark:bg-yellow-900/10",
+                  textColor: "text-yellow-600 dark:text-yellow-400",
+                  desc: "Aguardando ação",
+                  modal: "pendentes" as ListModalType,
+                },
+                {
+                  label: "Resolvidos",
+                  value: secResolved,
+                  color: "border-emerald-400 bg-emerald-50 dark:bg-emerald-900/10",
+                  textColor: "text-emerald-600 dark:text-emerald-400",
+                  desc: "Concluídos com sucesso",
+                  modal: "resolvidos" as ListModalType,
+                },
+                {
+                  label: "Atrasados",
+                  value: totalOverdue,
+                  color: "border-red-400 bg-red-50 dark:bg-red-900/10",
+                  textColor: "text-red-600 dark:text-red-400",
+                  desc: "Prazo vencido",
+                  modal: "atrasados" as ListModalType,
+                },
               ].map((item) => (
                 <button
                   key={item.label}
@@ -375,7 +455,9 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
             <DialogTitle>{cardFilter ? cardFilterTitle[cardFilter] : ""}</DialogTitle>
           </DialogHeader>
           {isFilterLoading ? (
-            <div className="py-8 text-center"><p className="text-sm text-muted-foreground">Carregando...</p></div>
+            <div className="py-8 text-center">
+              <p className="text-sm text-muted-foreground">Carregando...</p>
+            </div>
           ) : filteredInterventions.length === 0 ? (
             <p className="text-sm text-muted-foreground py-6 text-center">Nenhuma intervenção encontrada.</p>
           ) : (
@@ -388,12 +470,23 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-foreground truncate">{iv.reason}</p>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <Badge variant="secondary" className={sev.class + " text-[10px]"}>{sev.label}</Badge>
-                        <Badge variant="secondary" className={st.class + " text-[10px]"}>{st.label}</Badge>
+                        <Badge variant="secondary" className={sev.class + " text-[10px]"}>
+                          {sev.label}
+                        </Badge>
+                        <Badge variant="secondary" className={st.class + " text-[10px]"}>
+                          {st.label}
+                        </Badge>
                         {iv.created_role === "coordenacao" && (
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 text-[10px]">Coordenação</Badge>
+                          <Badge
+                            variant="outline"
+                            className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 text-[10px]"
+                          >
+                            Coordenação
+                          </Badge>
                         )}
-                        <span className="text-[10px] text-muted-foreground">{format(new Date(iv.created_at), "dd/MM/yyyy")}</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {format(new Date(iv.created_at), "dd/MM/yyyy")}
+                        </span>
                       </div>
                       {iv.recommendation && (
                         <p className="text-xs text-muted-foreground mt-1 truncate">💡 {iv.recommendation}</p>
@@ -424,19 +517,41 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
                 return (
                   <div key={r.id} className="border border-border/60 rounded-lg p-3 flex items-center gap-3">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground truncate">{r.student_name || "—"} — {r.request_type}</p>
+                      <p className="text-sm font-semibold text-foreground truncate">
+                        {r.student_name || "—"} — {r.request_type}
+                      </p>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <Badge variant="secondary" className={pri.class + " text-[10px]"}>{pri.label}</Badge>
-                        <Badge variant="secondary" className={st.class + " text-[10px]"}>{st.label}</Badge>
+                        <Badge variant="secondary" className={pri.class + " text-[10px]"}>
+                          {pri.label}
+                        </Badge>
+                        <Badge variant="secondary" className={st.class + " text-[10px]"}>
+                          {st.label}
+                        </Badge>
                         {r.origin === "coordenacao" && (
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 text-[10px]">Coordenação</Badge>
+                          <Badge
+                            variant="outline"
+                            className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 text-[10px]"
+                          >
+                            Coordenação
+                          </Badge>
                         )}
-                        <span className="text-[10px] text-muted-foreground">{format(new Date(r.created_at), "dd/MM/yyyy")}</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {format(new Date(r.created_at), "dd/MM/yyyy")}
+                        </span>
                       </div>
                     </div>
                     {next && (listModal === "pendentes" || listModal === "atrasados") && (
-                      <button onClick={() => advanceStatus.mutate({ id: r.id, newStatus: next })} className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1 shrink-0">
-                        {next === "concluido" ? <><CheckCircle2 className="h-3.5 w-3.5" /> Resolver</> : <>→ {STATUS_MAP[next]?.label}</>}
+                      <button
+                        onClick={() => advanceStatus.mutate({ id: r.id, newStatus: next })}
+                        className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1 shrink-0"
+                      >
+                        {next === "concluido" ? (
+                          <>
+                            <CheckCircle2 className="h-3.5 w-3.5" /> Resolver
+                          </>
+                        ) : (
+                          <>→ {STATUS_MAP[next]?.label}</>
+                        )}
                       </button>
                     )}
                   </div>
