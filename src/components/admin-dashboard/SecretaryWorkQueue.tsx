@@ -78,8 +78,6 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
     },
     enabled: !!schoolId,
   });
-  const totalPending = cardCounts?.pendentes ?? 0;
-  const totalResolved = cardCounts?.resolvidos ?? 0;
   const urgentCount = cardCounts?.urgentes ?? 0;
   const coordCount = cardCounts?.da_coordenacao ?? 0;
 
@@ -169,45 +167,9 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
     },
   });
 
-  // ── Dashboard metric cards (values from view, click filters pedagogical_interventions) ──
-  const metrics = [
-    {
-      label: "Pendentes",
-      value: totalPending,
-      icon: Clock,
-      accent:
-        totalPending > 0
-          ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
-          : "bg-muted/50 text-muted-foreground",
-      onClick: () => setCardFilter("pendentes"),
-    },
-    {
-      label: "Resolvidos",
-      value: totalResolved,
-      icon: CheckCircle2,
-      accent: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-      onClick: () => setCardFilter("resolvidos"),
-    },
-    {
-      label: "Urgentes",
-      value: urgentCount,
-      icon: AlertTriangle,
-      accent: urgentCount > 0 ? "bg-destructive/10 text-destructive" : "bg-muted/50 text-muted-foreground",
-      onClick: () => setCardFilter("urgentes"),
-    },
-    {
-      label: "Da Coordenação",
-      value: coordCount,
-      icon: Bell,
-      accent:
-        coordCount > 0
-          ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-          : "bg-muted/50 text-muted-foreground",
-      onClick: () => setCardFilter("coordenacao"),
-    },
-  ];
+  const isRequestModalOpen = externalModalOpen !== undefined ? externalModalOpen : modalOpen;
+  const setRequestModalOpen = onExternalModalChange || setModalOpen;
 
-  // ── Secretary list modal (for Saúde da Secretaria clicks) ──
   const secModalList =
     listModal === "pendentes" ? activeRequests : listModal === "atrasados" ? overdueRequests : resolvedRequests;
   const secModalTitle =
@@ -218,14 +180,11 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
         : "Solicitações Resolvidas";
 
   const cardFilterTitle: Record<string, string> = {
-    pendentes: "Intervenções Pendentes",
-    resolvidos: "Intervenções Resolvidas",
-    urgentes: "Intervenções Urgentes",
-    coordenacao: "Intervenções da Coordenação",
+    pendentes: "Solicitações Pendentes",
+    resolvidos: "Solicitações Resolvidas",
+    urgentes: "Solicitações Urgentes",
+    coordenacao: "Solicitações da Coordenação",
   };
-
-  const isRequestModalOpen = externalModalOpen !== undefined ? externalModalOpen : modalOpen;
-  const setRequestModalOpen = onExternalModalChange || setModalOpen;
 
   return (
     <>
@@ -246,25 +205,6 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
           </Badge>
         </div>
       )}
-
-      {/* Dynamic Metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {metrics.map((m) => (
-          <button
-            key={m.label}
-            onClick={m.onClick}
-            className="bg-card border border-border/60 rounded-xl p-4 flex items-center gap-3 text-left transition-all hover:shadow-sm hover:-translate-y-0.5 cursor-pointer"
-          >
-            <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${m.accent}`}>
-              <m.icon className="h-4 w-4" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">{m.label}</p>
-              <p className="text-lg font-bold text-foreground">{m.value}</p>
-            </div>
-          </button>
-        ))}
-      </div>
 
       {/* Urgent alert */}
       {urgentCount > 0 && (

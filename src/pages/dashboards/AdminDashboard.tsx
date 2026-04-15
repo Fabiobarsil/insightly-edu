@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import RoleLayout from "@/components/layout/RoleLayout";
 import DashboardHeader from "@/components/admin-dashboard/DashboardHeader";
+import TopMetricCards from "@/components/admin-dashboard/TopMetricCards";
 import QuickAccessCards from "@/components/admin-dashboard/QuickAccessCards";
 import QuickActions from "@/components/admin-dashboard/QuickActions";
 import DashboardCharts from "@/components/admin-dashboard/DashboardCharts";
@@ -32,6 +33,7 @@ const AdminDashboard = () => {
           />
         </div>
 
+        <TopMetricCards />
         <QuickAccessCards />
         <QuickActions onNewRequest={() => setModalOpen(true)} />
 
