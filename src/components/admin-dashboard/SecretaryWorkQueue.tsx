@@ -49,7 +49,6 @@ interface SecretaryWorkQueueProps {
 }
 
 const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalChange }: SecretaryWorkQueueProps) => {
-  const schoolId = "0cd6ed2b-75e0-4fb1-a7ae-ead1bec80d1e";
   const { schoolId } = useSchoolId();
   const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
