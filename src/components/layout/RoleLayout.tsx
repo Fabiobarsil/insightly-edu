@@ -15,7 +15,7 @@ const RoleLayout = ({ children, title, breadcrumbs }: RoleLayoutProps) => (
     <main className="ml-60 w-[calc(100%-240px)] min-h-screen max-[900px]:ml-0 max-[900px]:w-full overflow-y-auto">
       <Topbar title={title} breadcrumbs={breadcrumbs} />
       <div className="max-w-[1200px] p-8 max-[900px]:p-5">
-        <InternalPageHeader />
+        <InternalPageHeader breadcrumbs={breadcrumbs} />
         {children}
       </div>
       <ScrollToTop />
