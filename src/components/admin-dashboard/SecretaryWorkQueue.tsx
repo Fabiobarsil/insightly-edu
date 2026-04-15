@@ -24,14 +24,23 @@ const PRIORITY_MAP: Record<string, { label: string; class: string }> = {
 const STATUS_MAP: Record<string, { label: string; class: string }> = {
   aberto: { label: "Aberto", class: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
   "em andamento": { label: "Em andamento", class: "bg-primary/10 text-primary" },
+  em_andamento: { label: "Em andamento", class: "bg-primary/10 text-primary" },
   concluido: { label: "Concluído", class: "bg-secondary/15 text-secondary" },
+  resolvido: { label: "Resolvido", class: "bg-secondary/15 text-secondary" },
 };
 const NEXT_STATUS: Record<string, string> = {
   aberto: "em andamento",
   "em andamento": "concluido",
 };
 
-type ListModalType = "pendentes" | "resolvidos" | "atrasados" | "urgentes" | "coordenacao" | null;
+const SEVERITY_MAP: Record<string, { label: string; class: string }> = {
+  baixa: { label: "Baixa", class: "bg-muted text-muted-foreground" },
+  media: { label: "Média", class: "bg-primary/10 text-primary" },
+  alta: { label: "Alta", class: "bg-destructive/10 text-destructive" },
+};
+
+type CardFilterType = "pendentes" | "resolvidos" | "urgentes" | "coordenacao" | null;
+type ListModalType = "pendentes" | "resolvidos" | "atrasados" | null;
 
 interface SecretaryWorkQueueProps {
   onNewRequest?: () => void;
@@ -45,8 +54,46 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
   const [modalOpen, setModalOpen] = useState(false);
   const [classifyId, setClassifyId] = useState<string | null>(null);
   const [listModal, setListModal] = useState<ListModalType>(null);
-  const [attendRequest, setAttendRequest] = useState<typeof requests[0] | null>(null);
+  const [cardFilter, setCardFilter] = useState<CardFilterType>(null);
+  const [attendRequest, setAttendRequest] = useState<any | null>(null);
 
+  // Debug: log school_id
+  console.log("school_id:", schoolId);
+
+  // ── Cards: valores da view v_dashboard_main (pedagogical_interventions) ──
+  const { data: dashData } = useDashboard(schoolId);
+  const totalPending = dashData?.pendentes ?? 0;
+  const totalResolved = dashData?.resolvidos ?? 0;
+  const urgentCount = dashData?.urgentes ?? 0;
+  const coordCount = dashData?.da_coordenacao ?? 0;
+
+  // ── Card filter: query pedagogical_interventions based on card clicked ──
+  const { data: filteredInterventions = [], isLoading: isFilterLoading } = useQuery({
+    queryKey: ["pedagogical-interventions-filtered", schoolId, cardFilter],
+    queryFn: async () => {
+      if (!schoolId || !cardFilter) return [];
+      let query = supabase
+        .from("pedagogical_interventions")
+        .select("*")
+        .eq("school_id", schoolId);
+
+      if (cardFilter === "pendentes") {
+        query = query.in("status", ["aberto", "em_andamento"]);
+      } else if (cardFilter === "resolvidos") {
+        query = query.eq("status", "resolvido");
+      } else if (cardFilter === "urgentes") {
+        query = query.eq("severity", "alta").in("status", ["aberto", "em_andamento"]);
+      } else if (cardFilter === "coordenacao") {
+        query = query.eq("created_role", "coordenacao");
+      }
+
+      const { data } = await query.order("created_at", { ascending: false });
+      return data || [];
+    },
+    enabled: !!schoolId && !!cardFilter,
+  });
+
+  // ── Secretary work queue (secretary_requests) — kept intact ──
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ["secretary-requests", schoolId],
     queryFn: async () => {
@@ -81,21 +128,16 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
   );
 
   const totalOverdue = overdueRequests.length;
-
-  // Use the v_dashboard_main view as single source of truth for metric cards
-  const { data: dashData } = useDashboard(schoolId);
-  const totalPending = dashData?.pendentes ?? activeRequests.length;
-  const totalResolved = dashData?.resolvidos ?? resolvedRequests.length;
-  const urgentCount = dashData?.urgentes ?? 0;
-  const coordCount = dashData?.da_coordenacao ?? 0;
+  const secPending = activeRequests.length;
+  const secResolved = resolvedRequests.length;
 
   const healthData = useMemo(() => [
-    { name: "Pendentes", value: totalPending - totalOverdue, color: "#EAB308" },
-    { name: "Resolvidos", value: totalResolved, color: "#22C55E" },
+    { name: "Pendentes", value: secPending - totalOverdue, color: "#EAB308" },
+    { name: "Resolvidos", value: secResolved, color: "#22C55E" },
     { name: "Atrasados", value: totalOverdue, color: "#EF4444" },
-  ].filter((d) => d.value > 0), [totalPending, totalResolved, totalOverdue]);
+  ].filter((d) => d.value > 0), [secPending, secResolved, totalOverdue]);
 
-  const healthTotal = totalPending + totalResolved;
+  const healthTotal = secPending + secResolved;
 
   const classifyMutation = useMutation({
     mutationFn: async ({ id, priority }: { id: string; priority: string }) => {
@@ -127,49 +169,40 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
     },
   });
 
+  // ── Dashboard metric cards (values from view, click filters pedagogical_interventions) ──
   const metrics = [
     {
       label: "Pendentes", value: totalPending, icon: Clock,
       accent: totalPending > 0 ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" : "bg-muted/50 text-muted-foreground",
-      onClick: () => setListModal("pendentes"),
+      onClick: () => setCardFilter("pendentes"),
     },
     {
       label: "Resolvidos", value: totalResolved, icon: CheckCircle2,
       accent: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-      onClick: () => setListModal("resolvidos"),
+      onClick: () => setCardFilter("resolvidos"),
     },
     {
       label: "Urgentes", value: urgentCount, icon: AlertTriangle,
       accent: urgentCount > 0 ? "bg-destructive/10 text-destructive" : "bg-muted/50 text-muted-foreground",
-      onClick: () => setListModal("urgentes"),
+      onClick: () => setCardFilter("urgentes"),
     },
     {
       label: "Da Coordenação", value: coordCount, icon: Bell,
       accent: coordCount > 0 ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" : "bg-muted/50 text-muted-foreground",
-      onClick: () => setListModal("coordenacao"),
+      onClick: () => setCardFilter("coordenacao"),
     },
   ];
 
-  const urgentRequests = activeRequests.filter((r) => r.priority === "urgente" || r.priority === "alta");
-  const coordRequests = requests.filter((r) => r.origin === "coordenacao");
+  // ── Secretary list modal (for Saúde da Secretaria clicks) ──
+  const secModalList = listModal === "pendentes" ? activeRequests : listModal === "atrasados" ? overdueRequests : resolvedRequests;
+  const secModalTitle = listModal === "pendentes" ? "Solicitações Pendentes" : listModal === "atrasados" ? "Solicitações Atrasadas" : "Solicitações Resolvidas";
 
-  const modalListMap: Record<string, typeof requests> = {
-    pendentes: activeRequests,
-    resolvidos: resolvedRequests,
-    atrasados: overdueRequests,
-    urgentes: urgentRequests,
-    coordenacao: coordRequests,
+  const cardFilterTitle: Record<string, string> = {
+    pendentes: "Intervenções Pendentes",
+    resolvidos: "Intervenções Resolvidas",
+    urgentes: "Intervenções Urgentes",
+    coordenacao: "Intervenções da Coordenação",
   };
-  const modalTitleMap: Record<string, string> = {
-    pendentes: "Solicitações Pendentes",
-    resolvidos: "Solicitações Resolvidas",
-    atrasados: "Solicitações Atrasadas",
-    urgentes: "Solicitações Urgentes",
-    coordenacao: "Solicitações da Coordenação",
-  };
-
-  const modalList = listModal ? modalListMap[listModal] ?? [] : [];
-  const modalTitle = listModal ? modalTitleMap[listModal] ?? "" : "";
 
   const isRequestModalOpen = externalModalOpen !== undefined ? externalModalOpen : modalOpen;
   const setRequestModalOpen = onExternalModalChange || setModalOpen;
@@ -182,11 +215,7 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
           <Bell className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground">
-              {coordCount} solicitação(ões) da Coordenação Pedagógica
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {activeRequests.filter((r) => r.origin === "coordenacao").map((r) => r.student_name || r.request_type).slice(0, 3).join(", ")}
-              {coordCount > 3 ? ` e mais ${coordCount - 3}...` : ""}
+              {coordCount} intervenção(ões) da Coordenação Pedagógica
             </p>
           </div>
           <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 text-[10px] shrink-0">Nova</Badge>
@@ -283,7 +312,6 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
           <p className="text-sm text-muted-foreground text-center py-6">Nenhuma solicitação registrada.</p>
         ) : (
           <div className="flex items-center gap-8">
-            {/* Donut - compact */}
             <div className="w-[120px] h-[120px] shrink-0 relative">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -319,11 +347,10 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
               </span>
             </div>
 
-            {/* Stat cards */}
             <div className="grid grid-cols-3 gap-3 flex-1">
               {[
-                { label: "Pendentes", value: totalPending - totalOverdue, color: "border-yellow-400 bg-yellow-50 dark:bg-yellow-900/10", textColor: "text-yellow-600 dark:text-yellow-400", desc: "Aguardando ação", modal: "pendentes" as ListModalType },
-                { label: "Resolvidos", value: totalResolved, color: "border-emerald-400 bg-emerald-50 dark:bg-emerald-900/10", textColor: "text-emerald-600 dark:text-emerald-400", desc: "Concluídos com sucesso", modal: "resolvidos" as ListModalType },
+                { label: "Pendentes", value: secPending - totalOverdue, color: "border-yellow-400 bg-yellow-50 dark:bg-yellow-900/10", textColor: "text-yellow-600 dark:text-yellow-400", desc: "Aguardando ação", modal: "pendentes" as ListModalType },
+                { label: "Resolvidos", value: secResolved, color: "border-emerald-400 bg-emerald-50 dark:bg-emerald-900/10", textColor: "text-emerald-600 dark:text-emerald-400", desc: "Concluídos com sucesso", modal: "resolvidos" as ListModalType },
                 { label: "Atrasados", value: totalOverdue, color: "border-red-400 bg-red-50 dark:bg-red-900/10", textColor: "text-red-600 dark:text-red-400", desc: "Prazo vencido", modal: "atrasados" as ListModalType },
               ].map((item) => (
                 <button
@@ -341,17 +368,56 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
         )}
       </div>
 
-      {/* List Modal */}
+      {/* Card filter modal (pedagogical_interventions) */}
+      <Dialog open={!!cardFilter} onOpenChange={(open) => !open && setCardFilter(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{cardFilter ? cardFilterTitle[cardFilter] : ""}</DialogTitle>
+          </DialogHeader>
+          {isFilterLoading ? (
+            <div className="py-8 text-center"><p className="text-sm text-muted-foreground">Carregando...</p></div>
+          ) : filteredInterventions.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-6 text-center">Nenhuma intervenção encontrada.</p>
+          ) : (
+            <div className="space-y-3 mt-2">
+              {filteredInterventions.map((iv: any) => {
+                const sev = SEVERITY_MAP[iv.severity] || SEVERITY_MAP.media;
+                const st = STATUS_MAP[iv.status] || STATUS_MAP.aberto;
+                return (
+                  <div key={iv.id} className="border border-border/60 rounded-lg p-3 flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{iv.reason}</p>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <Badge variant="secondary" className={sev.class + " text-[10px]"}>{sev.label}</Badge>
+                        <Badge variant="secondary" className={st.class + " text-[10px]"}>{st.label}</Badge>
+                        {iv.created_role === "coordenacao" && (
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 text-[10px]">Coordenação</Badge>
+                        )}
+                        <span className="text-[10px] text-muted-foreground">{format(new Date(iv.created_at), "dd/MM/yyyy")}</span>
+                      </div>
+                      {iv.recommendation && (
+                        <p className="text-xs text-muted-foreground mt-1 truncate">💡 {iv.recommendation}</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Secretary list modal (Saúde da Secretaria) */}
       <Dialog open={!!listModal} onOpenChange={(open) => !open && setListModal(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{modalTitle}</DialogTitle>
+            <DialogTitle>{secModalTitle}</DialogTitle>
           </DialogHeader>
-          {modalList.length === 0 ? (
+          {secModalList.length === 0 ? (
             <p className="text-sm text-muted-foreground py-6 text-center">Nenhuma solicitação encontrada.</p>
           ) : (
             <div className="space-y-3 mt-2">
-              {modalList.map((r) => {
+              {secModalList.map((r) => {
                 const pri = PRIORITY_MAP[r.priority] || PRIORITY_MAP.media;
                 const st = STATUS_MAP[r.status] || STATUS_MAP.aberto;
                 const next = NEXT_STATUS[r.status];
