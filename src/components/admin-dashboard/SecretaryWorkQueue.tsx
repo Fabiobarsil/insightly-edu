@@ -188,29 +188,22 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
 
   return (
     <>
-      {/* Coordenação alert banner */}
+      {/* Coordenação alert banner — soft style */}
       {coordCount > 0 && (
-        <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800 rounded-xl px-4 py-3 animate-in fade-in-0 slide-in-from-top-2 duration-300">
-          <Bell className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-foreground">
-              {coordCount} intervenção(ões) da Coordenação Pedagógica
-            </p>
-          </div>
-          <Badge
-            variant="secondary"
-            className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 text-[10px] shrink-0"
-          >
+        <div className="flex items-center gap-2.5 rounded-[10px] px-3.5 py-2.5 text-[13px] bg-[rgba(59,130,246,0.08)] text-blue-600 border border-[rgba(59,130,246,0.15)] animate-in fade-in-0 slide-in-from-top-2 duration-300">
+          <Bell className="h-4 w-4 shrink-0" />
+          <span className="font-medium flex-1">{coordCount} intervenção(ões) da Coordenação Pedagógica</span>
+          <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 text-[10px] shrink-0">
             Nova
           </Badge>
         </div>
       )}
 
-      {/* Urgent alert */}
+      {/* Urgent alert — soft style */}
       {urgentCount > 0 && (
-        <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-3 flex items-center gap-2 text-sm">
-          <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
-          <span className="font-semibold text-foreground">{urgentCount} urgente(s) na fila</span>
+        <div className="flex items-center gap-2.5 rounded-[10px] px-3.5 py-2.5 text-[13px] bg-[rgba(239,68,68,0.08)] text-red-600 border border-[rgba(239,68,68,0.15)]">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          <span className="font-medium">{urgentCount} urgente(s) na fila</span>
         </div>
       )}
 

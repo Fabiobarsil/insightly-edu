@@ -26,18 +26,20 @@ const AdminDashboard = () => {
             <h2 className="text-2xl font-bold text-foreground tracking-tight">Secretaria Digital</h2>
             <p className="text-sm text-muted-foreground mt-1">Centro de controle administrativo da escola</p>
           </div>
-          <DashboardHeader
-            selectedYear={selectedYear}
-            onYearChange={setSelectedYear}
-            onDataRefresh={handleRefresh}
-          />
+          <div className="flex items-center gap-2">
+            <QuickActions onNewRequest={() => setModalOpen(true)} />
+            <DashboardHeader
+              selectedYear={selectedYear}
+              onYearChange={setSelectedYear}
+              onDataRefresh={handleRefresh}
+            />
+          </div>
         </div>
 
         <TopMetricCards />
         <QuickAccessCards />
-        <QuickActions onNewRequest={() => setModalOpen(true)} />
 
-        {/* Secretary dynamic content: metrics, alerts, work queue, health chart */}
+        {/* Alerts + Work Queue */}
         <SecretaryWorkQueue
           externalModalOpen={modalOpen}
           onExternalModalChange={setModalOpen}
