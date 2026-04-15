@@ -78,8 +78,6 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
     },
     enabled: !!schoolId,
   });
-  const totalPending = cardCounts?.pendentes ?? 0;
-  const totalResolved = cardCounts?.resolvidos ?? 0;
   const urgentCount = cardCounts?.urgentes ?? 0;
   const coordCount = cardCounts?.da_coordenacao ?? 0;
 
