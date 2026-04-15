@@ -6,9 +6,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
+import { useDashboard } from "@/hooks/useDashboard";
 
 interface DashboardHeaderProps {
   selectedYear: number;
@@ -19,20 +18,8 @@ interface DashboardHeaderProps {
 const DashboardHeader = (_props: DashboardHeaderProps) => {
   const navigate = useNavigate();
   const { schoolId } = useSchoolId();
-
-  const { data: pendingCount = 0 } = useQuery({
-    queryKey: ["pending-count", schoolId],
-    queryFn: async () => {
-      if (!schoolId) return 0;
-      const { count } = await supabase
-        .from("secretary_requests")
-        .select("*", { count: "exact", head: true })
-        .eq("school_id", schoolId)
-        .eq("status", "aberto");
-      return count || 0;
-    },
-    enabled: !!schoolId,
-  });
+  const { data: dashData } = useDashboard(schoolId);
+  const pendingCount = dashData?.pendentes ?? 0;
 
   const scrollToAgenda = () => {
     const el = document.getElementById("agenda-section");

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
+import { useDashboard } from "@/hooks/useDashboard";
 import { Plus, AlertTriangle, CheckCircle2, Bell, Clock, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -79,11 +80,14 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
     (a, b) => PRIORITY_ORDER.indexOf(a.priority) - PRIORITY_ORDER.indexOf(b.priority)
   );
 
-  const urgentCount = activeRequests.filter((r) => r.priority === "urgente").length;
-  const coordCount = activeRequests.filter((r) => r.origin === "coordenacao").length;
-  const totalPending = activeRequests.length;
-  const totalResolved = resolvedRequests.length;
   const totalOverdue = overdueRequests.length;
+
+  // Use the v_dashboard_main view as single source of truth for metric cards
+  const { data: dashData } = useDashboard(schoolId);
+  const totalPending = dashData?.pendentes ?? activeRequests.length;
+  const totalResolved = dashData?.resolvidos ?? resolvedRequests.length;
+  const urgentCount = dashData?.urgentes ?? 0;
+  const coordCount = dashData?.da_coordenacao ?? 0;
 
   const healthData = useMemo(() => [
     { name: "Pendentes", value: totalPending - totalOverdue, color: "#EAB308" },
