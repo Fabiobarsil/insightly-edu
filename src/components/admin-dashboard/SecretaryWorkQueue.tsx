@@ -169,6 +169,25 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
 
   const isRequestModalOpen = externalModalOpen !== undefined ? externalModalOpen : modalOpen;
   const setRequestModalOpen = onExternalModalChange || setModalOpen;
+  return (
+    <>
+      {/* Coordenação alert banner */}
+      {coordCount > 0 && (
+        <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800 rounded-xl px-4 py-3 animate-in fade-in-0 slide-in-from-top-2 duration-300">
+          <Bell className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground">
+              {coordCount} intervenção(ões) da Coordenação Pedagógica
+            </p>
+          </div>
+          <Badge
+            variant="secondary"
+            className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 text-[10px] shrink-0"
+          >
+            Nova
+          </Badge>
+        </div>
+      )}
 
       {/* Urgent alert */}
       {urgentCount > 0 && (
