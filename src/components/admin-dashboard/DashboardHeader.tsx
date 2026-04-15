@@ -1,11 +1,14 @@
 import { useNavigate } from "react-router-dom";
-import { Calendar, FileText, Bell, Send } from "lucide-react";
+import { Calendar, Bell, Send } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useSchoolId } from "@/hooks/useSchoolId";
 
 interface DashboardHeaderProps {
   selectedYear: number;
@@ -13,10 +16,23 @@ interface DashboardHeaderProps {
   onDataRefresh: () => void;
 }
 
-const PENDING_COUNT = 6; // mock
-
 const DashboardHeader = (_props: DashboardHeaderProps) => {
   const navigate = useNavigate();
+  const { schoolId } = useSchoolId();
+
+  const { data: pendingCount = 0 } = useQuery({
+    queryKey: ["pending-count", schoolId],
+    queryFn: async () => {
+      if (!schoolId) return 0;
+      const { count } = await supabase
+        .from("secretary_requests")
+        .select("*", { count: "exact", head: true })
+        .eq("school_id", schoolId)
+        .eq("status", "aberto");
+      return count || 0;
+    },
+    enabled: !!schoolId,
+  });
 
   const scrollToAgenda = () => {
     const el = document.getElementById("agenda-section");
@@ -30,7 +46,6 @@ const DashboardHeader = (_props: DashboardHeaderProps) => {
 
   const shortcuts = [
     { icon: Calendar, label: "Agenda", action: scrollToAgenda },
-    { icon: FileText, label: "Documentos", action: () => navigate("/admin/documentos") },
     { icon: Send, label: "Comunicação", action: () => navigate("/admin/comunicacao") },
   ];
 
@@ -61,7 +76,7 @@ const DashboardHeader = (_props: DashboardHeaderProps) => {
         className="h-9 px-3 rounded-xl border border-destructive/30 bg-destructive/5 flex items-center gap-1.5 text-destructive hover:bg-destructive/10 transition-colors"
       >
         <Bell className="h-3.5 w-3.5" />
-        <span className="text-xs font-semibold">{PENDING_COUNT} pendências</span>
+        <span className="text-xs font-semibold">{pendingCount} pendência{pendingCount !== 1 ? "s" : ""}</span>
       </button>
     </div>
   );
