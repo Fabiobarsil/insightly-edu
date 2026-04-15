@@ -169,6 +169,23 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
 
   const isRequestModalOpen = externalModalOpen !== undefined ? externalModalOpen : modalOpen;
   const setRequestModalOpen = onExternalModalChange || setModalOpen;
+
+  const secModalList =
+    listModal === "pendentes" ? activeRequests : listModal === "atrasados" ? overdueRequests : resolvedRequests;
+  const secModalTitle =
+    listModal === "pendentes"
+      ? "Solicitações Pendentes"
+      : listModal === "atrasados"
+        ? "Solicitações Atrasadas"
+        : "Solicitações Resolvidas";
+
+  const cardFilterTitle: Record<string, string> = {
+    pendentes: "Solicitações Pendentes",
+    resolvidos: "Solicitações Resolvidas",
+    urgentes: "Solicitações Urgentes",
+    coordenacao: "Solicitações da Coordenação",
+  };
+
   return (
     <>
       {/* Coordenação alert banner */}
