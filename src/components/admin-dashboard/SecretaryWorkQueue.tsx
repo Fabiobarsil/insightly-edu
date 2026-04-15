@@ -31,7 +31,7 @@ const NEXT_STATUS: Record<string, string> = {
   "em andamento": "concluido",
 };
 
-type ListModalType = "pendentes" | "resolvidos" | "atrasados" | null;
+type ListModalType = "pendentes" | "resolvidos" | "atrasados" | "urgentes" | "coordenacao" | null;
 
 interface SecretaryWorkQueueProps {
   onNewRequest?: () => void;
@@ -141,17 +141,35 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
     {
       label: "Urgentes", value: urgentCount, icon: AlertTriangle,
       accent: urgentCount > 0 ? "bg-destructive/10 text-destructive" : "bg-muted/50 text-muted-foreground",
-      onClick: () => {},
+      onClick: () => setListModal("urgentes"),
     },
     {
       label: "Da Coordenação", value: coordCount, icon: Bell,
       accent: coordCount > 0 ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" : "bg-muted/50 text-muted-foreground",
-      onClick: () => {},
+      onClick: () => setListModal("coordenacao"),
     },
   ];
 
-  const modalList = listModal === "pendentes" ? activeRequests : listModal === "atrasados" ? overdueRequests : resolvedRequests;
-  const modalTitle = listModal === "pendentes" ? "Solicitações Pendentes" : listModal === "atrasados" ? "Solicitações Atrasadas" : "Solicitações Resolvidas";
+  const urgentRequests = activeRequests.filter((r) => r.priority === "urgente" || r.priority === "alta");
+  const coordRequests = requests.filter((r) => r.origin === "coordenacao");
+
+  const modalListMap: Record<string, typeof requests> = {
+    pendentes: activeRequests,
+    resolvidos: resolvedRequests,
+    atrasados: overdueRequests,
+    urgentes: urgentRequests,
+    coordenacao: coordRequests,
+  };
+  const modalTitleMap: Record<string, string> = {
+    pendentes: "Solicitações Pendentes",
+    resolvidos: "Solicitações Resolvidas",
+    atrasados: "Solicitações Atrasadas",
+    urgentes: "Solicitações Urgentes",
+    coordenacao: "Solicitações da Coordenação",
+  };
+
+  const modalList = listModal ? modalListMap[listModal] ?? [] : [];
+  const modalTitle = listModal ? modalTitleMap[listModal] ?? "" : "";
 
   const isRequestModalOpen = externalModalOpen !== undefined ? externalModalOpen : modalOpen;
   const setRequestModalOpen = onExternalModalChange || setModalOpen;
