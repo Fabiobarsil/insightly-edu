@@ -1,13 +1,24 @@
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import {
   Breadcrumb,
-  BreadcrumbList,
   BreadcrumbItem,
   BreadcrumbLink,
-  BreadcrumbSeparator,
+  BreadcrumbList,
   BreadcrumbPage,
+  BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+
+interface InternalPageHeaderProps {
+  breadcrumbs?: { label: string; href?: string }[];
+}
+
+const ROOT_LABELS: Record<string, string> = {
+  admin: "Secretaria",
+  secretaria: "Secretaria",
+  professor: "Professor",
+  superadmin: "Superadmin",
+};
 
 const ROUTE_LABELS: Record<string, string> = {
   alunos: "Alunos",
@@ -22,43 +33,63 @@ const ROUTE_LABELS: Record<string, string> = {
   notas: "Notas",
 };
 
-const InternalPageHeader = () => {
+const InternalPageHeader = ({ breadcrumbs }: InternalPageHeaderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-
-  // Don't show on dashboard
   const segments = location.pathname.split("/").filter(Boolean);
+  const rootSegment = segments[0] || "admin";
   const lastSegment = segments[segments.length - 1];
-  if (lastSegment === "dashboard") return null;
+  const isDashboard = lastSegment === "dashboard";
 
-  const pageLabel = ROUTE_LABELS[lastSegment] || lastSegment;
+  if (isDashboard) return null;
+
+  const rootLabel = ROOT_LABELS[rootSegment] || "Secretaria";
+  const dashboardPath = rootSegment === "admin" ? "/admin/dashboard" : `/${rootSegment}/dashboard`;
+  const fallbackLabel = ROUTE_LABELS[lastSegment] || lastSegment;
+  const trail = breadcrumbs && breadcrumbs.length > 0 ? breadcrumbs : [{ label: fallbackLabel }];
 
   return (
-    <div className="flex items-center gap-4 mb-4">
+    <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink
+              href={dashboardPath}
+              onClick={(e) => {
+                e.preventDefault();
+                navigate(dashboardPath);
+              }}
+              className="text-xs"
+            >
+              {rootLabel}
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+
+          {trail.map((item, index) => {
+            const isLast = index === trail.length - 1;
+            return (
+              <BreadcrumbItem key={`${item.label}-${index}`}>
+                <BreadcrumbSeparator />
+                {isLast || !item.href ? (
+                  <BreadcrumbPage className="text-xs">{item.label}</BreadcrumbPage>
+                ) : (
+                  <BreadcrumbLink href={item.href} className="text-xs">
+                    {item.label}
+                  </BreadcrumbLink>
+                )}
+              </BreadcrumbItem>
+            );
+          })}
+        </BreadcrumbList>
+      </Breadcrumb>
+
       <button
-        onClick={() => navigate("/admin/dashboard")}
+        onClick={() => navigate(dashboardPath)}
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
       >
         <ChevronLeft className="h-4 w-4" />
         Voltar para Dashboard
       </button>
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink
-              href="#"
-              onClick={(e) => { e.preventDefault(); navigate("/admin/dashboard"); }}
-              className="text-xs"
-            >
-              Secretaria
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage className="text-xs">{pageLabel}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
     </div>
   );
 };
