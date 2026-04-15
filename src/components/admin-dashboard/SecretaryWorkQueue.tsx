@@ -60,35 +60,28 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
   // Debug: log school_id
   console.log("school_id:", schoolId);
 
-  // ── Cards: valores da view v_dashboard_main (pedagogical_interventions) ──
-  const { data: dashData } = useDashboard(schoolId);
-  const totalPending = dashData?.pendentes ?? 0;
-  const totalResolved = dashData?.resolvidos ?? 0;
-  const urgentCount = dashData?.urgentes ?? 0;
-  const coordCount = dashData?.da_coordenacao ?? 0;
-
-  // ── Card filter: query pedagogical_interventions based on card clicked ──
-  const { data: filteredInterventions = [], isLoading: isFilterLoading } = useQuery({
-    queryKey: ["pedagogical-interventions-filtered", schoolId, cardFilter],
+  // ── Cards: valores calculados direto de secretary_requests ──
+  const { data: cardCounts } = useQuery({
+    queryKey: ["dashboard-cards", schoolId],
     queryFn: async () => {
-      if (!schoolId || !cardFilter) return [];
-      let query = supabase.from("pedagogical_interventions").select("*").eq("school_id", schoolId);
-
-      if (cardFilter === "pendentes") {
-        query = query.in("status", ["aberto", "em_andamento"]);
-      } else if (cardFilter === "resolvidos") {
-        query = query.eq("status", "resolvido");
-      } else if (cardFilter === "urgentes") {
-        query = query.eq("severity", "alta").in("status", ["aberto", "em_andamento"]);
-      } else if (cardFilter === "coordenacao") {
-        query = query.eq("created_role", "coordenacao");
-      }
-
-      const { data } = await query.order("created_at", { ascending: false });
-      return data || [];
+      const { data } = await supabase
+        .from("secretary_requests")
+        .select("status, priority, origin")
+        .eq("school_id", schoolId!);
+      const rows = data ?? [];
+      return {
+        pendentes: rows.filter(r => r.status !== "concluido").length,
+        resolvidos: rows.filter(r => r.status === "concluido").length,
+        urgentes: rows.filter(r => r.priority === "urgente" && r.status !== "concluido").length,
+        da_coordenacao: rows.filter(r => r.origin === "coordenacao" && r.status !== "concluido").length,
+      };
     },
-    enabled: !!schoolId && !!cardFilter,
+    enabled: !!schoolId,
   });
+  const totalPending = cardCounts?.pendentes ?? 0;
+  const totalResolved = cardCounts?.resolvidos ?? 0;
+  const urgentCount = cardCounts?.urgentes ?? 0;
+  const coordCount = cardCounts?.da_coordenacao ?? 0;
 
   // ── Secretary work queue (secretary_requests) — kept intact ──
   const { data: requests = [], isLoading } = useQuery({
