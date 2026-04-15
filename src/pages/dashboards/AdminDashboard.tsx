@@ -3,7 +3,6 @@ import RoleLayout from "@/components/layout/RoleLayout";
 import DashboardHeader from "@/components/admin-dashboard/DashboardHeader";
 import TopMetricCards from "@/components/admin-dashboard/TopMetricCards";
 import QuickAccessCards from "@/components/admin-dashboard/QuickAccessCards";
-import QuickActions from "@/components/admin-dashboard/QuickActions";
 import DashboardCharts from "@/components/admin-dashboard/DashboardCharts";
 import AdminRecentActivity from "@/components/admin-dashboard/AdminRecentActivity";
 import AdminHealthScore from "@/components/admin-dashboard/AdminHealthScore";
@@ -26,20 +25,16 @@ const AdminDashboard = () => {
             <h2 className="text-2xl font-bold text-foreground tracking-tight">Secretaria Digital</h2>
             <p className="text-sm text-muted-foreground mt-1">Centro de controle administrativo da escola</p>
           </div>
-          <div className="flex items-center gap-2">
-            <QuickActions onNewRequest={() => setModalOpen(true)} />
-            <DashboardHeader
-              selectedYear={selectedYear}
-              onYearChange={setSelectedYear}
-              onDataRefresh={handleRefresh}
-            />
-          </div>
+          <DashboardHeader
+            selectedYear={selectedYear}
+            onYearChange={setSelectedYear}
+            onDataRefresh={handleRefresh}
+          />
         </div>
 
         <TopMetricCards />
-        <QuickAccessCards />
+        <QuickAccessCards onNewRequest={() => setModalOpen(true)} />
 
-        {/* Alerts + Work Queue */}
         <SecretaryWorkQueue
           externalModalOpen={modalOpen}
           onExternalModalChange={setModalOpen}
