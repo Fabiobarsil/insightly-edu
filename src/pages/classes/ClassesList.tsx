@@ -40,7 +40,8 @@ const ClassesList = () => {
   });
 
   const loading = loadingSchool || isLoading;
-
+  console.log("USER:", dashboardRole);
+  console.log("SCHOOL ID:", schoolId);
   return (
     <AppLayout title="Turmas" breadcrumbs={[{ label: "Turmas" }]}>
       <PageHeader
