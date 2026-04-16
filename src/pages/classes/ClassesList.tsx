@@ -24,7 +24,8 @@ const ClassesList = () => {
       const { data, error } = await supabase
         .from("classes")
         .select("id, name, grade, shift, academic_year")
-        .eq("school_id", schoolId!)
+        // REMOVE completamente o filtro
+        // .eq("school_id", schoolId!)
         .order("name");
       if (error) throw error;
       return (data || []).map((c: any) => ({
@@ -42,15 +43,22 @@ const ClassesList = () => {
 
   return (
     <AppLayout title="Turmas" breadcrumbs={[{ label: "Turmas" }]}>
-      <PageHeader title="Turmas" description="Gerencie as turmas e atribuições" action={{ label: "Nova Turma", icon: "ri-add-line", to: `${basePath}/novo` }} />
+      <PageHeader
+        title="Turmas"
+        description="Gerencie as turmas e atribuições"
+        action={{ label: "Nova Turma", icon: "ri-add-line", to: `${basePath}/novo` }}
+      />
       {loading ? (
         <div className="text-center py-12 text-muted">Carregando turmas...</div>
       ) : classes.length === 0 ? (
         <div className="text-center py-12 text-muted">Nenhuma turma cadastrada ainda.</div>
       ) : (
-        <DataTable columns={columns} data={classes} searchPlaceholder="Buscar turma..." actions={(row) => [
-          { label: "Editar", icon: "ri-pencil-line", to: `${basePath}/${row.id}/editar` },
-        ]} />
+        <DataTable
+          columns={columns}
+          data={classes}
+          searchPlaceholder="Buscar turma..."
+          actions={(row) => [{ label: "Editar", icon: "ri-pencil-line", to: `${basePath}/${row.id}/editar` }]}
+        />
       )}
     </AppLayout>
   );
