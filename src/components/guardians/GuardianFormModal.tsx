@@ -189,7 +189,7 @@ export default function GuardianFormModal({ open, onOpenChange, schoolId, studen
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Novo Responsável</DialogTitle>
+          <DialogTitle>{isEdit ? "Editar Responsável" : "Novo Responsável"}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-1 pt-2">
