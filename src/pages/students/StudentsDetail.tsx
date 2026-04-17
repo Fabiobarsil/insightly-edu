@@ -85,12 +85,22 @@ const StudentsDetail = () => {
   const { data: guardiansList = [] } = useQuery({
     queryKey: ["student-guardians", id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: sgData, error: sgError } = await supabase
         .from("student_guardians")
-        .select("guardian_id, guardians(id, full_name, phone, email, relationship_type, whatsapp_enabled)")
+        .select("guardian_id")
         .eq("student_id", id!);
-      if (error) throw error;
-      return (data || []).map((sg: any) => sg.guardians).filter(Boolean);
+      if (sgError) throw sgError;
+
+      const guardianIds = (sgData || []).map((g) => g.guardian_id);
+      if (!guardianIds.length) return [];
+
+      const { data: guardiansData, error: gError } = await supabase
+        .from("guardians")
+        .select("id, full_name, phone, email, relationship_type, whatsapp_enabled")
+        .in("id", guardianIds);
+      if (gError) throw gError;
+
+      return guardiansData || [];
     },
     enabled: !!id,
   });
