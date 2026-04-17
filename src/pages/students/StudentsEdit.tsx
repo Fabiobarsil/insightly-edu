@@ -8,6 +8,7 @@ import FormField from "@/components/shared/FormField";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
 import { toast } from "sonner";
+import { fetchAddressByCEP } from "@/utils/cep";
 
 const StudentsEdit = () => {
   const { id } = useParams();
@@ -49,6 +50,23 @@ const StudentsEdit = () => {
 
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((prev: any) => ({ ...prev, [key]: e.target.value }));
+
+  const handleZipChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setForm((prev: any) => ({ ...prev, zip_code: value }));
+    const clean = value.replace(/\D/g, "");
+    if (clean.length === 8) {
+      const data = await fetchAddressByCEP(clean);
+      if (!data) return;
+      setForm((prev: any) => ({
+        ...prev,
+        address: prev.address || data.address,
+        district: prev.district || data.district,
+        city: prev.city || data.city,
+        state: prev.state || data.state,
+      }));
+    }
+  };
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -159,7 +177,7 @@ const StudentsEdit = () => {
           <div className="mt-6">
             <h3 className="text-sm font-bold text-primary mb-3">Endereço</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField label="CEP" placeholder="00000-000" value={form.zip_code || ""} onChange={set("zip_code")} />
+              <FormField label="CEP" placeholder="00000-000" value={form.zip_code || ""} onChange={handleZipChange} />
               <FormField label="Rua" placeholder="Nome da rua" value={form.address || ""} onChange={set("address")} />
               <FormField label="Número" placeholder="Nº" value={form.number || ""} onChange={set("number")} />
               <FormField label="Bairro" placeholder="Bairro" value={form.district || ""} onChange={set("district")} />

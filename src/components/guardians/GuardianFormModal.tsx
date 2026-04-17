@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { fetchAddressByCEP } from "@/utils/cep";
 
 const relationshipTypes = [
   { value: "pai", label: "Pai" },
@@ -97,6 +98,22 @@ export default function GuardianFormModal({ open, onOpenChange, schoolId, studen
 
   const gSet = (key: string) => (val: string) => setGf((p) => ({ ...p, [key]: val }));
   const gCheck = (key: string) => (val: boolean) => setGf((p) => ({ ...p, [key]: val }));
+
+  const handleZipChange = async (val: string) => {
+    setGf((p) => ({ ...p, zipcode: val }));
+    const clean = val.replace(/\D/g, "");
+    if (clean.length === 8) {
+      const data = await fetchAddressByCEP(clean);
+      if (!data) return;
+      setGf((p) => ({
+        ...p,
+        address: p.address || data.address,
+        district: p.district || data.district,
+        city: p.city || data.city,
+        state: p.state || data.state,
+      }));
+    }
+  };
 
   // Load guardian data when editing
   useEffect(() => {
@@ -228,7 +245,7 @@ export default function GuardianFormModal({ open, onOpenChange, schoolId, studen
 
           <SectionTitle>Endereço</SectionTitle>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <FieldInput label="CEP" value={gf.zipcode} onChange={gSet("zipcode")} placeholder="00000-000" />
+            <FieldInput label="CEP" value={gf.zipcode} onChange={handleZipChange} placeholder="00000-000" />
             <div className="md:col-span-2">
               <FieldInput label="Endereço" value={gf.address} onChange={gSet("address")} placeholder="Rua, Avenida..." />
             </div>
