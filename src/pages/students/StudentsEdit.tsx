@@ -51,6 +51,23 @@ const StudentsEdit = () => {
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((prev: any) => ({ ...prev, [key]: e.target.value }));
 
+  const handleZipChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setForm((prev: any) => ({ ...prev, zip_code: value }));
+    const clean = value.replace(/\D/g, "");
+    if (clean.length === 8) {
+      const data = await fetchAddressByCEP(clean);
+      if (!data) return;
+      setForm((prev: any) => ({
+        ...prev,
+        address: prev.address || data.address,
+        district: prev.district || data.district,
+        city: prev.city || data.city,
+        state: prev.state || data.state,
+      }));
+    }
+  };
+
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
