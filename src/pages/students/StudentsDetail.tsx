@@ -274,6 +274,8 @@ const StudentsDetail = () => {
             <InfoRow label="CPF" value={s.cpf || "—"} />
             <InfoRow label="RG" value={s.rg || "—"} />
             <InfoRow label="E-mail" value={s.email || "—"} />
+            <InfoRow label="Telefone" value={s.phone || "—"} />
+            <InfoRow label="Tipo Sanguíneo" value={s.blood_type || "—"} />
             <InfoRow label="Status" value={mapped.label} />
           </div>
           <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow">
