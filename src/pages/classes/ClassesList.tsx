@@ -21,11 +21,14 @@ const ClassesList = () => {
   const { data: classes = [], isLoading } = useQuery({
     queryKey: ["classes", schoolId],
     queryFn: async () => {
+      if (!schoolId) {
+        throw new Error("schoolId não encontrado");
+      }
       console.log("SCHOOL_ID:", schoolId);
       const { data, error } = await supabase
         .from("classes")
         .select("id, name, grade, shift, academic_year")
-        .eq("school_id", schoolId!)
+        .eq("school_id", schoolId)
         .order("name");
       if (error) throw error;
       return (data || []).map((c: any) => ({
