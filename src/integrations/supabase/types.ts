@@ -1661,6 +1661,7 @@ export type Database = {
         }
         Returns: string
       }
+      ensure_user_school: { Args: never; Returns: undefined }
       get_effective_role: { Args: never; Returns: string }
       is_member_of_school: { Args: { _school_id: string }; Returns: boolean }
       process_rematricula: { Args: { p_year: number }; Returns: number }

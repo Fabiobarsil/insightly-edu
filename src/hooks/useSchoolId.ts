@@ -33,19 +33,36 @@ export function useSchoolId() {
           return;
         }
 
-        const { data: profile, error: profileError } = await supabase
+        console.log("AUTH USER:", user.id);
+
+        // 1ª tentativa: ler school_id direto do profile
+        let { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("school_id")
           .eq("id", user.id)
           .maybeSingle();
 
+        console.log("PROFILE:", profile);
+
         if (profileError) {
           console.error("[useSchoolId] profile error:", profileError);
-          if (mounted) {
-            setSchoolId(null);
-            setLoading(false);
+        }
+
+        // Se não tem school_id, chama RPC que faz fallback no servidor
+        if (!profile?.school_id) {
+          console.log("[useSchoolId] school_id ausente, chamando ensure_user_school...");
+          const { error: rpcError } = await supabase.rpc("ensure_user_school" as any);
+          if (rpcError) {
+            console.error("[useSchoolId] ensure_user_school error:", rpcError);
           }
-          return;
+
+          const { data: refreshed } = await supabase
+            .from("profiles")
+            .select("school_id")
+            .eq("id", user.id)
+            .maybeSingle();
+          profile = refreshed;
+          console.log("PROFILE (after ensure):", profile);
         }
 
         const resolved = profile?.school_id ?? null;
