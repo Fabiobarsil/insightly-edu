@@ -137,6 +137,14 @@ const StudentsEdit = () => {
             <FormField label="CPF" placeholder="000.000.000-00" value={form.cpf || ""} onChange={set("cpf")} />
             <FormField label="RG" placeholder="Número do RG" value={form.rg || ""} onChange={set("rg")} />
             <FormField label="E-mail" placeholder="email@exemplo.com" value={form.email || ""} onChange={set("email")} />
+            <FormField label="Telefone" placeholder="(00) 00000-0000" value={form.phone || ""} onChange={set("phone")} />
+            <FormField label="Tipo Sanguíneo" options={[
+              { value: "A+", label: "A+" }, { value: "A-", label: "A-" },
+              { value: "B+", label: "B+" }, { value: "B-", label: "B-" },
+              { value: "AB+", label: "AB+" }, { value: "AB-", label: "AB-" },
+              { value: "O+", label: "O+" }, { value: "O-", label: "O-" },
+            ]} value={form.blood_type || ""} onChange={set("blood_type")} />
+            <FormField label="Matrícula" placeholder="Nº de matrícula" value={form.enrollment_number || ""} onChange={set("enrollment_number")} />
             <FormField label="Ano Letivo" placeholder="2026" value={form.academic_year ? String(form.academic_year) : ""} onChange={set("academic_year")} />
             <FormField label="Turma" options={classes.map((c: any) => ({ value: c.id, label: c.name }))} value={form.class_id || ""} onChange={set("class_id")} />
             <FormField label="Status" options={[
@@ -146,6 +154,22 @@ const StudentsEdit = () => {
               { value: "incompleto", label: "Incompleto" },
               { value: "irregular", label: "Irregular" },
             ]} value={form.status || "ativo"} onChange={set("status")} />
+          </div>
+
+          <div className="mt-6">
+            <h3 className="text-sm font-bold text-primary mb-3">Endereço</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField label="CEP" placeholder="00000-000" value={form.zip_code || ""} onChange={set("zip_code")} />
+              <FormField label="Rua" placeholder="Nome da rua" value={form.address || ""} onChange={set("address")} />
+              <FormField label="Número" placeholder="Nº" value={form.number || ""} onChange={set("number")} />
+              <FormField label="Bairro" placeholder="Bairro" value={form.district || ""} onChange={set("district")} />
+              <FormField label="Cidade" placeholder="Cidade" value={form.city || ""} onChange={set("city")} />
+              <FormField label="Estado" placeholder="UF" value={form.state || ""} onChange={set("state")} />
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <FormField label="Observações" textarea placeholder="Notas adicionais sobre o aluno" value={form.notes || ""} onChange={set("notes")} />
           </div>
         </FormCard>
       </div>
