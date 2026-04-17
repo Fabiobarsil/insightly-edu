@@ -1377,6 +1377,7 @@ export type Database = {
         Row: {
           address: string | null
           cnpj: string | null
+          complement: string | null
           created_at: string | null
           director_name: string | null
           director_role: string | null
@@ -1388,6 +1389,7 @@ export type Database = {
         Insert: {
           address?: string | null
           cnpj?: string | null
+          complement?: string | null
           created_at?: string | null
           director_name?: string | null
           director_role?: string | null
@@ -1399,6 +1401,7 @@ export type Database = {
         Update: {
           address?: string | null
           cnpj?: string | null
+          complement?: string | null
           created_at?: string | null
           director_name?: string | null
           director_role?: string | null
@@ -1791,6 +1794,7 @@ export type Database = {
           blood_type: string | null
           city: string | null
           class_id: string | null
+          complement: string | null
           cpf: string | null
           district: string | null
           email: string | null
@@ -1814,6 +1818,7 @@ export type Database = {
           blood_type?: string | null
           city?: string | null
           class_id?: string | null
+          complement?: string | null
           cpf?: string | null
           district?: string | null
           email?: string | null
@@ -1837,6 +1842,7 @@ export type Database = {
           blood_type?: string | null
           city?: string | null
           class_id?: string | null
+          complement?: string | null
           cpf?: string | null
           district?: string | null
           email?: string | null
