@@ -72,12 +72,12 @@ const Settings = () => {
     enabled: !!schoolId,
   });
 
-  const [form, setForm] = useState({ name: "", address: "", cnpj: "", mec_authorization_code: "", director_name: "", director_role: "", logo_url: "" });
+  const [form, setForm] = useState({ name: "", address: "", complement: "", cnpj: "", mec_authorization_code: "", director_name: "", director_role: "", logo_url: "" });
 
   useEffect(() => {
     if (school) {
       setForm({
-        name: school.name || "", address: school.address || "", cnpj: school.cnpj || "",
+        name: school.name || "", address: school.address || "", complement: (school as any).complement || "", cnpj: school.cnpj || "",
         mec_authorization_code: school.mec_authorization_code || "", director_name: school.director_name || "",
         director_role: school.director_role || "", logo_url: school.logo_url || "",
       });
@@ -217,6 +217,10 @@ const Settings = () => {
               <div className="md:col-span-2">
                 <label className="block text-xs font-bold text-muted-foreground mb-1.5">Endereço Completo</label>
                 <input value={form.address} onChange={handleChange("address")} placeholder="Rua, número, bairro, cidade - UF, CEP" className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5">Complemento</label>
+                <input value={form.complement} onChange={handleChange("complement")} placeholder="Sala, Bloco, Andar..." className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-xs font-bold text-muted-foreground mb-1.5">Portaria / Ato de Autorização</label>

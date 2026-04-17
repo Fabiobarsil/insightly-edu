@@ -106,6 +106,7 @@ const StudentsEdit = () => {
         city: form.city || null,
         state: form.state || null,
         zip_code: form.zip_code || null,
+        complement: form.complement || null,
         enrollment_number: form.enrollment_number || null,
         notes: form.notes || null,
       } as any).eq("id", id!);
@@ -180,6 +181,7 @@ const StudentsEdit = () => {
               <FormField label="CEP" placeholder="00000-000" value={form.zip_code || ""} onChange={handleZipChange} />
               <FormField label="Rua" placeholder="Nome da rua" value={form.address || ""} onChange={set("address")} />
               <FormField label="Número" placeholder="Nº" value={form.number || ""} onChange={set("number")} />
+              <FormField label="Complemento" placeholder="Apto, Bloco..." value={form.complement || ""} onChange={set("complement")} />
               <FormField label="Bairro" placeholder="Bairro" value={form.district || ""} onChange={set("district")} />
               <FormField label="Cidade" placeholder="Cidade" value={form.city || ""} onChange={set("city")} />
               <FormField label="Estado" placeholder="UF" value={form.state || ""} onChange={set("state")} />
