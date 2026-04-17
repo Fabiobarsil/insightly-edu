@@ -1585,45 +1585,72 @@ export type Database = {
       students: {
         Row: {
           academic_year: number | null
+          address: string | null
           birth_date: string | null
           blood_type: string | null
+          city: string | null
           class_id: string | null
           cpf: string | null
+          district: string | null
           email: string | null
+          enrollment_number: string | null
           full_name: string
           id: string
+          notes: string | null
+          number: string | null
+          phone: string | null
           photo_url: string | null
           rg: string | null
           school_id: string
+          state: string | null
           status: Database["public"]["Enums"]["student_status"] | null
+          zip_code: string | null
         }
         Insert: {
           academic_year?: number | null
+          address?: string | null
           birth_date?: string | null
           blood_type?: string | null
+          city?: string | null
           class_id?: string | null
           cpf?: string | null
+          district?: string | null
           email?: string | null
+          enrollment_number?: string | null
           full_name: string
           id?: string
+          notes?: string | null
+          number?: string | null
+          phone?: string | null
           photo_url?: string | null
           rg?: string | null
           school_id: string
+          state?: string | null
           status?: Database["public"]["Enums"]["student_status"] | null
+          zip_code?: string | null
         }
         Update: {
           academic_year?: number | null
+          address?: string | null
           birth_date?: string | null
           blood_type?: string | null
+          city?: string | null
           class_id?: string | null
           cpf?: string | null
+          district?: string | null
           email?: string | null
+          enrollment_number?: string | null
           full_name?: string
           id?: string
+          notes?: string | null
+          number?: string | null
+          phone?: string | null
           photo_url?: string | null
           rg?: string | null
           school_id?: string
+          state?: string | null
           status?: Database["public"]["Enums"]["student_status"] | null
+          zip_code?: string | null
         }
         Relationships: [
           {

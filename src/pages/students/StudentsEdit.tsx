@@ -80,6 +80,16 @@ const StudentsEdit = () => {
         rg: form.rg || null,
         email: form.email || null,
         academic_year: form.academic_year ? parseInt(form.academic_year) : null,
+        phone: form.phone || null,
+        blood_type: form.blood_type || null,
+        address: form.address || null,
+        number: form.number || null,
+        district: form.district || null,
+        city: form.city || null,
+        state: form.state || null,
+        zip_code: form.zip_code || null,
+        enrollment_number: form.enrollment_number || null,
+        notes: form.notes || null,
       } as any).eq("id", id!);
       if (error) throw error;
     },
