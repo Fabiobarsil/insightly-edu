@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -86,37 +86,81 @@ interface GuardianFormModalProps {
   studentId?: string;
   /** Called after successful creation with the new guardian's id and full_name */
   onCreated?: (guardian: { id: string; full_name: string }) => void;
+  /** If provided, modal opens in edit mode for this guardian id */
+  guardianId?: string | null;
 }
 
-export default function GuardianFormModal({ open, onOpenChange, schoolId, studentId, onCreated }: GuardianFormModalProps) {
+export default function GuardianFormModal({ open, onOpenChange, schoolId, studentId, onCreated, guardianId }: GuardianFormModalProps) {
   const queryClient = useQueryClient();
   const [gf, setGf] = useState({ ...emptyForm });
+  const isEdit = !!guardianId;
 
   const gSet = (key: string) => (val: string) => setGf((p) => ({ ...p, [key]: val }));
   const gCheck = (key: string) => (val: boolean) => setGf((p) => ({ ...p, [key]: val }));
+
+  // Load guardian data when editing
+  useEffect(() => {
+    if (!open) return;
+    if (!guardianId) {
+      setGf({ ...emptyForm });
+      return;
+    }
+    (async () => {
+      const { data, error } = await supabase
+        .from("guardians")
+        .select("*")
+        .eq("id", guardianId)
+        .maybeSingle();
+      if (error) {
+        toast.error("Erro ao carregar responsável");
+        return;
+      }
+      if (data) {
+        setGf({
+          ...emptyForm,
+          ...Object.fromEntries(
+            Object.keys(emptyForm).map((k) => [k, (data as any)[k] ?? (typeof (emptyForm as any)[k] === "boolean" ? false : "")])
+          ),
+        } as typeof emptyForm);
+      }
+    })();
+  }, [open, guardianId]);
 
   const mutation = useMutation({
     mutationFn: async () => {
       if (!schoolId) throw new Error("Sem escola vinculada");
       if (!gf.full_name.trim()) throw new Error("Nome é obrigatório");
+
+      const payload = {
+        full_name: gf.full_name.trim(),
+        cpf: gf.cpf || null, rg: gf.rg || null, birth_date: gf.birth_date || null,
+        gender: gf.gender || null, nationality: gf.nationality || null, marital_status: gf.marital_status || null,
+        relationship_type: gf.relationship_type || null, relationship_description: gf.relationship_description || null,
+        is_financial: gf.is_financial, is_pedagogical: gf.is_pedagogical, is_primary: gf.is_primary,
+        phone: gf.phone || null, phone_secondary: gf.phone_secondary || null,
+        email: gf.email || null, email_secondary: gf.email_secondary || null, whatsapp_enabled: gf.whatsapp_enabled,
+        zipcode: gf.zipcode || null, address: gf.address || null, number: gf.number || null,
+        complement: gf.complement || null, district: gf.district || null, city: gf.city || null, state: gf.state || null,
+        profession: gf.profession || null, company: gf.company || null,
+        income_range: gf.income_range || null, work_phone: gf.work_phone || null,
+        can_pickup: gf.can_pickup, can_receive_reports: gf.can_receive_reports, can_authorize_image: gf.can_authorize_image,
+        notes: gf.notes || null,
+      };
+
+      if (isEdit && guardianId) {
+        const { data: guardian, error: uErr } = await supabase
+          .from("guardians")
+          .update(payload)
+          .eq("id", guardianId)
+          .select("id, full_name")
+          .single();
+        if (uErr) throw uErr;
+        return guardian;
+      }
+
       const { data: guardian, error: gErr } = await supabase
         .from("guardians")
-        .insert({
-          full_name: gf.full_name.trim(),
-          cpf: gf.cpf || null, rg: gf.rg || null, birth_date: gf.birth_date || null,
-          gender: gf.gender || null, nationality: gf.nationality || null, marital_status: gf.marital_status || null,
-          relationship_type: gf.relationship_type || null, relationship_description: gf.relationship_description || null,
-          is_financial: gf.is_financial, is_pedagogical: gf.is_pedagogical, is_primary: gf.is_primary,
-          phone: gf.phone || null, phone_secondary: gf.phone_secondary || null,
-          email: gf.email || null, email_secondary: gf.email_secondary || null, whatsapp_enabled: gf.whatsapp_enabled,
-          zipcode: gf.zipcode || null, address: gf.address || null, number: gf.number || null,
-          complement: gf.complement || null, district: gf.district || null, city: gf.city || null, state: gf.state || null,
-          profession: gf.profession || null, company: gf.company || null,
-          income_range: gf.income_range || null, work_phone: gf.work_phone || null,
-          can_pickup: gf.can_pickup, can_receive_reports: gf.can_receive_reports, can_authorize_image: gf.can_authorize_image,
-          notes: gf.notes || null,
-          school_id: schoolId,
-        })
+        .insert({ ...payload, school_id: schoolId })
         .select("id, full_name")
         .single();
       if (gErr) throw gErr;
@@ -135,17 +179,17 @@ export default function GuardianFormModal({ open, onOpenChange, schoolId, studen
       queryClient.invalidateQueries({ queryKey: ["student-guardians"] });
       setGf({ ...emptyForm });
       onOpenChange(false);
-      toast.success("Responsável cadastrado!");
-      onCreated?.(guardian);
+      toast.success(isEdit ? "Responsável atualizado!" : "Responsável cadastrado!");
+      if (!isEdit) onCreated?.(guardian);
     },
-    onError: (err: any) => toast.error(err.message || "Erro ao cadastrar responsável"),
+    onError: (err: any) => toast.error(err.message || "Erro ao salvar responsável"),
   });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Novo Responsável</DialogTitle>
+          <DialogTitle>{isEdit ? "Editar Responsável" : "Novo Responsável"}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-1 pt-2">

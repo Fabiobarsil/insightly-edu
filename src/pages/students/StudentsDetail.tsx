@@ -65,6 +65,7 @@ const StudentsDetail = () => {
   const [declReason, setDeclReason] = useState("");
   const [customReason, setCustomReason] = useState("");
   const [guardianModalOpen, setGuardianModalOpen] = useState(false);
+  const [editingGuardianId, setEditingGuardianId] = useState<string | null>(null);
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const docInputRef = useRef<HTMLInputElement>(null);
 
@@ -290,7 +291,7 @@ const StudentsDetail = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-bold text-primary">Responsáveis Vinculados ({guardiansList.length})</h4>
-            <button onClick={() => setGuardianModalOpen(true)} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-secondary text-secondary-foreground text-xs font-bold hover:bg-secondary/90 transition-colors">
+            <button onClick={() => { setEditingGuardianId(null); setGuardianModalOpen(true); }} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-secondary text-secondary-foreground text-xs font-bold hover:bg-secondary/90 transition-colors">
               <i className="ri-add-line" /> Adicionar Responsável
             </button>
           </div>
@@ -318,6 +319,10 @@ const StudentsDetail = () => {
                     <i className="ri-whatsapp-line" /> WhatsApp
                   </a>
                 )}
+                <button onClick={() => { setEditingGuardianId(g.id); setGuardianModalOpen(true); }}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-[10px] bg-accent text-primary text-xs font-bold hover:bg-accent/80 transition-colors">
+                  <i className="ri-edit-line" /> Editar
+                </button>
                 <button onClick={() => unlinkGuardianMutation.mutate(g.id)}
                   className="text-xs font-bold text-destructive hover:underline">Desvincular</button>
               </div>
@@ -470,9 +475,10 @@ const StudentsDetail = () => {
 
       <GuardianFormModal
         open={guardianModalOpen}
-        onOpenChange={setGuardianModalOpen}
+        onOpenChange={(o) => { setGuardianModalOpen(o); if (!o) setEditingGuardianId(null); }}
         schoolId={schoolId}
         studentId={id}
+        guardianId={editingGuardianId}
       />
     </AppLayout>
   );
