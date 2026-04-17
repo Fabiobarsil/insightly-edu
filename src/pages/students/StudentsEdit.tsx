@@ -8,6 +8,7 @@ import FormField from "@/components/shared/FormField";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
 import { toast } from "sonner";
+import { fetchAddressByCEP } from "@/utils/cep";
 
 const StudentsEdit = () => {
   const { id } = useParams();
@@ -159,7 +160,7 @@ const StudentsEdit = () => {
           <div className="mt-6">
             <h3 className="text-sm font-bold text-primary mb-3">Endereço</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField label="CEP" placeholder="00000-000" value={form.zip_code || ""} onChange={set("zip_code")} />
+              <FormField label="CEP" placeholder="00000-000" value={form.zip_code || ""} onChange={handleZipChange} />
               <FormField label="Rua" placeholder="Nome da rua" value={form.address || ""} onChange={set("address")} />
               <FormField label="Número" placeholder="Nº" value={form.number || ""} onChange={set("number")} />
               <FormField label="Bairro" placeholder="Bairro" value={form.district || ""} onChange={set("district")} />
