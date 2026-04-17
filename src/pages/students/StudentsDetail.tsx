@@ -291,7 +291,7 @@ const StudentsDetail = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-bold text-primary">Responsáveis Vinculados ({guardiansList.length})</h4>
-            <button onClick={() => setGuardianModalOpen(true)} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-secondary text-secondary-foreground text-xs font-bold hover:bg-secondary/90 transition-colors">
+            <button onClick={() => { setEditingGuardianId(null); setGuardianModalOpen(true); }} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-secondary text-secondary-foreground text-xs font-bold hover:bg-secondary/90 transition-colors">
               <i className="ri-add-line" /> Adicionar Responsável
             </button>
           </div>
