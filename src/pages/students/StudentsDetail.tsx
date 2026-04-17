@@ -65,6 +65,7 @@ const StudentsDetail = () => {
   const [declReason, setDeclReason] = useState("");
   const [customReason, setCustomReason] = useState("");
   const [guardianModalOpen, setGuardianModalOpen] = useState(false);
+  const [editingGuardianId, setEditingGuardianId] = useState<string | null>(null);
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const docInputRef = useRef<HTMLInputElement>(null);
 
