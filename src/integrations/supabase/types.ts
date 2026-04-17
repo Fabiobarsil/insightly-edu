@@ -257,6 +257,258 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_classes_20260417: {
+        Row: {
+          academic_year: number | null
+          capacity: number | null
+          grade: string | null
+          grade_id: string | null
+          id: string | null
+          name: string | null
+          school_id: string | null
+          shift: string | null
+          shift_id: string | null
+        }
+        Insert: {
+          academic_year?: number | null
+          capacity?: number | null
+          grade?: string | null
+          grade_id?: string | null
+          id?: string | null
+          name?: string | null
+          school_id?: string | null
+          shift?: string | null
+          shift_id?: string | null
+        }
+        Update: {
+          academic_year?: number | null
+          capacity?: number | null
+          grade?: string | null
+          grade_id?: string | null
+          id?: string | null
+          name?: string | null
+          school_id?: string | null
+          shift?: string | null
+          shift_id?: string | null
+        }
+        Relationships: []
+      }
+      backup_guardians_20260417: {
+        Row: {
+          address: string | null
+          birth_date: string | null
+          can_authorize_image: boolean | null
+          can_pickup: boolean | null
+          can_receive_reports: boolean | null
+          city: string | null
+          company: string | null
+          complement: string | null
+          cpf: string | null
+          district: string | null
+          email: string | null
+          email_secondary: string | null
+          full_name: string | null
+          gender: string | null
+          id: string | null
+          income_range: string | null
+          is_financial: boolean | null
+          is_pedagogical: boolean | null
+          is_primary: boolean | null
+          marital_status: string | null
+          nationality: string | null
+          notes: string | null
+          number: string | null
+          phone: string | null
+          phone_secondary: string | null
+          profession: string | null
+          relationship_description: string | null
+          relationship_type: string | null
+          rg: string | null
+          school_id: string | null
+          state: string | null
+          whatsapp_enabled: boolean | null
+          work_phone: string | null
+          zipcode: string | null
+        }
+        Insert: {
+          address?: string | null
+          birth_date?: string | null
+          can_authorize_image?: boolean | null
+          can_pickup?: boolean | null
+          can_receive_reports?: boolean | null
+          city?: string | null
+          company?: string | null
+          complement?: string | null
+          cpf?: string | null
+          district?: string | null
+          email?: string | null
+          email_secondary?: string | null
+          full_name?: string | null
+          gender?: string | null
+          id?: string | null
+          income_range?: string | null
+          is_financial?: boolean | null
+          is_pedagogical?: boolean | null
+          is_primary?: boolean | null
+          marital_status?: string | null
+          nationality?: string | null
+          notes?: string | null
+          number?: string | null
+          phone?: string | null
+          phone_secondary?: string | null
+          profession?: string | null
+          relationship_description?: string | null
+          relationship_type?: string | null
+          rg?: string | null
+          school_id?: string | null
+          state?: string | null
+          whatsapp_enabled?: boolean | null
+          work_phone?: string | null
+          zipcode?: string | null
+        }
+        Update: {
+          address?: string | null
+          birth_date?: string | null
+          can_authorize_image?: boolean | null
+          can_pickup?: boolean | null
+          can_receive_reports?: boolean | null
+          city?: string | null
+          company?: string | null
+          complement?: string | null
+          cpf?: string | null
+          district?: string | null
+          email?: string | null
+          email_secondary?: string | null
+          full_name?: string | null
+          gender?: string | null
+          id?: string | null
+          income_range?: string | null
+          is_financial?: boolean | null
+          is_pedagogical?: boolean | null
+          is_primary?: boolean | null
+          marital_status?: string | null
+          nationality?: string | null
+          notes?: string | null
+          number?: string | null
+          phone?: string | null
+          phone_secondary?: string | null
+          profession?: string | null
+          relationship_description?: string | null
+          relationship_type?: string | null
+          rg?: string | null
+          school_id?: string | null
+          state?: string | null
+          whatsapp_enabled?: boolean | null
+          work_phone?: string | null
+          zipcode?: string | null
+        }
+        Relationships: []
+      }
+      backup_student_guardians_20260417: {
+        Row: {
+          guardian_id: string | null
+          school_id: string | null
+          student_id: string | null
+        }
+        Insert: {
+          guardian_id?: string | null
+          school_id?: string | null
+          student_id?: string | null
+        }
+        Update: {
+          guardian_id?: string | null
+          school_id?: string | null
+          student_id?: string | null
+        }
+        Relationships: []
+      }
+      backup_students_20260417: {
+        Row: {
+          academic_year: number | null
+          birth_date: string | null
+          class_id: string | null
+          cpf: string | null
+          email: string | null
+          full_name: string | null
+          id: string | null
+          photo_url: string | null
+          rg: string | null
+          school_id: string | null
+          status: Database["public"]["Enums"]["student_status"] | null
+        }
+        Insert: {
+          academic_year?: number | null
+          birth_date?: string | null
+          class_id?: string | null
+          cpf?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string | null
+          photo_url?: string | null
+          rg?: string | null
+          school_id?: string | null
+          status?: Database["public"]["Enums"]["student_status"] | null
+        }
+        Update: {
+          academic_year?: number | null
+          birth_date?: string | null
+          class_id?: string | null
+          cpf?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string | null
+          photo_url?: string | null
+          rg?: string | null
+          school_id?: string | null
+          status?: Database["public"]["Enums"]["student_status"] | null
+        }
+        Relationships: []
+      }
+      backup_teacher_assignments_20260417: {
+        Row: {
+          class_id: string | null
+          id: string | null
+          school_id: string | null
+          subject_id: string | null
+          teacher_id: string | null
+        }
+        Insert: {
+          class_id?: string | null
+          id?: string | null
+          school_id?: string | null
+          subject_id?: string | null
+          teacher_id?: string | null
+        }
+        Update: {
+          class_id?: string | null
+          id?: string | null
+          school_id?: string | null
+          subject_id?: string | null
+          teacher_id?: string | null
+        }
+        Relationships: []
+      }
+      backup_teacher_classes_20260417: {
+        Row: {
+          class_id: string | null
+          id: string | null
+          subject_id: string | null
+          teacher_id: string | null
+        }
+        Insert: {
+          class_id?: string | null
+          id?: string | null
+          subject_id?: string | null
+          teacher_id?: string | null
+        }
+        Update: {
+          class_id?: string | null
+          id?: string | null
+          subject_id?: string | null
+          teacher_id?: string | null
+        }
+        Relationships: []
+      }
       classes: {
         Row: {
           academic_year: number | null
@@ -478,7 +730,7 @@ export type Database = {
           relationship_description: string | null
           relationship_type: string | null
           rg: string | null
-          school_id: string | null
+          school_id: string
           state: string | null
           whatsapp_enabled: boolean | null
           work_phone: string | null
@@ -514,7 +766,7 @@ export type Database = {
           relationship_description?: string | null
           relationship_type?: string | null
           rg?: string | null
-          school_id?: string | null
+          school_id: string
           state?: string | null
           whatsapp_enabled?: boolean | null
           work_phone?: string | null
@@ -550,7 +802,7 @@ export type Database = {
           relationship_description?: string | null
           relationship_type?: string | null
           rg?: string | null
-          school_id?: string | null
+          school_id?: string
           state?: string | null
           whatsapp_enabled?: boolean | null
           work_phone?: string | null
@@ -719,7 +971,7 @@ export type Database = {
           full_name: string | null
           id: string
           role: string | null
-          school_id: string | null
+          school_id: string
           status: string | null
         }
         Insert: {
@@ -728,7 +980,7 @@ export type Database = {
           full_name?: string | null
           id: string
           role?: string | null
-          school_id?: string | null
+          school_id: string
           status?: string | null
         }
         Update: {
@@ -737,7 +989,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           role?: string | null
-          school_id?: string | null
+          school_id?: string
           status?: string | null
         }
         Relationships: []
@@ -1334,6 +1586,7 @@ export type Database = {
         Row: {
           academic_year: number | null
           birth_date: string | null
+          blood_type: string | null
           class_id: string | null
           cpf: string | null
           email: string | null
@@ -1341,12 +1594,13 @@ export type Database = {
           id: string
           photo_url: string | null
           rg: string | null
-          school_id: string | null
+          school_id: string
           status: Database["public"]["Enums"]["student_status"] | null
         }
         Insert: {
           academic_year?: number | null
           birth_date?: string | null
+          blood_type?: string | null
           class_id?: string | null
           cpf?: string | null
           email?: string | null
@@ -1354,12 +1608,13 @@ export type Database = {
           id?: string
           photo_url?: string | null
           rg?: string | null
-          school_id?: string | null
+          school_id: string
           status?: Database["public"]["Enums"]["student_status"] | null
         }
         Update: {
           academic_year?: number | null
           birth_date?: string | null
+          blood_type?: string | null
           class_id?: string | null
           cpf?: string | null
           email?: string | null
@@ -1367,7 +1622,7 @@ export type Database = {
           id?: string
           photo_url?: string | null
           rg?: string | null
-          school_id?: string | null
+          school_id?: string
           status?: Database["public"]["Enums"]["student_status"] | null
         }
         Relationships: [
@@ -1391,17 +1646,17 @@ export type Database = {
         Row: {
           id: string
           name: string | null
-          school_id: string | null
+          school_id: string
         }
         Insert: {
           id?: string
           name?: string | null
-          school_id?: string | null
+          school_id: string
         }
         Update: {
           id?: string
           name?: string | null
-          school_id?: string | null
+          school_id?: string
         }
         Relationships: [
           {
@@ -1417,21 +1672,21 @@ export type Database = {
         Row: {
           class_id: string | null
           id: string
-          school_id: string | null
+          school_id: string
           subject_id: string | null
           teacher_id: string | null
         }
         Insert: {
           class_id?: string | null
           id?: string
-          school_id?: string | null
+          school_id: string
           subject_id?: string | null
           teacher_id?: string | null
         }
         Update: {
           class_id?: string | null
           id?: string
-          school_id?: string | null
+          school_id?: string
           subject_id?: string | null
           teacher_id?: string | null
         }
@@ -1507,7 +1762,7 @@ export type Database = {
           full_name: string | null
           id: string
           profile_id: string | null
-          school_id: string | null
+          school_id: string
           status: string | null
         }
         Insert: {
@@ -1515,7 +1770,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           profile_id?: string | null
-          school_id?: string | null
+          school_id: string
           status?: string | null
         }
         Update: {
@@ -1523,7 +1778,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           profile_id?: string | null
-          school_id?: string | null
+          school_id?: string
           status?: string | null
         }
         Relationships: [
