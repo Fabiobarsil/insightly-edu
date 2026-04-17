@@ -319,6 +319,10 @@ const StudentsDetail = () => {
                     <i className="ri-whatsapp-line" /> WhatsApp
                   </a>
                 )}
+                <button onClick={() => { setEditingGuardianId(g.id); setGuardianModalOpen(true); }}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-[10px] bg-accent text-primary text-xs font-bold hover:bg-accent/80 transition-colors">
+                  <i className="ri-edit-line" /> Editar
+                </button>
                 <button onClick={() => unlinkGuardianMutation.mutate(g.id)}
                   className="text-xs font-bold text-destructive hover:underline">Desvincular</button>
               </div>
