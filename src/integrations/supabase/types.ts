@@ -80,32 +80,155 @@ export type Database = {
         }
         Relationships: []
       }
+      assessments: {
+        Row: {
+          assessment_date: string | null
+          class_id: string
+          created_at: string | null
+          id: string
+          max_score: number | null
+          name: string
+          school_id: string
+          subject_id: string
+          teacher_id: string | null
+          term: number
+          type: string
+          weight: number | null
+        }
+        Insert: {
+          assessment_date?: string | null
+          class_id: string
+          created_at?: string | null
+          id?: string
+          max_score?: number | null
+          name: string
+          school_id: string
+          subject_id: string
+          teacher_id?: string | null
+          term: number
+          type: string
+          weight?: number | null
+        }
+        Update: {
+          assessment_date?: string | null
+          class_id?: string
+          created_at?: string | null
+          id?: string
+          max_score?: number | null
+          name?: string
+          school_id?: string
+          subject_id?: string
+          teacher_id?: string | null
+          term?: number
+          type?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessments_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessments_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessments_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessments_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "v_boletim"
+            referencedColumns: ["subject_id"]
+          },
+          {
+            foreignKeyName: "assessments_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "v_boletim_base"
+            referencedColumns: ["subject_id"]
+          },
+          {
+            foreignKeyName: "assessments_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assignments: {
         Row: {
+          class_id: string | null
           created_at: string | null
           description: string | null
           id: string
           school_id: string
+          subject_id: string | null
           term: string | null
           title: string
         }
         Insert: {
+          class_id?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
           school_id: string
+          subject_id?: string | null
           term?: string | null
           title: string
         }
         Update: {
+          class_id?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
           school_id?: string
+          subject_id?: string | null
           term?: string | null
           title?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_assignment_class"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_assignment_subject"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_assignment_subject"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "v_boletim"
+            referencedColumns: ["subject_id"]
+          },
+          {
+            foreignKeyName: "fk_assignment_subject"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "v_boletim_base"
+            referencedColumns: ["subject_id"]
+          },
+        ]
       }
       attendance: {
         Row: {
@@ -247,6 +370,7 @@ export type Database = {
       grades: {
         Row: {
           assignment_id: string | null
+          enrollment_id: string
           grade_value: number | null
           id: string
           school_id: string | null
@@ -255,6 +379,7 @@ export type Database = {
         }
         Insert: {
           assignment_id?: string | null
+          enrollment_id: string
           grade_value?: number | null
           id?: string
           school_id?: string | null
@@ -263,6 +388,7 @@ export type Database = {
         }
         Update: {
           assignment_id?: string | null
+          enrollment_id?: string
           grade_value?: number | null
           id?: string
           school_id?: string | null
@@ -270,6 +396,27 @@ export type Database = {
           term?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_grade_enrollment"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "student_enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_grade_enrollment"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "v_boletim"
+            referencedColumns: ["enrollment_id"]
+          },
+          {
+            foreignKeyName: "fk_grade_enrollment"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "v_boletim_base"
+            referencedColumns: ["enrollment_id"]
+          },
           {
             foreignKeyName: "grades_assignment_id_fkey"
             columns: ["assignment_id"]
@@ -543,6 +690,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "pedagogical_interventions_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "v_boletim"
+            referencedColumns: ["subject_id"]
+          },
+          {
+            foreignKeyName: "pedagogical_interventions_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "v_boletim_base"
+            referencedColumns: ["subject_id"]
+          },
+          {
             foreignKeyName: "pedagogical_interventions_teacher_id_fkey"
             columns: ["teacher_id"]
             isOneToOne: false
@@ -580,6 +741,55 @@ export type Database = {
           status?: string | null
         }
         Relationships: []
+      }
+      recovery_grades: {
+        Row: {
+          created_at: string | null
+          enrollment_id: string
+          id: string
+          recovery_score: number
+          subject_id: string
+          term: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          enrollment_id: string
+          id?: string
+          recovery_score: number
+          subject_id: string
+          term?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          enrollment_id?: string
+          id?: string
+          recovery_score?: number
+          subject_id?: string
+          term?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_recovery_enrollment"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "student_enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_recovery_enrollment"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "v_boletim"
+            referencedColumns: ["enrollment_id"]
+          },
+          {
+            foreignKeyName: "fk_recovery_enrollment"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "v_boletim_base"
+            referencedColumns: ["enrollment_id"]
+          },
+        ]
       }
       role_delegations: {
         Row: {
@@ -936,6 +1146,104 @@ export type Database = {
         }
         Relationships: []
       }
+      student_enrollments: {
+        Row: {
+          academic_year: number
+          class_id: string
+          created_at: string | null
+          end_date: string | null
+          enrolled_at: string | null
+          enrollment_number: string | null
+          id: string
+          notes: string | null
+          origin_enrollment_id: string | null
+          school_id: string
+          start_date: string | null
+          status: Database["public"]["Enums"]["enrollment_status"] | null
+          student_id: string
+        }
+        Insert: {
+          academic_year: number
+          class_id: string
+          created_at?: string | null
+          end_date?: string | null
+          enrolled_at?: string | null
+          enrollment_number?: string | null
+          id?: string
+          notes?: string | null
+          origin_enrollment_id?: string | null
+          school_id: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["enrollment_status"] | null
+          student_id: string
+        }
+        Update: {
+          academic_year?: number
+          class_id?: string
+          created_at?: string | null
+          end_date?: string | null
+          enrolled_at?: string | null
+          enrollment_number?: string | null
+          id?: string
+          notes?: string | null
+          origin_enrollment_id?: string | null
+          school_id?: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["enrollment_status"] | null
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_enrollment_class"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_enrollment_origin"
+            columns: ["origin_enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "student_enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_enrollment_origin"
+            columns: ["origin_enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "v_boletim"
+            referencedColumns: ["enrollment_id"]
+          },
+          {
+            foreignKeyName: "fk_enrollment_origin"
+            columns: ["origin_enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "v_boletim_base"
+            referencedColumns: ["enrollment_id"]
+          },
+          {
+            foreignKeyName: "fk_enrollment_school"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_enrollment_student"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_enrollment_student"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_student_performance"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_guardians: {
         Row: {
           guardian_id: string
@@ -1150,6 +1458,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "teacher_assignments_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "v_boletim"
+            referencedColumns: ["subject_id"]
+          },
+          {
+            foreignKeyName: "teacher_assignments_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "v_boletim_base"
+            referencedColumns: ["subject_id"]
+          },
+          {
             foreignKeyName: "teacher_assignments_teacher_id_fkey"
             columns: ["teacher_id"]
             isOneToOne: false
@@ -1271,6 +1593,29 @@ export type Database = {
       }
     }
     Views: {
+      v_boletim: {
+        Row: {
+          disciplina: string | null
+          enrollment_id: string | null
+          full_name: string | null
+          media: number | null
+          situacao: string | null
+          subject_id: string | null
+          term: string | null
+        }
+        Relationships: []
+      }
+      v_boletim_base: {
+        Row: {
+          disciplina: string | null
+          enrollment_id: string | null
+          full_name: string | null
+          media: number | null
+          subject_id: string | null
+          term: string | null
+        }
+        Relationships: []
+      }
       v_dashboard_main: {
         Row: {
           da_coordenacao: number | null
@@ -1307,6 +1652,15 @@ export type Database = {
       }
       current_account_id: { Args: never; Returns: string }
       current_school_id: { Args: never; Returns: string }
+      enroll_student: {
+        Args: {
+          p_class_id: string
+          p_school_id: string
+          p_student_id: string
+          p_year: number
+        }
+        Returns: string
+      }
       get_effective_role: { Args: never; Returns: string }
       is_member_of_school: { Args: { _school_id: string }; Returns: boolean }
       process_rematricula: { Args: { p_year: number }; Returns: number }
@@ -1325,6 +1679,7 @@ export type Database = {
         | "coordenador"
         | "professor"
         | "auxiliar"
+      enrollment_status: "ativo" | "transferido" | "trancado" | "cancelado"
       school_user_status: "ativo" | "inativo"
       student_status:
         | "ativo"
@@ -1467,6 +1822,7 @@ export const Constants = {
         "professor",
         "auxiliar",
       ],
+      enrollment_status: ["ativo", "transferido", "trancado", "cancelado"],
       school_user_status: ["ativo", "inativo"],
       student_status: [
         "ativo",
