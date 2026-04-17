@@ -91,13 +91,30 @@ const GradeEntry = () => {
         await supabase.from("grades").delete().eq("assignment_id", assignment.id).eq("term", term);
       }
 
-      const rows = entries.map(([studentId, val]) => ({
-        student_id: studentId,
-        assignment_id: assignment.id,
-        grade_value: parseFloat(val),
-        term,
-        school_id: schoolId,
-      }));
+      const studentIds = entries.map(([sid]) => sid);
+      const { data: enrollments } = await supabase
+        .from("student_enrollments")
+        .select("id, student_id")
+        .in("student_id", studentIds)
+        .eq("status", "ativo");
+      const enrollmentByStudent = new Map((enrollments || []).map((e: any) => [e.student_id, e.id]));
+
+      const rows = entries
+        .map(([studentId, val]) => {
+          const enrollmentId = enrollmentByStudent.get(studentId);
+          if (!enrollmentId) return null;
+          return {
+            enrollment_id: enrollmentId as string,
+            student_id: studentId,
+            assignment_id: assignment.id,
+            grade_value: parseFloat(val),
+            term,
+            school_id: schoolId,
+          };
+        })
+        .filter(Boolean) as any[];
+
+      if (rows.length === 0) throw new Error("Alunos sem matrícula ativa");
       const { error } = await supabase.from("grades").insert(rows);
       if (error) throw error;
     },

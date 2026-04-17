@@ -6,18 +6,69 @@ export function useSchoolId() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
+
     const fetchSchoolId = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setLoading(false); return; }
-      const { data } = await supabase
-        .from("profiles")
-        .select("school_id")
-        .eq("id", user.id)
-        .single();
-      setSchoolId(data?.school_id ?? null);
-      setLoading(false);
+      try {
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser();
+
+        if (authError) {
+          console.error("[useSchoolId] auth error:", authError);
+          if (mounted) {
+            setSchoolId(null);
+            setLoading(false);
+          }
+          return;
+        }
+
+        if (!user) {
+          console.log("[useSchoolId] no authenticated user");
+          if (mounted) {
+            setSchoolId(null);
+            setLoading(false);
+          }
+          return;
+        }
+
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("school_id")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (profileError) {
+          console.error("[useSchoolId] profile error:", profileError);
+          if (mounted) {
+            setSchoolId(null);
+            setLoading(false);
+          }
+          return;
+        }
+
+        const resolved = profile?.school_id ?? null;
+        console.log("SCHOOL_ID:", resolved);
+
+        if (mounted) {
+          setSchoolId(resolved);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error("[useSchoolId] unexpected error:", err);
+        if (mounted) {
+          setSchoolId(null);
+          setLoading(false);
+        }
+      }
     };
+
     fetchSchoolId();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return { schoolId, loading, isLoading: loading };

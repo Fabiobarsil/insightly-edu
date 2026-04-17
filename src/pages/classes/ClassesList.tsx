@@ -21,11 +21,11 @@ const ClassesList = () => {
   const { data: classes = [], isLoading } = useQuery({
     queryKey: ["classes", schoolId],
     queryFn: async () => {
+      console.log("SCHOOL_ID:", schoolId);
       const { data, error } = await supabase
         .from("classes")
         .select("id, name, grade, shift, academic_year")
-        // REMOVE completamente o filtro
-        // .eq("school_id", schoolId!)
+        .eq("school_id", schoolId!)
         .order("name");
       if (error) throw error;
       return (data || []).map((c: any) => ({
@@ -36,12 +36,10 @@ const ClassesList = () => {
         academic_year: c.academic_year || "—",
       }));
     },
-    enabled: !!schoolId,
+    enabled: !loadingSchool && !!schoolId,
   });
 
-  const loading = loadingSchool || isLoading;
-  console.log("USER:", dashboardRole);
-  console.log("SCHOOL ID:", schoolId);
+  const loading = loadingSchool || (!!schoolId && isLoading);
   return (
     <AppLayout title="Turmas" breadcrumbs={[{ label: "Turmas" }]}>
       <PageHeader
