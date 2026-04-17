@@ -209,8 +209,20 @@ const TeachersDetail = () => {
         await supabase.from("grades").update({ grade_value: value }).eq("id", existing.id);
       } else {
         const { data: student } = await supabase.from("students").select("school_id").eq("id", studentId).maybeSingle();
+        const { data: enrollment } = await supabase
+          .from("student_enrollments")
+          .select("id")
+          .eq("student_id", studentId)
+          .eq("status", "ativo")
+          .maybeSingle();
+        if (!enrollment?.id) throw new Error("Aluno sem matrícula ativa");
         await supabase.from("grades").insert({
-          student_id: studentId, assignment_id: assignmentId, grade_value: value, term: period, school_id: student?.school_id,
+          enrollment_id: enrollment.id,
+          student_id: studentId,
+          assignment_id: assignmentId,
+          grade_value: value,
+          term: period,
+          school_id: student?.school_id,
         });
       }
     },
