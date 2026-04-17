@@ -475,9 +475,10 @@ const StudentsDetail = () => {
 
       <GuardianFormModal
         open={guardianModalOpen}
-        onOpenChange={setGuardianModalOpen}
+        onOpenChange={(o) => { setGuardianModalOpen(o); if (!o) setEditingGuardianId(null); }}
         schoolId={schoolId}
         studentId={id}
+        guardianId={editingGuardianId}
       />
     </AppLayout>
   );
