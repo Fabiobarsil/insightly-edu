@@ -47,8 +47,90 @@ const DocumentModal = ({ open, onOpenChange, title, docId }: DocumentModalProps)
     enabled: !!schoolId && open,
   });
 
+  // Histórico/Boletim: buscar notas agrupadas por disciplina
+  const { data: historico = [] } = useQuery({
+    queryKey: ["doc-historico", selectedStudent],
+    queryFn: async () => {
+      if (!selectedStudent) return [];
+      const { data, error } = await supabase
+        .from("v_historico_escolar")
+        .select("disciplina, term, grade_value")
+        .eq("student_id", selectedStudent);
+      if (error) throw error;
+
+      const map = new Map<string, { disciplina: string; b1: number | null; b2: number | null; b3: number | null; b4: number | null; notas: number[] }>();
+      (data || []).forEach((row: any) => {
+        const key = row.disciplina || "—";
+        if (!map.has(key)) {
+          map.set(key, { disciplina: key, b1: null, b2: null, b3: null, b4: null, notas: [] });
+        }
+        const entry = map.get(key)!;
+        const val = row.grade_value != null ? Number(row.grade_value) : null;
+        if (val != null) entry.notas.push(val);
+        if (row.term === "1º Bimestre") entry.b1 = val;
+        else if (row.term === "2º Bimestre") entry.b2 = val;
+        else if (row.term === "3º Bimestre") entry.b3 = val;
+        else if (row.term === "4º Bimestre") entry.b4 = val;
+      });
+
+      return Array.from(map.values())
+        .map((r) => ({
+          disciplina: r.disciplina,
+          b1: r.b1,
+          b2: r.b2,
+          b3: r.b3,
+          b4: r.b4,
+          media_final: r.notas.length > 0 ? r.notas.reduce((a, b) => a + b, 0) / r.notas.length : null,
+        }))
+        .sort((a, b) => a.disciplina.localeCompare(b.disciplina));
+    },
+    enabled: !!selectedStudent && open && (docId === "historico" || docId === "boletim"),
+  });
+
   const student = students.find((s: any) => s.id === selectedStudent) as any;
   const documentText = student ? getDocumentText(docId, { student, school }) : "";
+
+  const renderGradesTable = () => {
+    if (docId !== "historico" && docId !== "boletim") return null;
+    if (!historico.length) {
+      return (
+        <p style={{ fontSize: 13, textAlign: "center", color: "#666", marginTop: 16 }}>
+          Nenhum dado acadêmico disponível.
+        </p>
+      );
+    }
+    const th: React.CSSProperties = { border: "1px solid #0f2a44", padding: "6px 8px", fontSize: 12, background: "#f3f4f6", textAlign: "center" };
+    const td: React.CSSProperties = { border: "1px solid #0f2a44", padding: "6px 8px", fontSize: 12, textAlign: "center", color: "#0f2a44" };
+    const tdLeft: React.CSSProperties = { ...td, textAlign: "left" };
+    return (
+      <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "'Times New Roman', serif" }}>
+        <thead>
+          <tr>
+            <th style={{ ...th, textAlign: "left" }}>Disciplina</th>
+            <th style={th}>1º Bim</th>
+            <th style={th}>2º Bim</th>
+            <th style={th}>3º Bim</th>
+            <th style={th}>4º Bim</th>
+            <th style={th}>Média</th>
+          </tr>
+        </thead>
+        <tbody>
+          {historico.map((r: any, i: number) => (
+            <tr key={i}>
+              <td style={tdLeft}>{r.disciplina}</td>
+              <td style={td}>{r.b1 != null ? Number(r.b1).toFixed(1) : "—"}</td>
+              <td style={td}>{r.b2 != null ? Number(r.b2).toFixed(1) : "—"}</td>
+              <td style={td}>{r.b3 != null ? Number(r.b3).toFixed(1) : "—"}</td>
+              <td style={td}>{r.b4 != null ? Number(r.b4).toFixed(1) : "—"}</td>
+              <td style={{ ...td, fontWeight: "bold" }}>
+                {r.media_final != null ? Number(r.media_final).toFixed(1) : "—"}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  };
 
   const handlePreview = () => {
     if (!selectedStudent) {
