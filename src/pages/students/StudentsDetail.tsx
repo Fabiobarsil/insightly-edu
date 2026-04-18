@@ -637,6 +637,63 @@ const StudentsDetail = () => {
               </table>
             )}
           </div>
+
+          {/* Histórico Escolar */}
+          <div className="bg-card border border-border/60 rounded-xl certus-shadow">
+            <div className="flex items-center justify-between p-5 border-b border-border/40">
+              <h4 className="text-sm font-bold text-primary">Histórico Escolar</h4>
+              <button
+                onClick={handleGerarHistorico}
+                disabled={!historico.length}
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-secondary text-secondary-foreground text-xs font-bold hover:bg-secondary/90 transition-colors disabled:opacity-50"
+              >
+                <i className="ri-printer-line" /> Gerar Histórico
+              </button>
+            </div>
+            <div className="overflow-x-auto">
+              {loadingHistorico ? (
+                <div className="p-5 space-y-2">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="h-8 bg-muted/50 animate-pulse rounded" />
+                  ))}
+                </div>
+              ) : historico.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground text-sm">
+                  Nenhum dado acadêmico disponível
+                </div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-card">
+                    <tr className="border-b border-border/40">
+                      <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Disciplina</th>
+                      <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground uppercase">1º Bim</th>
+                      <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground uppercase">2º Bim</th>
+                      <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground uppercase">3º Bim</th>
+                      <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground uppercase">4º Bim</th>
+                      <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Média</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {historico.map((r: any, i: number) => (
+                      <tr key={i} className="border-b border-border/20 last:border-0 hover:bg-accent/30 transition-colors">
+                        <td className="px-4 py-3 font-medium text-primary">{r.disciplina}</td>
+                        <td className="px-4 py-3 text-center text-muted-foreground">{r.b1 != null ? Number(r.b1).toFixed(1) : "—"}</td>
+                        <td className="px-4 py-3 text-center text-muted-foreground">{r.b2 != null ? Number(r.b2).toFixed(1) : "—"}</td>
+                        <td className="px-4 py-3 text-center text-muted-foreground">{r.b3 != null ? Number(r.b3).toFixed(1) : "—"}</td>
+                        <td className="px-4 py-3 text-center text-muted-foreground">{r.b4 != null ? Number(r.b4).toFixed(1) : "—"}</td>
+                        <td className={cn(
+                          "px-4 py-3 text-center font-bold",
+                          r.media_final == null ? "text-muted-foreground" : r.media_final >= 7 ? "text-secondary" : "text-destructive"
+                        )}>
+                          {r.media_final != null ? Number(r.media_final).toFixed(1) : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
