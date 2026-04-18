@@ -162,6 +162,7 @@ const StudentsDetail = () => {
         student_id: id!,
         name: file.name,
         file_url: urlData.publicUrl,
+        file_path: filePath,
         status: "recebido",
       });
       if (docErr) throw docErr;
@@ -189,7 +190,10 @@ const StudentsDetail = () => {
 
   const handleGenerateDecl = () => {
     const reason = declReason === "__custom" ? customReason : declReason;
-    if (!reason) { toast.error("Selecione ou digite o motivo da declaração"); return; }
+    if (!reason) {
+      toast.error("Selecione ou digite o motivo da declaração");
+      return;
+    }
     toast.success(`Declaração gerada: "${reason}"`);
   };
 
@@ -198,11 +202,16 @@ const StudentsDetail = () => {
   const mediaGeral = gradeValues.length > 0 ? gradeValues.reduce((a, b) => a + b, 0) / gradeValues.length : 0;
 
   const termOrder = ["1º Bimestre", "2º Bimestre", "3º Bimestre", "4º Bimestre"];
-  const gradesByTerm = termOrder.map((term) => {
-    const termGrades = grades.filter((g: any) => g.term === term).map((g: any) => g.grade_value).filter((v: any) => v != null) as number[];
-    const avg = termGrades.length > 0 ? termGrades.reduce((a, b) => a + b, 0) / termGrades.length : null;
-    return { term: term.replace(" Bimestre", ""), media: avg };
-  }).filter((t) => t.media !== null);
+  const gradesByTerm = termOrder
+    .map((term) => {
+      const termGrades = grades
+        .filter((g: any) => g.term === term)
+        .map((g: any) => g.grade_value)
+        .filter((v: any) => v != null) as number[];
+      const avg = termGrades.length > 0 ? termGrades.reduce((a, b) => a + b, 0) / termGrades.length : null;
+      return { term: term.replace(" Bimestre", ""), media: avg };
+    })
+    .filter((t) => t.media !== null);
 
   let evolucao = "Sem dados";
   let evolucaoColor = "text-muted-foreground";
@@ -210,27 +219,45 @@ const StudentsDetail = () => {
   if (gradesByTerm.length >= 2) {
     const last = gradesByTerm[gradesByTerm.length - 1].media!;
     const prev = gradesByTerm[gradesByTerm.length - 2].media!;
-    if (last > prev) { evolucao = "Evoluindo"; evolucaoColor = "text-secondary"; evolucaoIcon = "ri-arrow-up-line"; }
-    else if (last < prev) { evolucao = "Atenção"; evolucaoColor = "text-destructive"; evolucaoIcon = "ri-arrow-down-line"; }
-    else { evolucao = "Estável"; evolucaoColor = "text-muted-foreground"; evolucaoIcon = "ri-subtract-line"; }
+    if (last > prev) {
+      evolucao = "Evoluindo";
+      evolucaoColor = "text-secondary";
+      evolucaoIcon = "ri-arrow-up-line";
+    } else if (last < prev) {
+      evolucao = "Atenção";
+      evolucaoColor = "text-destructive";
+      evolucaoIcon = "ri-arrow-down-line";
+    } else {
+      evolucao = "Estável";
+      evolucaoColor = "text-muted-foreground";
+      evolucaoIcon = "ri-subtract-line";
+    }
   }
 
-  if (isLoading || !student) return (
-    <AppLayout title="Aluno" breadcrumbs={[{ label: "Alunos", href: "/admin/alunos" }, { label: "Detalhes" }]}>
-      <div className="text-center py-12 text-muted-foreground">Carregando...</div>
-    </AppLayout>
-  );
+  if (isLoading || !student)
+    return (
+      <AppLayout title="Aluno" breadcrumbs={[{ label: "Alunos", href: "/admin/alunos" }, { label: "Detalhes" }]}>
+        <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+      </AppLayout>
+    );
 
   const mapped = statusMap[student.status || "ativo"] || statusMap.ativo;
   const s = student as any;
 
   return (
-    <AppLayout title={student.full_name} breadcrumbs={[{ label: "Alunos", href: "/admin/alunos" }, { label: student.full_name }]}>
+    <AppLayout
+      title={student.full_name}
+      breadcrumbs={[{ label: "Alunos", href: "/admin/alunos" }, { label: student.full_name }]}
+    >
       {/* Header */}
       <div className="flex items-center justify-between mb-6 max-[640px]:flex-col max-[640px]:gap-4 max-[640px]:items-start">
         <div className="flex items-center gap-4">
           {student.photo_url ? (
-            <img src={student.photo_url} alt={student.full_name} className="w-14 h-14 rounded-full object-cover border-2 border-secondary/30" />
+            <img
+              src={student.photo_url}
+              alt={student.full_name}
+              className="w-14 h-14 rounded-full object-cover border-2 border-secondary/30"
+            />
           ) : (
             <div className="w-14 h-14 rounded-full bg-secondary/15 flex items-center justify-center">
               <i className="ri-user-line text-2xl text-secondary" />
@@ -243,10 +270,16 @@ const StudentsDetail = () => {
         </div>
         <div className="flex items-center gap-3">
           <StatusBadge {...mapped} />
-          <Link to={`/admin/alunos/${id}/prontuario`} className="inline-flex items-center gap-2 px-4 py-2 rounded-[12px] bg-secondary text-secondary-foreground text-sm font-bold hover:bg-secondary/90 transition-colors">
+          <Link
+            to={`/admin/alunos/${id}/prontuario`}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-[12px] bg-secondary text-secondary-foreground text-sm font-bold hover:bg-secondary/90 transition-colors"
+          >
             <i className="ri-file-chart-line" /> Prontuário
           </Link>
-          <Link to={`/admin/alunos/${id}/editar`} className="inline-flex items-center gap-2 px-4 py-2 rounded-[12px] border border-border text-sm font-bold text-muted-foreground hover:bg-accent transition-colors">
+          <Link
+            to={`/admin/alunos/${id}/editar`}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-[12px] border border-border text-sm font-bold text-muted-foreground hover:bg-accent transition-colors"
+          >
             <i className="ri-pencil-line" /> Editar
           </Link>
         </div>
@@ -255,10 +288,16 @@ const StudentsDetail = () => {
       {/* Tabs */}
       <div className="flex gap-2 flex-wrap mb-6">
         {tabs.map((tab) => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={cn(
-            "flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-bold transition-colors border",
-            activeTab === tab.id ? "bg-secondary border-secondary text-secondary-foreground" : "bg-card border-border/60 text-muted-foreground hover:bg-accent"
-          )}>
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={cn(
+              "flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-bold transition-colors border",
+              activeTab === tab.id
+                ? "bg-secondary border-secondary text-secondary-foreground"
+                : "bg-card border-border/60 text-muted-foreground hover:bg-accent",
+            )}
+          >
             <i className={tab.icon} /> {tab.label}
           </button>
         ))}
@@ -294,43 +333,70 @@ const StudentsDetail = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-bold text-primary">Responsáveis Vinculados ({guardiansList.length})</h4>
-            <button onClick={() => { setEditingGuardianId(null); setGuardianModalOpen(true); }} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-secondary text-secondary-foreground text-xs font-bold hover:bg-secondary/90 transition-colors">
+            <button
+              onClick={() => {
+                setEditingGuardianId(null);
+                setGuardianModalOpen(true);
+              }}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-secondary text-secondary-foreground text-xs font-bold hover:bg-secondary/90 transition-colors"
+            >
               <i className="ri-add-line" /> Adicionar Responsável
             </button>
           </div>
 
           {guardiansList.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">Nenhum responsável vinculado.</div>
-          ) : guardiansList.map((g: any) => (
-            <div key={g.id} className="bg-card border border-border/60 rounded-xl p-5 certus-shadow flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center">
-                  <i className="ri-user-line text-primary" />
-                </div>
-                <div>
-                  <div className="text-sm font-bold text-primary">{g.full_name}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {g.relationship_type ? relationshipTypes.find(r => r.value === g.relationship_type)?.label || g.relationship_type : "—"}
-                    {" · "}{g.phone || "—"} · {g.email || "—"}
+          ) : (
+            guardiansList.map((g: any) => (
+              <div
+                key={g.id}
+                className="bg-card border border-border/60 rounded-xl p-5 certus-shadow flex items-center justify-between"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center">
+                    <i className="ri-user-line text-primary" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-primary">{g.full_name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {g.relationship_type
+                        ? relationshipTypes.find((r) => r.value === g.relationship_type)?.label || g.relationship_type
+                        : "—"}
+                      {" · "}
+                      {g.phone || "—"} · {g.email || "—"}
+                    </div>
                   </div>
                 </div>
+                <div className="flex items-center gap-2">
+                  {g.phone && (
+                    <a
+                      href={`https://wa.me/${g.phone.replace(/\D/g, "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-[10px] bg-secondary/10 text-secondary text-xs font-bold hover:bg-secondary/20 transition-colors"
+                    >
+                      <i className="ri-whatsapp-line" /> WhatsApp
+                    </a>
+                  )}
+                  <button
+                    onClick={() => {
+                      setEditingGuardianId(g.id);
+                      setGuardianModalOpen(true);
+                    }}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-[10px] bg-accent text-primary text-xs font-bold hover:bg-accent/80 transition-colors"
+                  >
+                    <i className="ri-edit-line" /> Editar
+                  </button>
+                  <button
+                    onClick={() => unlinkGuardianMutation.mutate(g.id)}
+                    className="text-xs font-bold text-destructive hover:underline"
+                  >
+                    Desvincular
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                {g.phone && (
-                  <a href={`https://wa.me/${g.phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-[10px] bg-secondary/10 text-secondary text-xs font-bold hover:bg-secondary/20 transition-colors">
-                    <i className="ri-whatsapp-line" /> WhatsApp
-                  </a>
-                )}
-                <button onClick={() => { setEditingGuardianId(g.id); setGuardianModalOpen(true); }}
-                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-[10px] bg-accent text-primary text-xs font-bold hover:bg-accent/80 transition-colors">
-                  <i className="ri-edit-line" /> Editar
-                </button>
-                <button onClick={() => unlinkGuardianMutation.mutate(g.id)}
-                  className="text-xs font-bold text-destructive hover:underline">Desvincular</button>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       )}
 
@@ -340,7 +406,12 @@ const StudentsDetail = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-card border border-border/60 rounded-xl p-4 certus-shadow">
               <div className="text-xs font-bold text-muted-foreground mb-1">Média Geral</div>
-              <div className={cn("text-2xl font-bold", mediaGeral >= 7 ? "text-secondary" : mediaGeral > 0 ? "text-destructive" : "text-muted-foreground")}>
+              <div
+                className={cn(
+                  "text-2xl font-bold",
+                  mediaGeral >= 7 ? "text-secondary" : mediaGeral > 0 ? "text-destructive" : "text-muted-foreground",
+                )}
+              >
                 {gradeValues.length > 0 ? mediaGeral.toFixed(1) : "—"}
               </div>
             </div>
@@ -365,7 +436,13 @@ const StudentsDetail = () => {
                   <XAxis dataKey="term" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
                   <YAxis domain={[0, 10]} tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
                   <Tooltip formatter={(val: number) => [val.toFixed(1), "Média"]} />
-                  <Line type="monotone" dataKey="media" stroke="hsl(var(--secondary))" strokeWidth={2} dot={{ fill: "hsl(var(--secondary))", r: 5 }} />
+                  <Line
+                    type="monotone"
+                    dataKey="media"
+                    stroke="hsl(var(--secondary))"
+                    strokeWidth={2}
+                    dot={{ fill: "hsl(var(--secondary))", r: 5 }}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -378,17 +455,30 @@ const StudentsDetail = () => {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border/40">
-                    <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Disciplina</th>
-                    <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Bimestre</th>
+                    <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">
+                      Disciplina
+                    </th>
+                    <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground uppercase">
+                      Bimestre
+                    </th>
                     <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Nota</th>
                   </tr>
                 </thead>
                 <tbody>
                   {grades.map((g: any, i: number) => (
                     <tr key={i} className="border-b border-border/20 last:border-0">
-                      <td className="px-4 py-3 font-medium text-primary">{g.teacher_assignments?.subjects?.name || "—"}</td>
+                      <td className="px-4 py-3 font-medium text-primary">
+                        {g.teacher_assignments?.subjects?.name || "—"}
+                      </td>
                       <td className="px-4 py-3 text-center text-muted-foreground">{g.term || "—"}</td>
-                      <td className={cn("px-4 py-3 text-center font-bold", (g.grade_value ?? 0) < 7 ? "text-destructive" : "text-secondary")}>{g.grade_value ?? "—"}</td>
+                      <td
+                        className={cn(
+                          "px-4 py-3 text-center font-bold",
+                          (g.grade_value ?? 0) < 7 ? "text-destructive" : "text-secondary",
+                        )}
+                      >
+                        {g.grade_value ?? "—"}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -404,10 +494,21 @@ const StudentsDetail = () => {
           <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow">
             <div className="flex items-center justify-between mb-4">
               <h4 className="text-sm font-bold text-primary">Documentos do Aluno</h4>
-              <button onClick={() => docInputRef.current?.click()} disabled={uploadingDoc} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-secondary text-secondary-foreground text-xs font-bold hover:bg-secondary/90 transition-colors disabled:opacity-50">
-                <i className={uploadingDoc ? "ri-loader-4-line animate-spin" : "ri-upload-2-line"} /> {uploadingDoc ? "Enviando..." : "Upload Documento"}
+              <button
+                onClick={() => docInputRef.current?.click()}
+                disabled={uploadingDoc}
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-secondary text-secondary-foreground text-xs font-bold hover:bg-secondary/90 transition-colors disabled:opacity-50"
+              >
+                <i className={uploadingDoc ? "ri-loader-4-line animate-spin" : "ri-upload-2-line"} />{" "}
+                {uploadingDoc ? "Enviando..." : "Upload Documento"}
               </button>
-              <input ref={docInputRef} type="file" className="hidden" onChange={handleDocUpload} accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
+              <input
+                ref={docInputRef}
+                type="file"
+                className="hidden"
+                onChange={handleDocUpload}
+                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+              />
             </div>
 
             {documents.length === 0 ? (
@@ -415,20 +516,33 @@ const StudentsDetail = () => {
             ) : (
               <div className="space-y-2">
                 {documents.map((doc: any) => (
-                  <div key={doc.id} className="flex items-center justify-between px-4 py-3 rounded-xl border border-border/40 hover:bg-accent/30 transition-colors">
+                  <div
+                    key={doc.id}
+                    className="flex items-center justify-between px-4 py-3 rounded-xl border border-border/40 hover:bg-accent/30 transition-colors"
+                  >
                     <div className="flex items-center gap-3">
                       <i className="ri-file-line text-lg text-secondary" />
                       <div>
                         <div className="text-sm font-medium text-primary">{doc.name || "Documento"}</div>
                         <div className="text-xs text-muted-foreground">
                           {doc.created_at ? new Date(doc.created_at).toLocaleDateString("pt-BR") : "—"}
-                          {doc.status && <span className="ml-2 px-2 py-0.5 rounded-full bg-accent text-[10px] font-bold">{doc.status}</span>}
+                          {doc.status && (
+                            <span className="ml-2 px-2 py-0.5 rounded-full bg-accent text-[10px] font-bold">
+                              {doc.status}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
                     {doc.file_url && (
-                      <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-secondary hover:underline">
-                        <i className="ri-download-line mr-1" />Baixar
+                      <a
+                        href={doc.file_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-bold text-secondary hover:underline"
+                      >
+                        <i className="ri-download-line mr-1" />
+                        Baixar
                       </a>
                     )}
                   </div>
@@ -441,7 +555,11 @@ const StudentsDetail = () => {
             <h4 className="text-sm font-bold text-primary mb-4">Gerar Documentos Oficiais</h4>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
               {officialDocs.map((d) => (
-                <button key={d.id} onClick={() => handleGenerate(d.nome)} className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border/60 hover:border-secondary/40 hover:bg-accent/30 transition-all group">
+                <button
+                  key={d.id}
+                  onClick={() => handleGenerate(d.nome)}
+                  className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border/60 hover:border-secondary/40 hover:bg-accent/30 transition-all group"
+                >
                   <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center group-hover:bg-secondary/15 transition-colors">
                     <i className={`${d.icon} text-lg text-primary group-hover:text-secondary transition-colors`} />
                   </div>
@@ -456,20 +574,36 @@ const StudentsDetail = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-xs font-bold text-muted-foreground mb-1.5">Motivo da Declaração</label>
-                <select value={declReason} onChange={(e) => setDeclReason(e.target.value)} className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors">
+                <select
+                  value={declReason}
+                  onChange={(e) => setDeclReason(e.target.value)}
+                  className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+                >
                   <option value="">Selecionar motivo...</option>
-                  {declReasons.map((r) => (<option key={r} value={r}>{r}</option>))}
+                  {declReasons.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
                   <option value="__custom">✏️ Outro motivo (digitar)</option>
                 </select>
               </div>
               {declReason === "__custom" && (
                 <div>
                   <label className="block text-xs font-bold text-muted-foreground mb-1.5">Motivo personalizado</label>
-                  <input value={customReason} onChange={(e) => setCustomReason(e.target.value)} placeholder="Digite o motivo..." className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+                  <input
+                    value={customReason}
+                    onChange={(e) => setCustomReason(e.target.value)}
+                    placeholder="Digite o motivo..."
+                    className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+                  />
                 </div>
               )}
             </div>
-            <button onClick={handleGenerateDecl} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[12px] bg-secondary text-secondary-foreground text-sm font-bold hover:bg-secondary/90 transition-colors">
+            <button
+              onClick={handleGenerateDecl}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[12px] bg-secondary text-secondary-foreground text-sm font-bold hover:bg-secondary/90 transition-colors"
+            >
               <i className="ri-draft-line" /> Gerar Declaração
             </button>
           </div>
@@ -478,7 +612,10 @@ const StudentsDetail = () => {
 
       <GuardianFormModal
         open={guardianModalOpen}
-        onOpenChange={(o) => { setGuardianModalOpen(o); if (!o) setEditingGuardianId(null); }}
+        onOpenChange={(o) => {
+          setGuardianModalOpen(o);
+          if (!o) setEditingGuardianId(null);
+        }}
         schoolId={schoolId}
         studentId={id}
         guardianId={editingGuardianId}
