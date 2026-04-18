@@ -190,6 +190,45 @@ const StudentsDetail = () => {
         file_path: filePath,
         status: "recebido",
       });
+      // 🔐 gera URL assinada (resolve bloqueio do navegador)
+const getSignedUrl = async (filePath: string) => {
+  const { data, error } = await supabase.storage
+    .from("student-assets")
+    .createSignedUrl(filePath, 60);
+
+  if (error) {
+    console.error("❌ ERRO SIGNED URL:", error);
+    return null;
+  }
+
+  return data.signedUrl;
+};
+
+// 👁 preview do documento
+const handlePreview = async (doc: any) => {
+  const url = await getSignedUrl(doc.file_path);
+
+  if (!url) return;
+
+  setPreviewDoc({
+    ...doc,
+    file_url: url,
+  });
+};
+
+// ⬇ download do documento
+const handleDownload = async (doc: any) => {
+  const url = await getSignedUrl(doc.file_path);
+
+  if (!url) return;
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = doc.name;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
 
       console.log("💾 TENTOU INSERT");
 
