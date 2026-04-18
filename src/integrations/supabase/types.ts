@@ -757,30 +757,48 @@ export type Database = {
       documents: {
         Row: {
           created_at: string | null
+          document_type: string | null
           due_date: string | null
+          file_path: string | null
+          file_size: number | null
           file_url: string | null
           id: string
+          mime_type: string | null
           name: string | null
+          notes: string | null
+          reviewed_at: string | null
           school_id: string
           status: string | null
           student_id: string | null
         }
         Insert: {
           created_at?: string | null
+          document_type?: string | null
           due_date?: string | null
+          file_path?: string | null
+          file_size?: number | null
           file_url?: string | null
           id?: string
+          mime_type?: string | null
           name?: string | null
+          notes?: string | null
+          reviewed_at?: string | null
           school_id: string
           status?: string | null
           student_id?: string | null
         }
         Update: {
           created_at?: string | null
+          document_type?: string | null
           due_date?: string | null
+          file_path?: string | null
+          file_size?: number | null
           file_url?: string | null
           id?: string
+          mime_type?: string | null
           name?: string | null
+          notes?: string | null
+          reviewed_at?: string | null
           school_id?: string
           status?: string | null
           student_id?: string | null
