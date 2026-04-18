@@ -67,6 +67,7 @@ const StudentsDetail = () => {
   const [guardianModalOpen, setGuardianModalOpen] = useState(false);
   const [editingGuardianId, setEditingGuardianId] = useState<string | null>(null);
   const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<any | null>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
 
   const { data: student, isLoading } = useQuery({
