@@ -151,12 +151,28 @@ const StudentsDetail = () => {
 
   const uploadDocMutation = useMutation({
     mutationFn: async (file: File) => {
+      console.log("🔥 UPLOAD INICIOU");
+
       if (!schoolId) throw new Error("Sem escola vinculada");
+
       setUploadingDoc(true);
+
       const filePath = `${schoolId}/${id}/${Date.now()}_${file.name}`;
+      console.log("📁 PATH:", filePath);
+
       const { error: upErr } = await supabase.storage.from("student-assets").upload(filePath, file);
-      if (upErr) throw upErr;
+
+      console.log("📦 PASSOU UPLOAD");
+
+      if (upErr) {
+        console.error("❌ ERRO UPLOAD:", upErr);
+        throw upErr;
+      }
+
       const { data: urlData } = supabase.storage.from("student-assets").getPublicUrl(filePath);
+
+      console.log("🔗 URL:", urlData?.publicUrl);
+
       const { error: docErr } = await supabase.from("documents").insert({
         school_id: schoolId,
         student_id: id!,
@@ -165,15 +181,26 @@ const StudentsDetail = () => {
         file_path: filePath,
         status: "recebido",
       });
-      if (docErr) throw docErr;
+
+      console.log("💾 TENTOU INSERT");
+
+      if (docErr) {
+        console.error("❌ ERRO INSERT:", docErr);
+        throw docErr;
+      }
+
+      console.log("✅ INSERT OK");
     },
+
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["student-documents", id] });
       setUploadingDoc(false);
       toast.success("Documento enviado!");
     },
+
     onError: (err: any) => {
       setUploadingDoc(false);
+      console.error("❌ ERRO FINAL:", err);
       toast.error(err.message || "Erro ao enviar documento");
     },
   });
