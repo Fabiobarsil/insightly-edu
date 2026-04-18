@@ -181,7 +181,7 @@ const StudentsDetail = () => {
       const { error: docErr } = await supabase.from("documents").insert({
         school_id: schoolId,
         student_id: id!,
-        name: file.name,
+        name: cleanFileName,
         file_url: urlData.publicUrl,
         file_path: filePath,
         status: "recebido",
