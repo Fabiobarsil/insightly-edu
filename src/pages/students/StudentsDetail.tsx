@@ -162,7 +162,7 @@ const StudentsDetail = () => {
         .replace(/[\u0300-\u036f]/g, "") // remove acentos
         .replace(/\s+/g, "_") // espaço vira _
         .replace(/[^a-zA-Z0-9._-]/g, ""); // remove caracteres estranhos
-      const filePath = `${schoolId}/${id}/${Date.now()}_${file.name}`;
+      const filePath = `${schoolId}/${id}/${Date.now()}_${cleanFileName}`;
       console.log("📁 PATH:", filePath);
 
       const { error: upErr } = await supabase.storage.from("student-assets").upload(filePath, file);
