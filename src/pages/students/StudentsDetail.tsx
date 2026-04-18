@@ -157,6 +157,11 @@ const StudentsDetail = () => {
 
       setUploadingDoc(true);
 
+      const cleanFileName = file.name
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // remove acentos
+        .replace(/\s+/g, "_") // espaço vira _
+        .replace(/[^a-zA-Z0-9._-]/g, ""); // remove caracteres estranhos
       const filePath = `${schoolId}/${id}/${Date.now()}_${file.name}`;
       console.log("📁 PATH:", filePath);
 
