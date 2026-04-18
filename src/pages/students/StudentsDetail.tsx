@@ -571,15 +571,22 @@ const StudentsDetail = () => {
                       </div>
                     </div>
                     {doc.file_url && (
-                      <a
-                        href={doc.file_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs font-bold text-secondary hover:underline"
-                      >
-                        <i className="ri-download-line mr-1" />
-                        Baixar
-                      </a>
+                     <div className="flex gap-2">
+  <button
+    onClick={() => handlePreview(doc)}
+    className="text-xs font-bold text-blue-600 hover:underline"
+  >
+    Ver
+  </button>
+
+  <button
+    onClick={() => handleDownload(doc.file_url, doc.name)}
+    className="text-xs font-bold text-secondary hover:underline"
+  >
+    <i className="ri-download-line mr-1" />
+    Baixar
+  </button>
+</div>
                     )}
                   </div>
                 ))}
