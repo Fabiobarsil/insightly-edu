@@ -2166,6 +2166,30 @@ export type Database = {
         }
         Relationships: []
       }
+      v_historico_escolar: {
+        Row: {
+          disciplina: string | null
+          grade_value: number | null
+          student_id: string | null
+          term: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grades_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grades_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_student_performance"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vw_student_performance: {
         Row: {
           full_name: string | null
