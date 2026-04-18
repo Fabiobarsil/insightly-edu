@@ -192,6 +192,7 @@ const DocumentModal = ({ open, onOpenChange, title, docId }: DocumentModalProps)
                 student={student}
                 school={school}
                 orientation="portrait"
+                extraContent={renderGradesTable()}
               />
             </div>
           )}
