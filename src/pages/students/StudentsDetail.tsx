@@ -119,15 +119,19 @@ const StudentsDetail = () => {
     enabled: !!id && activeTab === "notas",
   });
 
-  const { data: documents = [] } = useQuery({
+  const { data: documents = [], isLoading } = useQuery({
     queryKey: ["student-documents", id],
+    enabled: !!id && activeTab === "documentos",
+
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documents")
         .select("*")
         .eq("student_id", id!)
         .order("created_at", { ascending: false });
-      if (error) throw error;
+      if (error)  {
+      console.error("❌ ERRO AO BUSCAR DOCUMENTOS:", error);
+      throw error;
       return data || [];
     },
     enabled: !!id && activeTab === "documentos",
