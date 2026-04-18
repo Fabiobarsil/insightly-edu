@@ -214,6 +214,19 @@ const StudentsDetail = () => {
     },
   });
 
+  const getSignedUrl = async (filePath: string) => {
+  const { data, error } = await supabase.storage
+    .from("student-assets")
+    .createSignedUrl(filePath, 60);
+
+  if (error) {
+    console.error("❌ ERRO SIGNED URL:", error);
+    return null;
+  }
+
+  return data.signedUrl;
+};
+
   const handleDocUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) uploadDocMutation.mutate(file);
