@@ -754,6 +754,39 @@ export type Database = {
           },
         ]
       }
+      document_templates: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          id: string
+          name: string | null
+          orientation: string | null
+          school_id: string | null
+          template_html: string | null
+          type: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          name?: string | null
+          orientation?: string | null
+          school_id?: string | null
+          template_html?: string | null
+          type?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          name?: string | null
+          orientation?: string | null
+          school_id?: string | null
+          template_html?: string | null
+          type?: string | null
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           created_at: string | null
