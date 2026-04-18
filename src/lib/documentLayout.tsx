@@ -25,6 +25,7 @@ export interface DocumentLayoutProps {
   school: DocumentSchool | null;
   orientation?: DocumentOrientation;
   id?: string;
+  extraContent?: React.ReactNode;
 }
 
 const formatDate = (): string => {
@@ -53,6 +54,7 @@ export function DocumentLayout({
   school,
   orientation = "portrait",
   id = "doc-preview-content",
+  extraContent,
 }: DocumentLayoutProps) {
   const isLandscape = orientation === "landscape";
   const width = isLandscape ? 1123 : 794;
@@ -300,6 +302,7 @@ export function DocumentLayout({
             {content}
           </p>
         )}
+        {extraContent && <div style={{ marginTop: 24 }}>{extraContent}</div>}
       </div>
 
       {/* Rodapé: local, data e assinatura */}
