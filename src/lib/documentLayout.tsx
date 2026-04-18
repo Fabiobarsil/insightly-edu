@@ -25,6 +25,7 @@ export interface DocumentLayoutProps {
   school: DocumentSchool | null;
   orientation?: DocumentOrientation;
   id?: string;
+  extraContent?: React.ReactNode;
 }
 
 const formatDate = (): string => {
