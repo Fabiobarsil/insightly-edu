@@ -1,17 +1,10 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import AppLayout from "@/components/layout/AppLayout";
 import PageHeader from "@/components/shared/PageHeader";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { toast } from "sonner";
-
-const docTemplates = [
-  { id: "1", nome: "Declaração de Matrícula", icon: "ri-file-text-line" },
-  { id: "2", nome: "Histórico Escolar", icon: "ri-file-list-3-line" },
-  { id: "3", nome: "Boletim", icon: "ri-bar-chart-box-line" },
-  { id: "4", nome: "Declaração de Frequência", icon: "ri-calendar-check-line" },
-  { id: "5", nome: "Transferência", icon: "ri-swap-line" },
-  { id: "6", nome: "Atestado de Vaga", icon: "ri-checkbox-circle-line" },
-];
 
 const history = [
   { doc: "Declaração de Matrícula", aluno: "Ana Clara Silva", data: "01/04/2024", status: "active" },
@@ -22,6 +15,24 @@ const history = [
 
 const OfficialDocuments = () => {
   const [tab, setTab] = useState<"generate" | "history">("generate");
+
+  const { data: templates = [] } = useQuery({
+    queryKey: ["document-templates"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("document_templates")
+        .select("*")
+        .eq("active", true)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const handleGenerateDocument = (template: any) => {
+    console.log("Gerar documento:", template);
+    toast.success(`${template.name} selecionado`);
+  };
 
   return (
     <AppLayout title="Documentos Oficiais" breadcrumbs={[{ label: "Docs Oficiais" }]}>
@@ -37,17 +48,30 @@ const OfficialDocuments = () => {
       </div>
 
       {tab === "generate" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {docTemplates.map((d) => (
-            <button key={d.id} onClick={() => toast.success(`${d.nome} gerado!`)} className="bg-card border border-border/60 rounded-xl p-5 certus-shadow hover:border-secondary/40 transition-all text-left group">
-              <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center mb-3 group-hover:bg-secondary/15 transition-colors">
-                <i className={`${d.icon} text-lg text-primary group-hover:text-secondary transition-colors`} />
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {templates.map((tpl: any) => (
+              <div
+                key={tpl.id}
+                onClick={() => handleGenerateDocument(tpl)}
+                className="cursor-pointer border border-border/60 rounded-xl p-4 hover:bg-accent/30 transition bg-card certus-shadow"
+              >
+                <div className="flex items-center gap-2">
+                  <i className="ri-file-text-line text-lg text-secondary" />
+                  <div>
+                    <div className="text-sm font-medium text-primary">{tpl.name}</div>
+                    <div className="text-xs text-muted-foreground">{tpl.type}</div>
+                  </div>
+                </div>
               </div>
-              <div className="text-sm font-bold text-primary">{d.nome}</div>
-              <div className="text-xs text-muted mt-1">Clique para gerar</div>
-            </button>
-          ))}
-        </div>
+            ))}
+          </div>
+          {templates.length === 0 && (
+            <div className="text-center text-muted-foreground mt-6">
+              Nenhum template cadastrado
+            </div>
+          )}
+        </>
       ) : (
         <div className="bg-card border border-border/60 rounded-xl certus-shadow">
           {history.map((h, i) => (
