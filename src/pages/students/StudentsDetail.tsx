@@ -656,8 +656,34 @@ const StudentsDetail = () => {
         studentId={id}
         guardianId={editingGuardianId}
       />
-    </AppLayout>
-  );
+      
+   {previewDoc && (
+  <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+    <div className="bg-white w-[90vw] h-[85vh] rounded-lg p-4 relative">
+
+      <button
+        onClick={() => setPreviewDoc(null)}
+        className="absolute top-2 right-2"
+      >
+        Fechar
+      </button>
+
+      {previewDoc.mime_type?.includes("image") ? (
+        <img src={previewDoc.file_url} className="max-h-full mx-auto" />
+      ) : previewDoc.mime_type === "application/pdf" ? (
+        <iframe src={previewDoc.file_url} className="w-full h-full" />
+      ) : (
+        <p className="text-center mt-10">
+          Visualização não disponível
+        </p>
+      )}
+
+    </div>
+  </div>
+)}
+
+</AppLayout>
+);
 };
 
 export default StudentsDetail;
