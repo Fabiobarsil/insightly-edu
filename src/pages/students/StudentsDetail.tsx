@@ -190,45 +190,6 @@ const StudentsDetail = () => {
         file_path: filePath,
         status: "recebido",
       });
-      // 🔐 gera URL assinada (resolve bloqueio do navegador)
-const getSignedUrl = async (filePath: string) => {
-  const { data, error } = await supabase.storage
-    .from("student-assets")
-    .createSignedUrl(filePath, 60);
-
-  if (error) {
-    console.error("❌ ERRO SIGNED URL:", error);
-    return null;
-  }
-
-  return data.signedUrl;
-};
-
-// 👁 preview do documento
-const handlePreview = async (doc: any) => {
-  const url = await getSignedUrl(doc.file_path);
-
-  if (!url) return;
-
-  setPreviewDoc({
-    ...doc,
-    file_url: url,
-  });
-};
-
-// ⬇ download do documento
-const handleDownload = async (doc: any) => {
-  const url = await getSignedUrl(doc.file_path);
-
-  if (!url) return;
-
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = doc.name;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
 
       console.log("💾 TENTOU INSERT");
 
@@ -253,18 +214,36 @@ const handleDownload = async (doc: any) => {
     },
   });
 
+  // 🔐 gerar URL assinada (evita bloqueio do navegador)
   const getSignedUrl = async (filePath: string) => {
-  const { data, error } = await supabase.storage
-    .from("student-assets")
-    .createSignedUrl(filePath, 60);
+    const { data, error } = await supabase.storage
+      .from("student-assets")
+      .createSignedUrl(filePath, 60);
+    if (error) {
+      console.error("Erro ao gerar signed URL:", error);
+      return null;
+    }
+    return data?.signedUrl;
+  };
 
-  if (error) {
-    console.error("❌ ERRO SIGNED URL:", error);
-    return null;
-  }
+  // 👁 preview do documento
+  const handlePreview = async (doc: any) => {
+    const url = await getSignedUrl(doc.file_path);
+    if (!url) return;
+    setPreviewDoc({ ...doc, file_url: url });
+  };
 
-  return data.signedUrl;
-};
+  // ⬇ download do documento
+  const handleDownload = async (doc: any) => {
+    const url = await getSignedUrl(doc.file_path);
+    if (!url) return;
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = doc.name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const handleDocUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -632,7 +611,7 @@ const handleDownload = async (doc: any) => {
   </button>
 
   <button
-    onClick={() => handleDownload(doc.file_url, doc.name)}
+    onClick={() => handleDownload(doc)}
     className="text-xs font-bold text-secondary hover:underline"
   >
     <i className="ri-download-line mr-1" />
