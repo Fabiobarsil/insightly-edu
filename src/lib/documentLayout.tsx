@@ -303,7 +303,7 @@ export function DocumentLayout({
           </p>
         )}
         {extraContent && <div style={{ marginTop: 24 }}>{extraContent}</div>}
-      </div>}
+      </div>
 
       {/* Rodapé: local, data e assinatura */}
       <div
