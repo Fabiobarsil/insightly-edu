@@ -120,6 +120,91 @@ const StudentsDetail = () => {
     enabled: !!id && activeTab === "notas",
   });
 
+  const { data: historico = [], isLoading: loadingHistorico } = useQuery({
+    queryKey: ["student-historico", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("v_historico_escolar")
+        .select("disciplina, term, grade_value")
+        .eq("student_id", id!);
+      if (error) throw error;
+
+      // Agrupar por disciplina
+      const map = new Map<string, { disciplina: string; b1: number | null; b2: number | null; b3: number | null; b4: number | null; notas: number[] }>();
+      (data || []).forEach((row: any) => {
+        const key = row.disciplina || "—";
+        if (!map.has(key)) {
+          map.set(key, { disciplina: key, b1: null, b2: null, b3: null, b4: null, notas: [] });
+        }
+        const entry = map.get(key)!;
+        const val = row.grade_value != null ? Number(row.grade_value) : null;
+        if (val != null) entry.notas.push(val);
+        if (row.term === "1º Bimestre") entry.b1 = val;
+        else if (row.term === "2º Bimestre") entry.b2 = val;
+        else if (row.term === "3º Bimestre") entry.b3 = val;
+        else if (row.term === "4º Bimestre") entry.b4 = val;
+      });
+
+      return Array.from(map.values())
+        .map((r) => ({
+          disciplina: r.disciplina,
+          b1: r.b1,
+          b2: r.b2,
+          b3: r.b3,
+          b4: r.b4,
+          media_final: r.notas.length > 0 ? r.notas.reduce((a, b) => a + b, 0) / r.notas.length : null,
+        }))
+        .sort((a, b) => a.disciplina.localeCompare(b.disciplina));
+    },
+    enabled: !!id && activeTab === "notas",
+  });
+
+  const handleGerarHistorico = () => {
+    if (!historico.length) {
+      toast.error("Sem dados de histórico");
+      return;
+    }
+    const win = window.open("", "_blank");
+    if (!win) return;
+    const rows = historico
+      .map(
+        (r: any) => `
+        <tr>
+          <td>${r.disciplina}</td>
+          <td style="text-align:center">${r.b1 != null ? Number(r.b1).toFixed(1) : "—"}</td>
+          <td style="text-align:center">${r.b2 != null ? Number(r.b2).toFixed(1) : "—"}</td>
+          <td style="text-align:center">${r.b3 != null ? Number(r.b3).toFixed(1) : "—"}</td>
+          <td style="text-align:center">${r.b4 != null ? Number(r.b4).toFixed(1) : "—"}</td>
+          <td style="text-align:center;font-weight:bold">${r.media_final != null ? Number(r.media_final).toFixed(1) : "—"}</td>
+        </tr>`
+      )
+      .join("");
+    win.document.write(`
+      <html><head><title>Histórico Escolar - ${student?.full_name || ""}</title>
+      <style>
+        body{font-family:Arial,sans-serif;padding:32px;color:#111}
+        h1{font-size:20px;margin-bottom:4px}
+        h2{font-size:14px;color:#666;margin-top:0;font-weight:normal}
+        table{width:100%;border-collapse:collapse;margin-top:24px;font-size:13px}
+        th,td{border:1px solid #ddd;padding:8px 12px}
+        th{background:#f5f5f5;text-align:left}
+      </style></head>
+      <body>
+        <h1>Histórico Escolar</h1>
+        <h2>${student?.full_name || ""}</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Disciplina</th><th>1º Bim</th><th>2º Bim</th><th>3º Bim</th><th>4º Bim</th><th>Média</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </body></html>
+    `);
+    win.document.close();
+  };
+
   const { data: documents = [] } = useQuery({
     queryKey: ["student-documents", id],
     queryFn: async () => {
