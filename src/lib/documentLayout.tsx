@@ -54,6 +54,7 @@ export function DocumentLayout({
   school,
   orientation = "portrait",
   id = "doc-preview-content",
+  extraContent,
 }: DocumentLayoutProps) {
   const isLandscape = orientation === "landscape";
   const width = isLandscape ? 1123 : 794;
