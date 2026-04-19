@@ -72,7 +72,11 @@ const Settings = () => {
     enabled: !!schoolId,
   });
 
-  const [form, setForm] = useState({ name: "", address: "", complement: "", cnpj: "", mec_authorization_code: "", director_name: "", director_role: "", logo_url: "" });
+  const [form, setForm] = useState({
+    name: "", address: "", complement: "", cnpj: "", mec_authorization_code: "",
+    director_name: "", director_role: "", logo_url: "",
+    offers_ensino_medio: true, offers_eja: false, offers_curso_tecnico: false,
+  });
 
   useEffect(() => {
     if (school) {
@@ -80,9 +84,15 @@ const Settings = () => {
         name: school.name || "", address: school.address || "", complement: (school as any).complement || "", cnpj: school.cnpj || "",
         mec_authorization_code: school.mec_authorization_code || "", director_name: school.director_name || "",
         director_role: school.director_role || "", logo_url: school.logo_url || "",
+        offers_ensino_medio: (school as any).offers_ensino_medio ?? true,
+        offers_eja: (school as any).offers_eja ?? false,
+        offers_curso_tecnico: (school as any).offers_curso_tecnico ?? false,
       });
     }
   }, [school]);
+
+  const toggleOffer = (key: "offers_ensino_medio" | "offers_eja" | "offers_curso_tecnico") =>
+    setForm((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const updateMutation = useMutation({
     mutationFn: async (data: typeof form) => {
