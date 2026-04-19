@@ -123,7 +123,7 @@ export default function CertificadoTemplate({ data }: Props) {
           width: "100%",
           textAlign: "center",
           fontSize: "42px",
-          fontFamily: "'Playfair Display', serif",
+          fontFamily: "Amoresa",
           letterSpacing: "2px",
           zIndex: 2,
         }}
