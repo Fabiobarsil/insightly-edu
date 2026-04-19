@@ -1,4 +1,4 @@
-import certificado from "@/assets/certificado-clean02.png";
+import certificado from "@/assets/certificado-clean.png";
 import brasao from "@/assets/brasao-republica.png";
 import logo from "@/assets/logo-certus.png";
 
@@ -88,7 +88,7 @@ export default function CertificadoTemplate({ data }: Props) {
         style={{
           position: "absolute",
           top: "60px",
-          right: "80px",
+          right: "100px",
           width: "90px",
           height: "auto",
           zIndex: 2,
@@ -118,18 +118,17 @@ export default function CertificadoTemplate({ data }: Props) {
       <div
         style={{
           position: "absolute",
-          top: "200px",
+          top: "180px",
           left: 0,
           width: "100%",
           textAlign: "center",
-          fontSize: "60px",
-          fontFamily: "Amoresa",
+          fontSize: "42px",
+          fontFamily: "'Playfair Display', serif",
           letterSpacing: "2px",
-          textTransform: "capitalize",
           zIndex: 2,
         }}
       >
-        Certificado de Conclusão
+        CERTIFICADO DE CONCLUSÃO
       </div>
       {/* TEXTO PRINCIPAL */}
       <div
