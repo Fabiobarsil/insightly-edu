@@ -118,7 +118,7 @@ export default function CertificadoTemplate({ data }: Props) {
       <div
         style={{
           position: "absolute",
-          top: "180px",
+          top: "200px",
           left: 0,
           width: "100%",
           textAlign: "center",
