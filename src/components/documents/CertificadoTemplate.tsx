@@ -84,8 +84,8 @@ nascido(a) em ${formatDate(data?.birth_date)}, concluiu o ${modalidadeLabel} no 
         style={{
           position: "absolute",
           top: "50px",
-          left: "100px",
-          right: "100px",
+          left: "120px",
+          right: "120px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
