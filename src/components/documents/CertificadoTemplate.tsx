@@ -97,16 +97,15 @@ export default function CertificadoTemplate({ data }: Props) {
 
       {/* 🔥 CABEÇALHO */}
       <div
-  style={{
-    position: "absolute",
-    top: "100px",
-    left: 0,
-    width: "100%",
-    textAlign: "center",
-    fontSize: "14px",
-    zIndex: 2,
-  }}
->
+        style={{
+          position: "absolute",
+          top: "100px",
+          left: 0,
+          width: "100%",
+          textAlign: "center",
+          fontSize: "14px",
+          zIndex: 2,
+        }}
       >
         REPÚBLICA FEDERATIVA DO BRASIL
         <br />
