@@ -17,7 +17,7 @@ export default function CertificadoPreview() {
   };
 
   return (
-    <AppLayout>
+    <AppLayout title="Preview Certificado">
       <div className="p-6 space-y-4">
         <h1 className="text-2xl font-bold text-primary">
           Preview — Certificado de Conclusão
