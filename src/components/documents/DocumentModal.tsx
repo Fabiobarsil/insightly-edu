@@ -201,15 +201,19 @@ const DocumentModal = ({ open, onOpenChange, title, docId }: DocumentModalProps)
 
           {showPreview && student && (
             <div className="flex justify-center overflow-auto">
-              <DocumentLayout
-                type={docId}
-                title={title}
-                content={documentText}
-                student={student}
-                school={school}
-                orientation="portrait"
-                extraContent={renderGradesTable()}
-              />
+              {docId === "historico" ? (
+                <HistoricoTemplate data={historicoOficial || {}} />
+              ) : (
+                <DocumentLayout
+                  type={docId}
+                  title={title}
+                  content={documentText}
+                  student={student}
+                  school={school}
+                  orientation="portrait"
+                  extraContent={renderGradesTable()}
+                />
+              )}
             </div>
           )}
         </div>
