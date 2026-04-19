@@ -84,7 +84,7 @@ export default function CertificadoTemplate({ data }: Props) {
           src={brasao} 
           alt="Brasão" 
           style={{ 
-            width: "80px",
+            width: "100px",
             
             marginTop: "10px}} />
 
