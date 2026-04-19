@@ -11,6 +11,7 @@ interface CertificadoData {
   father_name?: string;
   school_name?: string;
   modality?: string;
+  education_type?: string;
   year?: string | number;
   director?: string;
   secretary?: string;
@@ -37,20 +38,12 @@ const formatDate = (d?: string) => {
 export default function CertificadoTemplate({ data }: Props) {
   const W = 1100;
   const H = 778;
- // ✅ AQUI — LÓGICA DO CERTIFICADO
+
   const modalidadeLabel =
     data?.education_type === "eja"
       ? "Educação de Jovens e Adultos (EJA)"
       : "Ensino Médio";
 
-  const textoCertificado = `
-O(a) Diretor(a) do ${fallback(data?.school_name)}, no uso de suas atribuições legais,
-certifica que ${fallback(data?.full_name)}, inscrito no CPF ${fallback(data?.cpf)},
-portador do RG ${fallback(data?.rg)}, filho(a) de ${fallback(data?.mother_name)} e ${fallback(data?.father_name)},
-nascido(a) em ${formatDate(data?.birth_date)}, concluiu o ${modalidadeLabel} no ano de ${fallback(data?.year)}.
-`;
-
-  // ⬇️ SÓ AGORA começa o JSX
   return (
     <div
       id="certificado"
@@ -79,7 +72,7 @@ nascido(a) em ${formatDate(data?.birth_date)}, concluiu o ${modalidadeLabel} no 
         }}
       />
 
-      {/* 🔥 HEADER PROFISSIONAL */}
+      {/* HEADER PROFISSIONAL */}
       <div
         style={{
           position: "absolute",
@@ -93,13 +86,14 @@ nascido(a) em ${formatDate(data?.birth_date)}, concluiu o ${modalidadeLabel} no 
         }}
       >
         {/* BRASÃO */}
-        <img 
-          src={brasao} 
-          alt="Brasão" 
-          style={{ 
+        <img
+          src={brasao}
+          alt="Brasão"
+          style={{
             width: "100px",
-            
-            marginTop: "10px}} />
+            marginTop: "10px",
+          }}
+        />
 
         {/* TEXTO CENTRAL */}
         <div
@@ -110,10 +104,10 @@ nascido(a) em ${formatDate(data?.birth_date)}, concluiu o ${modalidadeLabel} no 
             lineHeight: 1.4,
           }}
         >
-          <div style={{ fontWeight: "bold", letterSpacing: "1px" }}>REPÚBLICA FEDERATIVA DO BRASIL</div>
-
+          <div style={{ fontWeight: "bold", letterSpacing: "1px" }}>
+            REPÚBLICA FEDERATIVA DO BRASIL
+          </div>
           <div>{fallback(data?.school_name)}</div>
-
           <div>Portaria nº XXXXX / Autorização XXXXX</div>
         </div>
 
@@ -123,25 +117,24 @@ nascido(a) em ${formatDate(data?.birth_date)}, concluiu o ${modalidadeLabel} no 
           alt="Logo"
           style={{
             width: "80px",
-            marginRight: "200px",
             marginTop: "10px",
           }}
         />
       </div>
 
-      {/* 🔥 TÍTULO */}
+      {/* TÍTULO */}
       <div
         style={{
           position: "absolute",
           top: "180px",
           left: 0,
+          right: 0,
           width: "100%",
-           right: "0",
-    textAlign: "center",
-    fontSize: "64px",
-    fontFamily: "Amoresa, serif",
-    color: "#0f2a44",
-    zIndex: 2,
+          textAlign: "center",
+          fontSize: "64px",
+          fontFamily: "Amoresa, serif",
+          color: "#0f2a44",
+          zIndex: 2,
         }}
       >
         Certificado de Conclusão
@@ -161,11 +154,12 @@ nascido(a) em ${formatDate(data?.birth_date)}, concluiu o ${modalidadeLabel} no 
           textIndent: "40px",
         }}
       >
-        O(a) Diretor(a) do <strong>{fallback(data?.school_name)}</strong>, no uso de suas atribuições legais, certifica
-        que <strong>{fallback(data?.full_name)}</strong>, inscrito no CPF <strong>{fallback(data?.cpf)}</strong>,
-        portador do RG <strong>{fallback(data?.rg)}</strong>, filho(a) de <strong>{fallback(data?.mother_name)}</strong>{" "}
-        e <strong>{fallback(data?.father_name)}</strong>, nascido(a) em <strong>{formatDate(data?.birth_date)}</strong>,
-        concluiu o Ensino Médio na modalidade <strong>{fallback(data?.modality)}</strong> no ano de{" "}
+        O(a) Diretor(a) do <strong>{fallback(data?.school_name)}</strong>, no uso de suas atribuições legais,
+        certifica que <strong>{fallback(data?.full_name)}</strong>, inscrito no CPF{" "}
+        <strong>{fallback(data?.cpf)}</strong>, portador do RG <strong>{fallback(data?.rg)}</strong>,
+        filho(a) de <strong>{fallback(data?.mother_name)}</strong> e{" "}
+        <strong>{fallback(data?.father_name)}</strong>, nascido(a) em{" "}
+        <strong>{formatDate(data?.birth_date)}</strong>, concluiu o <strong>{modalidadeLabel}</strong> no ano de{" "}
         <strong>{fallback(data?.year)}</strong>.
       </div>
 
