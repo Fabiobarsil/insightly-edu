@@ -123,12 +123,12 @@ export default function CertificadoTemplate({ data }: Props) {
           width: "100%",
           textAlign: "center",
           fontSize: "42px",
-          fontFamily: "Amoresa",
+          fontFamily: "Amoresa, serif",
           letterSpacing: "2px",
           zIndex: 2,
         }}
       >
-        CERTIFICADO DE CONCLUSÃO
+        Certificado De Conclusão
       </div>
       {/* TEXTO PRINCIPAL */}
       <div
