@@ -206,14 +206,19 @@ const DocumentModal = ({ open, onOpenChange, title, docId }: DocumentModalProps)
   };
 
   const handleGeneratePDF = () => {
-    const elementId = docId === "historico" ? "historico-preview-content" : "doc-preview-content";
+    const elementId =
+      docId === "historico"
+        ? "historico-preview-content"
+        : docId === "certificado"
+        ? "certificado"
+        : "doc-preview-content";
     const element = document.getElementById(elementId);
     if (!element) return;
     html2pdf().from(element).set({
       margin: 0,
       filename: `${docId}-${student?.full_name?.replace(/\s+/g, "-").toLowerCase() || "aluno"}.pdf`,
       html2canvas: { scale: 2 },
-      jsPDF: { orientation: "portrait", format: "a4" },
+      jsPDF: { orientation: docId === "certificado" ? "landscape" : "portrait", format: "a4" },
     }).save();
   };
 
@@ -253,6 +258,8 @@ const DocumentModal = ({ open, onOpenChange, title, docId }: DocumentModalProps)
             <div className="flex justify-center overflow-auto">
               {docId === "historico" ? (
                 <HistoricoTemplate data={historicoOficial || {}} />
+              ) : docId === "certificado" ? (
+                <CertificadoTemplate data={certificadoData || {}} />
               ) : (
                 <DocumentLayout
                   type={docId}
