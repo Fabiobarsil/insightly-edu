@@ -8,6 +8,7 @@ import { FileDown, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { getDocumentText } from "@/lib/documentTexts";
 import { DocumentLayout } from "@/lib/documentLayout";
+import { HistoricoTemplate } from "./HistoricoTemplate";
 import html2pdf from "html2pdf.js";
 
 interface DocumentModalProps {
@@ -47,7 +48,21 @@ const DocumentModal = ({ open, onOpenChange, title, docId }: DocumentModalProps)
     enabled: !!schoolId && open,
   });
 
-  // Histórico/Boletim: buscar notas agrupadas por disciplina
+  // Histórico Escolar Oficial: usa RPC consolidada
+  const { data: historicoOficial } = useQuery({
+    queryKey: ["doc-historico-oficial", selectedStudent],
+    queryFn: async () => {
+      if (!selectedStudent) return null;
+      const { data, error } = await supabase.rpc("get_student_historico", {
+        student_uuid: selectedStudent,
+      });
+      if (error) throw error;
+      return data as any;
+    },
+    enabled: !!selectedStudent && open && docId === "historico",
+  });
+
+  // Boletim: mantém leitura de v_historico_escolar (estrutura por bimestre)
   const { data: historico = [] } = useQuery({
     queryKey: ["doc-historico", selectedStudent],
     queryFn: async () => {
@@ -84,14 +99,14 @@ const DocumentModal = ({ open, onOpenChange, title, docId }: DocumentModalProps)
         }))
         .sort((a, b) => a.disciplina.localeCompare(b.disciplina));
     },
-    enabled: !!selectedStudent && open && (docId === "historico" || docId === "boletim"),
+    enabled: !!selectedStudent && open && docId === "boletim",
   });
 
   const student = students.find((s: any) => s.id === selectedStudent) as any;
   const documentText = student ? getDocumentText(docId, { student, school }) : "";
 
   const renderGradesTable = () => {
-    if (docId !== "historico" && docId !== "boletim") return null;
+    if (docId !== "boletim") return null;
     if (!historico.length) {
       return (
         <p style={{ fontSize: 13, textAlign: "center", color: "#666", marginTop: 16 }}>
@@ -141,7 +156,8 @@ const DocumentModal = ({ open, onOpenChange, title, docId }: DocumentModalProps)
   };
 
   const handleGeneratePDF = () => {
-    const element = document.getElementById("doc-preview-content");
+    const elementId = docId === "historico" ? "historico-preview-content" : "doc-preview-content";
+    const element = document.getElementById(elementId);
     if (!element) return;
     html2pdf().from(element).set({
       margin: 0,
@@ -185,15 +201,19 @@ const DocumentModal = ({ open, onOpenChange, title, docId }: DocumentModalProps)
 
           {showPreview && student && (
             <div className="flex justify-center overflow-auto">
-              <DocumentLayout
-                type={docId}
-                title={title}
-                content={documentText}
-                student={student}
-                school={school}
-                orientation="portrait"
-                extraContent={renderGradesTable()}
-              />
+              {docId === "historico" ? (
+                <HistoricoTemplate data={historicoOficial || {}} />
+              ) : (
+                <DocumentLayout
+                  type={docId}
+                  title={title}
+                  content={documentText}
+                  student={student}
+                  school={school}
+                  orientation="portrait"
+                  extraContent={renderGradesTable()}
+                />
+              )}
             </div>
           )}
         </div>
