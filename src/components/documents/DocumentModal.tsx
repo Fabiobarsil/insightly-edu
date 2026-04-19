@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { getDocumentText } from "@/lib/documentTexts";
 import { DocumentLayout } from "@/lib/documentLayout";
 import { HistoricoTemplate } from "./HistoricoTemplate";
+import CertificadoTemplate from "./CertificadoTemplate";
 import html2pdf from "html2pdf.js";
 
 interface DocumentModalProps {
