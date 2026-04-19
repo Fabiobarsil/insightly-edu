@@ -128,7 +128,7 @@ export default function CertificadoTemplate({ data }: Props) {
           zIndex: 2,
         }}
       >
-        CERTIFICADO DE CONCLUSÃO
+        Certificado de Conclusão
       </div>
       {/* TEXTO PRINCIPAL */}
       <div
