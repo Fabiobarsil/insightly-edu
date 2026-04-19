@@ -133,13 +133,15 @@ nascido(a) em ${formatDate(data?.birth_date)}, concluiu o ${modalidadeLabel} no 
       <div
         style={{
           position: "absolute",
-          top: "170px",
+          top: "180px",
           left: 0,
           width: "100%",
-          textAlign: "center",
-          fontSize: "60px",
-          fontFamily: "Amoresa, serif",
-          zIndex: 2,
+           right: "0",
+    textAlign: "center",
+    fontSize: "64px",
+    fontFamily: "Amoresa, serif",
+    color: "#0f2a44",
+    zIndex: 2,
         }}
       >
         Certificado de Conclusão
