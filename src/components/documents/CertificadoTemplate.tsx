@@ -95,6 +95,41 @@ export default function CertificadoTemplate({ data }: Props) {
         }}
       />
 
+      {/* 🔥 CABEÇALHO */}
+      <div
+        style={{
+          position: "absolute",
+          top: "100px",
+          left: 0,
+          width: "100%",
+          textAlign: "center",
+          fontSize: "14px",
+          zIndex: 2,
+        }}
+      >
+        REPÚBLICA FEDERATIVA DO BRASIL
+        <br />
+        {fallback(data?.school_name)}
+        <br />
+        Portaria nº XXXXX / Autorização XXXXX
+      </div>
+
+      {/* 🔥 TÍTULO */}
+      <div
+        style={{
+          position: "absolute",
+          top: "180px",
+          left: 0,
+          width: "100%",
+          textAlign: "center",
+          fontSize: "42px",
+          fontFamily: "'Playfair Display', serif",
+          letterSpacing: "2px",
+          zIndex: 2,
+        }}
+      >
+        CERTIFICADO DE CONCLUSÃO
+      </div>
       {/* TEXTO PRINCIPAL */}
       <div
         style={{
