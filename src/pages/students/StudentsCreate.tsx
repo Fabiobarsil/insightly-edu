@@ -25,13 +25,33 @@ const StudentsCreate = () => {
   const { schoolId } = useSchoolId();
   const [form, setForm] = useState({
     full_name: "", birth_date: "", class_id: "", guardian_id: "",
-    cpf: "", rg: "", email: "", academic_year: "",
+    cpf: "", rg: "", email: "", academic_year: "", modality: "",
   });
   const [docs, setDocs] = useState<Record<string, boolean>>({});
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [guardianModalOpen, setGuardianModalOpen] = useState(false);
+
+  const { data: school } = useQuery({
+    queryKey: ["school-modalities", schoolId],
+    queryFn: async () => {
+      if (!schoolId) return null;
+      const { data } = await supabase
+        .from("schools")
+        .select("offers_ensino_medio, offers_eja, offers_curso_tecnico")
+        .eq("id", schoolId)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!schoolId,
+  });
+
+  const modalityOptions = [
+    { value: "ensino_medio", label: "Ensino Médio", enabled: (school as any)?.offers_ensino_medio ?? true },
+    { value: "eja", label: "Educação de Jovens e Adultos (EJA)", enabled: (school as any)?.offers_eja ?? false },
+    { value: "curso_tecnico", label: "Curso Técnico", enabled: (school as any)?.offers_curso_tecnico ?? false },
+  ].filter((m) => m.enabled);
 
   const { data: classes = [] } = useQuery({
     queryKey: ["classes", schoolId],
@@ -93,6 +113,7 @@ const StudentsCreate = () => {
         rg: form.rg || null,
         email: form.email || null,
         academic_year: form.academic_year ? parseInt(form.academic_year) : null,
+        modality: form.modality || null,
       } as any).select("id").single();
       if (error) throw error;
       if (form.guardian_id && student) {
@@ -143,6 +164,21 @@ const StudentsCreate = () => {
           <FormField label="E-mail" placeholder="email@exemplo.com" value={form.email} onChange={set("email")} />
           <FormField label="Ano Letivo" placeholder="2026" value={form.academic_year} onChange={set("academic_year")} />
           <FormField label="Turma" options={classes.map((c: any) => ({ value: c.id, label: c.name }))} value={form.class_id} onChange={set("class_id")} />
+          {modalityOptions.length > 0 && (
+            <div>
+              <label className="block text-xs font-bold text-muted-foreground mb-1.5">Modalidade</label>
+              <select
+                value={form.modality}
+                onChange={set("modality")}
+                className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+              >
+                <option value="">Selecionar...</option>
+                {modalityOptions.map((m) => (
+                  <option key={m.value} value={m.value}>{m.label}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <div>
             <label className="block text-xs font-bold text-muted-foreground mb-1.5">Responsável</label>
             <div className="flex items-center gap-2">

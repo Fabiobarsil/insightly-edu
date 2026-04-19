@@ -1437,6 +1437,9 @@ export type Database = {
           logo_url: string | null
           mec_authorization_code: string | null
           name: string
+          offers_curso_tecnico: boolean
+          offers_eja: boolean
+          offers_ensino_medio: boolean
         }
         Insert: {
           address?: string | null
@@ -1450,6 +1453,9 @@ export type Database = {
           logo_url?: string | null
           mec_authorization_code?: string | null
           name: string
+          offers_curso_tecnico?: boolean
+          offers_eja?: boolean
+          offers_ensino_medio?: boolean
         }
         Update: {
           address?: string | null
@@ -1463,6 +1469,9 @@ export type Database = {
           logo_url?: string | null
           mec_authorization_code?: string | null
           name?: string
+          offers_curso_tecnico?: boolean
+          offers_eja?: boolean
+          offers_ensino_medio?: boolean
         }
         Relationships: []
       }
@@ -1855,6 +1864,7 @@ export type Database = {
           enrollment_number: string | null
           full_name: string
           id: string
+          modality: string | null
           notes: string | null
           number: string | null
           phone: string | null
@@ -1879,6 +1889,7 @@ export type Database = {
           enrollment_number?: string | null
           full_name: string
           id?: string
+          modality?: string | null
           notes?: string | null
           number?: string | null
           phone?: string | null
@@ -1903,6 +1914,7 @@ export type Database = {
           enrollment_number?: string | null
           full_name?: string
           id?: string
+          modality?: string | null
           notes?: string | null
           number?: string | null
           phone?: string | null

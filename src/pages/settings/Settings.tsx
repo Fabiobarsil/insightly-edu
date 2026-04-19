@@ -72,7 +72,11 @@ const Settings = () => {
     enabled: !!schoolId,
   });
 
-  const [form, setForm] = useState({ name: "", address: "", complement: "", cnpj: "", mec_authorization_code: "", director_name: "", director_role: "", logo_url: "" });
+  const [form, setForm] = useState({
+    name: "", address: "", complement: "", cnpj: "", mec_authorization_code: "",
+    director_name: "", director_role: "", logo_url: "",
+    offers_ensino_medio: true, offers_eja: false, offers_curso_tecnico: false,
+  });
 
   useEffect(() => {
     if (school) {
@@ -80,9 +84,15 @@ const Settings = () => {
         name: school.name || "", address: school.address || "", complement: (school as any).complement || "", cnpj: school.cnpj || "",
         mec_authorization_code: school.mec_authorization_code || "", director_name: school.director_name || "",
         director_role: school.director_role || "", logo_url: school.logo_url || "",
+        offers_ensino_medio: (school as any).offers_ensino_medio ?? true,
+        offers_eja: (school as any).offers_eja ?? false,
+        offers_curso_tecnico: (school as any).offers_curso_tecnico ?? false,
       });
     }
   }, [school]);
+
+  const toggleOffer = (key: "offers_ensino_medio" | "offers_eja" | "offers_curso_tecnico") =>
+    setForm((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const updateMutation = useMutation({
     mutationFn: async (data: typeof form) => {
@@ -233,6 +243,37 @@ const Settings = () => {
               <div>
                 <label className="block text-xs font-bold text-muted-foreground mb-1.5">Entidade Mantenedora / Cargo</label>
                 <input value={form.director_role} onChange={handleChange("director_role")} className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-xs font-bold text-muted-foreground mb-2">Modalidades Oferecidas</label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  {[
+                    { key: "offers_ensino_medio" as const, label: "Ensino Médio" },
+                    { key: "offers_eja" as const, label: "Educação de Jovens e Adultos (EJA)" },
+                    { key: "offers_curso_tecnico" as const, label: "Curso Técnico" },
+                  ].map((m) => (
+                    <label
+                      key={m.key}
+                      className={cn(
+                        "flex items-center gap-2 px-3 py-2.5 rounded-[12px] border cursor-pointer transition-colors text-sm",
+                        form[m.key]
+                          ? "border-secondary bg-secondary/10 text-primary font-bold"
+                          : "border-border bg-background text-muted-foreground hover:bg-accent"
+                      )}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={form[m.key]}
+                        onChange={() => toggleOffer(m.key)}
+                        className="w-4 h-4 rounded border-border text-secondary focus:ring-secondary"
+                      />
+                      {m.label}
+                    </label>
+                  ))}
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-1.5">
+                  Marque todas as modalidades disponíveis na escola. Elas aparecerão na matrícula do aluno.
+                </p>
               </div>
             </div>
           </FormCard>
