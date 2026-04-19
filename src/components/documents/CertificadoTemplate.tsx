@@ -1,4 +1,4 @@
-import certificado from "@/assets/certificado-clean.png";
+import certificado from "@/assets/certificado-clean02.png";
 import brasao from "@/assets/brasao-republica.png";
 import logo from "@/assets/logo-certus.png";
 
