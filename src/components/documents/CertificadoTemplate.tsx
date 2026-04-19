@@ -99,11 +99,14 @@ export default function CertificadoTemplate({ data }: Props) {
       <div
         style={{
           position: "absolute",
-          top: "100px",
+          top: "180px",
           left: 0,
           width: "100%",
           textAlign: "center",
-          fontSize: "14px",
+          fontSize: "60px",
+          fontFamily: "Amoresa",
+          letterSpacing: "2px",
+          textTransform: "capitalize",
           zIndex: 2,
         }}
       >
