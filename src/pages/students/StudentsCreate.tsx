@@ -113,6 +113,7 @@ const StudentsCreate = () => {
         rg: form.rg || null,
         email: form.email || null,
         academic_year: form.academic_year ? parseInt(form.academic_year) : null,
+        modality: form.modality || null,
       } as any).select("id").single();
       if (error) throw error;
       if (form.guardian_id && student) {
