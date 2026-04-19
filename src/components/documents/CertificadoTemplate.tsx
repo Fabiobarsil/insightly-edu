@@ -75,7 +75,7 @@ export default function CertificadoTemplate({ data }: Props) {
           position: "absolute",
           top: "60px",
           left: "80px",
-          width: "90px",
+          width: "100px",
           height: "auto",
           zIndex: 2,
         }}
