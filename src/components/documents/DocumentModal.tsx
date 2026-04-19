@@ -48,7 +48,21 @@ const DocumentModal = ({ open, onOpenChange, title, docId }: DocumentModalProps)
     enabled: !!schoolId && open,
   });
 
-  // Histórico/Boletim: buscar notas agrupadas por disciplina
+  // Histórico Escolar Oficial: usa RPC consolidada
+  const { data: historicoOficial } = useQuery({
+    queryKey: ["doc-historico-oficial", selectedStudent],
+    queryFn: async () => {
+      if (!selectedStudent) return null;
+      const { data, error } = await supabase.rpc("get_student_historico", {
+        student_uuid: selectedStudent,
+      });
+      if (error) throw error;
+      return data as any;
+    },
+    enabled: !!selectedStudent && open && docId === "historico",
+  });
+
+  // Boletim: mantém leitura de v_historico_escolar (estrutura por bimestre)
   const { data: historico = [] } = useQuery({
     queryKey: ["doc-historico", selectedStudent],
     queryFn: async () => {
@@ -85,7 +99,7 @@ const DocumentModal = ({ open, onOpenChange, title, docId }: DocumentModalProps)
         }))
         .sort((a, b) => a.disciplina.localeCompare(b.disciplina));
     },
-    enabled: !!selectedStudent && open && (docId === "historico" || docId === "boletim"),
+    enabled: !!selectedStudent && open && docId === "boletim",
   });
 
   const student = students.find((s: any) => s.id === selectedStudent) as any;
