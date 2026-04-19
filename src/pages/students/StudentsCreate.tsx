@@ -25,13 +25,33 @@ const StudentsCreate = () => {
   const { schoolId } = useSchoolId();
   const [form, setForm] = useState({
     full_name: "", birth_date: "", class_id: "", guardian_id: "",
-    cpf: "", rg: "", email: "", academic_year: "",
+    cpf: "", rg: "", email: "", academic_year: "", modality: "",
   });
   const [docs, setDocs] = useState<Record<string, boolean>>({});
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [guardianModalOpen, setGuardianModalOpen] = useState(false);
+
+  const { data: school } = useQuery({
+    queryKey: ["school-modalities", schoolId],
+    queryFn: async () => {
+      if (!schoolId) return null;
+      const { data } = await supabase
+        .from("schools")
+        .select("offers_ensino_medio, offers_eja, offers_curso_tecnico")
+        .eq("id", schoolId)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!schoolId,
+  });
+
+  const modalityOptions = [
+    { value: "ensino_medio", label: "Ensino Médio", enabled: (school as any)?.offers_ensino_medio ?? true },
+    { value: "eja", label: "Educação de Jovens e Adultos (EJA)", enabled: (school as any)?.offers_eja ?? false },
+    { value: "curso_tecnico", label: "Curso Técnico", enabled: (school as any)?.offers_curso_tecnico ?? false },
+  ].filter((m) => m.enabled);
 
   const { data: classes = [] } = useQuery({
     queryKey: ["classes", schoolId],
