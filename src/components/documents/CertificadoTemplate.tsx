@@ -104,7 +104,7 @@ export default function CertificadoTemplate({ data }: Props) {
           alt="Logo"
           style={{
             width: "65px",
-            marginRight: "28px",
+            marginRight: "60px",
             marginTop: "18px",
           }}
         />
