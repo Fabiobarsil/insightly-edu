@@ -106,7 +106,7 @@ const DocumentModal = ({ open, onOpenChange, title, docId }: DocumentModalProps)
   const documentText = student ? getDocumentText(docId, { student, school }) : "";
 
   const renderGradesTable = () => {
-    if (docId !== "historico" && docId !== "boletim") return null;
+    if (docId !== "boletim") return null;
     if (!historico.length) {
       return (
         <p style={{ fontSize: 13, textAlign: "center", color: "#666", marginTop: 16 }}>
@@ -156,7 +156,8 @@ const DocumentModal = ({ open, onOpenChange, title, docId }: DocumentModalProps)
   };
 
   const handleGeneratePDF = () => {
-    const element = document.getElementById("doc-preview-content");
+    const elementId = docId === "historico" ? "historico-preview-content" : "doc-preview-content";
+    const element = document.getElementById(elementId);
     if (!element) return;
     html2pdf().from(element).set({
       margin: 0,
