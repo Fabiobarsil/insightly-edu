@@ -164,6 +164,21 @@ const StudentsCreate = () => {
           <FormField label="E-mail" placeholder="email@exemplo.com" value={form.email} onChange={set("email")} />
           <FormField label="Ano Letivo" placeholder="2026" value={form.academic_year} onChange={set("academic_year")} />
           <FormField label="Turma" options={classes.map((c: any) => ({ value: c.id, label: c.name }))} value={form.class_id} onChange={set("class_id")} />
+          {modalityOptions.length > 0 && (
+            <div>
+              <label className="block text-xs font-bold text-muted-foreground mb-1.5">Modalidade</label>
+              <select
+                value={form.modality}
+                onChange={set("modality")}
+                className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+              >
+                <option value="">Selecionar...</option>
+                {modalityOptions.map((m) => (
+                  <option key={m.value} value={m.value}>{m.label}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <div>
             <label className="block text-xs font-bold text-muted-foreground mb-1.5">Responsável</label>
             <div className="flex items-center gap-2">
