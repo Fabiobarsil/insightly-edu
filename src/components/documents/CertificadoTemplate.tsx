@@ -80,13 +80,14 @@ export default function CertificadoTemplate({ data }: Props) {
         }}
       >
         {/* BRASÃO */}
-        <img 
-          src={brasao} 
-          alt="Brasão" 
-          style={{ 
+        <img
+          src={brasao}
+          alt="Brasão"
+          style={{
             width: "100px",
-            
-            marginTop: "10px}} />
+            marginTop: "10px",
+          }}
+        />
 
         {/* TEXTO CENTRAL */}
         <div
