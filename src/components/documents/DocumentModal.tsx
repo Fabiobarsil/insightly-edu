@@ -219,7 +219,7 @@ const DocumentModal = ({ open, onOpenChange, title, docId }: DocumentModalProps)
       docId === "historico"
         ? "historico-preview-content"
         : docId === "certificado"
-        ? "certificado"
+        ? "certificado-modal-preview"
         : "doc-preview-content";
     const element = document.getElementById(elementId);
     if (!element) return;
