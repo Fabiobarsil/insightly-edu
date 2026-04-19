@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { getDocumentText } from "@/lib/documentTexts";
 import { DocumentLayout } from "@/lib/documentLayout";
 import { HistoricoTemplate } from "./HistoricoTemplate";
+import CertificadoTemplate from "./CertificadoTemplate";
 import html2pdf from "html2pdf.js";
 
 interface DocumentModalProps {
@@ -102,6 +103,55 @@ const DocumentModal = ({ open, onOpenChange, title, docId }: DocumentModalProps)
     enabled: !!selectedStudent && open && docId === "boletim",
   });
 
+  // Certificado: dados detalhados do aluno + responsáveis (mãe/pai)
+  const { data: certificadoData } = useQuery({
+    queryKey: ["doc-certificado", selectedStudent, schoolId],
+    queryFn: async () => {
+      if (!selectedStudent) return null;
+      const { data: studentDetail } = await supabase
+        .from("students")
+        .select("full_name, cpf, rg, birth_date, academic_year")
+        .eq("id", selectedStudent)
+        .maybeSingle();
+
+      const { data: links } = await supabase
+        .from("student_guardians")
+        .select("guardian_id, guardians(full_name, relationship_type, relationship_description, gender)")
+        .eq("student_id", selectedStudent);
+
+      const guardians = (links || [])
+        .map((l: any) => l.guardians)
+        .filter(Boolean);
+
+      const matchRel = (g: any, keys: string[]) => {
+        const rel = `${g.relationship_type || ""} ${g.relationship_description || ""}`.toLowerCase();
+        return keys.some((k) => rel.includes(k));
+      };
+
+      const mother =
+        guardians.find((g: any) => matchRel(g, ["mãe", "mae", "mother"])) ||
+        guardians.find((g: any) => (g.gender || "").toLowerCase().startsWith("f"));
+      const father =
+        guardians.find((g: any) => matchRel(g, ["pai", "father"])) ||
+        guardians.find((g: any) => (g.gender || "").toLowerCase().startsWith("m"));
+
+      return {
+        full_name: studentDetail?.full_name,
+        cpf: studentDetail?.cpf,
+        rg: studentDetail?.rg,
+        birth_date: studentDetail?.birth_date,
+        mother_name: mother?.full_name,
+        father_name: father?.full_name,
+        school_name: school?.name,
+        modality: "EJA",
+        year: studentDetail?.academic_year || new Date().getFullYear(),
+        director: school?.director_name,
+        secretary: (school as any)?.secretary_name,
+      };
+    },
+    enabled: !!selectedStudent && open && docId === "certificado" && !!school,
+  });
+
   const student = students.find((s: any) => s.id === selectedStudent) as any;
   const documentText = student ? getDocumentText(docId, { student, school }) : "";
 
@@ -156,14 +206,19 @@ const DocumentModal = ({ open, onOpenChange, title, docId }: DocumentModalProps)
   };
 
   const handleGeneratePDF = () => {
-    const elementId = docId === "historico" ? "historico-preview-content" : "doc-preview-content";
+    const elementId =
+      docId === "historico"
+        ? "historico-preview-content"
+        : docId === "certificado"
+        ? "certificado"
+        : "doc-preview-content";
     const element = document.getElementById(elementId);
     if (!element) return;
     html2pdf().from(element).set({
       margin: 0,
       filename: `${docId}-${student?.full_name?.replace(/\s+/g, "-").toLowerCase() || "aluno"}.pdf`,
       html2canvas: { scale: 2 },
-      jsPDF: { orientation: "portrait", format: "a4" },
+      jsPDF: { orientation: docId === "certificado" ? "landscape" : "portrait", format: "a4" },
     }).save();
   };
 
@@ -203,6 +258,8 @@ const DocumentModal = ({ open, onOpenChange, title, docId }: DocumentModalProps)
             <div className="flex justify-center overflow-auto">
               {docId === "historico" ? (
                 <HistoricoTemplate data={historicoOficial || {}} />
+              ) : docId === "certificado" ? (
+                <CertificadoTemplate data={certificadoData || {}} />
               ) : (
                 <DocumentLayout
                   type={docId}
