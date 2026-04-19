@@ -37,7 +37,20 @@ const formatDate = (d?: string) => {
 export default function CertificadoTemplate({ data }: Props) {
   const W = 1100;
   const H = 778;
+ // ✅ AQUI — LÓGICA DO CERTIFICADO
+  const modalidadeLabel =
+    data?.education_type === "eja"
+      ? "Educação de Jovens e Adultos (EJA)"
+      : "Ensino Médio";
 
+  const textoCertificado = `
+O(a) Diretor(a) do ${fallback(data?.school_name)}, no uso de suas atribuições legais,
+certifica que ${fallback(data?.full_name)}, inscrito no CPF ${fallback(data?.cpf)},
+portador do RG ${fallback(data?.rg)}, filho(a) de ${fallback(data?.mother_name)} e ${fallback(data?.father_name)},
+nascido(a) em ${formatDate(data?.birth_date)}, concluiu o ${modalidadeLabel} no ano de ${fallback(data?.year)}.
+`;
+
+  // ⬇️ SÓ AGORA começa o JSX
   return (
     <div
       id="certificado"
@@ -80,14 +93,13 @@ export default function CertificadoTemplate({ data }: Props) {
         }}
       >
         {/* BRASÃO */}
-        <img
-          src={brasao}
-          alt="Brasão"
-          style={{
+        <img 
+          src={brasao} 
+          alt="Brasão" 
+          style={{ 
             width: "100px",
-            marginTop: "10px",
-          }}
-        />
+            
+            marginTop: "10px}} />
 
         {/* TEXTO CENTRAL */}
         <div
