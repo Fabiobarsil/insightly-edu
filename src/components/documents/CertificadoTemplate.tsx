@@ -83,8 +83,9 @@ export default function CertificadoTemplate({ data }: Props) {
         <img 
           src={brasao} 
           alt="Brasão" 
-          style={{ width: "80px",
-                 marginRight: "200px",
+          style={{ 
+            width: "80px",
+            
             marginTop: "10px}} />
 
         {/* TEXTO CENTRAL */}
