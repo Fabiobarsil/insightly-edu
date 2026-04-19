@@ -268,7 +268,9 @@ const DocumentModal = ({ open, onOpenChange, title, docId }: DocumentModalProps)
               {docId === "historico" ? (
                 <HistoricoTemplate data={historicoOficial || {}} />
               ) : docId === "certificado" ? (
-                <CertificadoTemplate data={certificadoData || {}} />
+                <div id="certificado-modal-preview">
+                  <CertificadoTemplate data={certificadoData || {}} />
+                </div>
               ) : (
                 <DocumentLayout
                   type={docId}
