@@ -99,7 +99,15 @@ export default function CertificadoTemplate({ data }: Props) {
         </div>
 
         {/* LOGO */}
-        <img src={logo} alt="Logo" style={{ width: "60px" }} />
+        <img
+          src={logo}
+          alt="Logo"
+          style={{
+            width: "65px",
+            marginRight: "28px",
+            marginTop: "18px",
+          }}
+        />
       </div>
 
       {/* 🔥 TÍTULO */}
