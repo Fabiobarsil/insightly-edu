@@ -1432,6 +1432,7 @@ export type Database = {
           created_at: string | null
           director_name: string | null
           director_role: string | null
+          education_type: string | null
           id: string
           logo_url: string | null
           mec_authorization_code: string | null
@@ -1444,6 +1445,7 @@ export type Database = {
           created_at?: string | null
           director_name?: string | null
           director_role?: string | null
+          education_type?: string | null
           id?: string
           logo_url?: string | null
           mec_authorization_code?: string | null
@@ -1456,6 +1458,7 @@ export type Database = {
           created_at?: string | null
           director_name?: string | null
           director_role?: string | null
+          education_type?: string | null
           id?: string
           logo_url?: string | null
           mec_authorization_code?: string | null
