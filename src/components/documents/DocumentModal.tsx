@@ -30,7 +30,16 @@ const DocumentModal = ({ open, onOpenChange, title, docId }: DocumentModalProps)
       if (!schoolId) return [];
       const { data } = await supabase
         .from("students")
-        .select("id, full_name, class_id, classes(name)")
+        .select(`
+          id,
+          full_name,
+          cpf,
+          rg,
+          birth_date,
+          class_id,
+          academic_year,
+          classes(name)
+        `)
         .eq("school_id", schoolId)
         .eq("status", "ativo")
         .order("full_name");
@@ -210,7 +219,7 @@ const DocumentModal = ({ open, onOpenChange, title, docId }: DocumentModalProps)
       docId === "historico"
         ? "historico-preview-content"
         : docId === "certificado"
-        ? "certificado"
+        ? "certificado-modal-preview"
         : "doc-preview-content";
     const element = document.getElementById(elementId);
     if (!element) return;
@@ -259,7 +268,9 @@ const DocumentModal = ({ open, onOpenChange, title, docId }: DocumentModalProps)
               {docId === "historico" ? (
                 <HistoricoTemplate data={historicoOficial || {}} />
               ) : docId === "certificado" ? (
-                <CertificadoTemplate data={certificadoData || {}} />
+                <div id="certificado-modal-preview">
+                  <CertificadoTemplate data={certificadoData || {}} />
+                </div>
               ) : (
                 <DocumentLayout
                   type={docId}

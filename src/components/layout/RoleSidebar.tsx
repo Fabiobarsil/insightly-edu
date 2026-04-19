@@ -27,6 +27,7 @@ const menusByRole: Record<DashboardRole, NavItem[]> = {
     { icon: "ri-compass-3-line", label: "Coordenação", to: "/admin/coordenacao" },
     { icon: "ri-file-text-line", label: "Documentos", to: "/admin/documentos" },
     { icon: "ri-chat-3-line", label: "Comunicação", to: "/admin/comunicacao" },
+    { icon: "ri-award-line", label: "Preview Certificado", to: "/admin/certificado-preview" },
     { icon: "ri-settings-3-line", label: "Administração", to: "/admin/configuracoes" },
   ],
   secretaria: [
