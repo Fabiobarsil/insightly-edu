@@ -35,7 +35,6 @@ const formatDate = (d?: string) => {
 };
 
 export default function CertificadoTemplate({ data }: Props) {
-  // A4 landscape ratio matching template (2000x1414 ≈ 1.414)
   const W = 1100;
   const H = 778;
 
@@ -67,69 +66,58 @@ export default function CertificadoTemplate({ data }: Props) {
         }}
       />
 
-      {/* BRASÃO (ESQUERDA) */}
-      <img
-        src={brasao}
-        alt="Brasão da República"
-        style={{
-          position: "absolute",
-          top: "60px",
-          left: "80px",
-          width: "100px",
-          height: "auto",
-          zIndex: 2,
-        }}
-      />
-
-      {/* LOGO (DIREITA - OPOSTO AO BRASÃO) */}
-      <img
-        src={logo}
-        alt="Logo Certus"
-        style={{
-          position: "absolute",
-          top: "60px",
-          right: "100px",
-          width: "90px",
-          height: "auto",
-          zIndex: 2,
-        }}
-      />
-
-      {/* 🔥 CABEÇALHO */}
+      {/* 🔥 HEADER PROFISSIONAL */}
       <div
         style={{
           position: "absolute",
-          top: "100px",
-          left: 0,
-          width: "100%",
-          textAlign: "center",
-          fontSize: "14px",
+          top: "50px",
+          left: "100px",
+          right: "100px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
           zIndex: 2,
         }}
       >
-        REPÚBLICA FEDERATIVA DO BRASIL
-        <br />
-        {fallback(data?.school_name)}
-        <br />
-        Portaria nº XXXXX / Autorização XXXXX
+        {/* BRASÃO */}
+        <img src={brasao} alt="Brasão" style={{ width: "70px" }} />
+
+        {/* TEXTO CENTRAL */}
+        <div
+          style={{
+            textAlign: "center",
+            flex: 1,
+            fontSize: "14px",
+            lineHeight: 1.4,
+          }}
+        >
+          <div style={{ fontWeight: "bold", letterSpacing: "1px" }}>REPÚBLICA FEDERATIVA DO BRASIL</div>
+
+          <div>{fallback(data?.school_name)}</div>
+
+          <div>Portaria nº XXXXX / Autorização XXXXX</div>
+        </div>
+
+        {/* LOGO */}
+        <img src={logo} alt="Logo" style={{ width: "60px" }} />
       </div>
 
       {/* 🔥 TÍTULO */}
       <div
         style={{
           position: "absolute",
-          top: "200px",
+          top: "170px",
           left: 0,
           width: "100%",
           textAlign: "center",
-          fontSize: "45px",
+          fontSize: "60px",
           fontFamily: "Amoresa, serif",
-          letterSpacing: "2px",
           zIndex: 2,
         }}
       >
-        Certificado De Conclusão
+        Certificado de Conclusão
       </div>
+
       {/* TEXTO PRINCIPAL */}
       <div
         style={{
@@ -163,12 +151,7 @@ export default function CertificadoTemplate({ data }: Props) {
           zIndex: 2,
         }}
       >
-        <div
-          style={{
-            borderTop: "1px solid #0f2a44",
-            marginBottom: "6px",
-          }}
-        />
+        <div style={{ borderTop: "1px solid #0f2a44", marginBottom: "6px" }} />
         <p style={{ margin: 0, fontSize: "14px", fontWeight: "bold" }}>{fallback(data?.director)}</p>
         <p style={{ margin: 0, fontSize: "12px" }}>Diretor</p>
       </div>
@@ -184,12 +167,7 @@ export default function CertificadoTemplate({ data }: Props) {
           zIndex: 2,
         }}
       >
-        <div
-          style={{
-            borderTop: "1px solid #0f2a44",
-            marginBottom: "6px",
-          }}
-        />
+        <div style={{ borderTop: "1px solid #0f2a44", marginBottom: "6px" }} />
         <p style={{ margin: 0, fontSize: "14px", fontWeight: "bold" }}>{fallback(data?.secretary)}</p>
         <p style={{ margin: 0, fontSize: "12px" }}>Secretária</p>
       </div>
