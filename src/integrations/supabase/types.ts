@@ -2227,6 +2227,7 @@ export type Database = {
       }
       ensure_user_school: { Args: never; Returns: undefined }
       get_effective_role: { Args: never; Returns: string }
+      get_student_historico: { Args: { student_uuid: string }; Returns: Json }
       is_member_of_school: { Args: { _school_id: string }; Returns: boolean }
       process_rematricula: { Args: { p_year: number }; Returns: number }
       process_rematricula_with_class: {
