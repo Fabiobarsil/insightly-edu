@@ -179,9 +179,9 @@ const StudentSearchModal = ({ open, onOpenChange }: StudentSearchModalProps) => 
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-foreground truncate">{s.full_name}</p>
                         <p className="text-xs text-muted-foreground truncate">
-                          {s.classes?.name || "Sem turma"}
-                          {s.classes?.grade ? ` · ${s.classes.grade}` : ""}
-                          {s.classes?.shift ? ` · ${s.classes.shift}` : ""}
+                          {s._class_name || "Sem turma"}
+                          {s._grade ? ` · ${s._grade}` : ""}
+                          {s._shift ? ` · ${s._shift}` : ""}
                         </p>
                       </div>
                     </button>
