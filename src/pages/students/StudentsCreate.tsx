@@ -279,8 +279,10 @@ const StudentsCreate = () => {
               </select>
             </div>
           )}
-          <div>
-            <label className="block text-xs font-bold text-muted-foreground mb-1.5">Responsável</label>
+          <div className="md:col-span-2">
+            <label className="block text-xs font-bold text-muted-foreground mb-1.5">
+              Outro responsável autorizado <span className="font-normal text-muted-foreground/70">(opcional — avô, avó, tio(a), transporte escolar etc.)</span>
+            </label>
             <div className="flex items-center gap-2">
               <select value={form.guardian_id} onChange={set("guardian_id")} className="flex-1 border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors">
                 <option value="">Selecionar...</option>
@@ -294,6 +296,69 @@ const StudentsCreate = () => {
           </div>
         </div>
       </FormCard>
+
+      {/* Pai e Mãe — obrigatórios na ficha */}
+      <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow mt-6">
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="text-sm font-bold text-primary">Filiação</h4>
+          <span className="text-[11px] text-muted-foreground">Marque quem é o responsável financeiro e pedagógico</span>
+        </div>
+
+        {[
+          { title: "Pai", state: father, setState: setFather, key: "father" },
+          { title: "Mãe", state: mother, setState: setMother, key: "mother" },
+        ].map(({ title, state, setState, key }) => (
+          <div key={key} className="mb-5 last:mb-0">
+            <h5 className="text-xs font-bold text-secondary uppercase tracking-wider mb-3">{title}</h5>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <FormField
+                label={`Nome do ${title.toLowerCase()} *`}
+                placeholder={`Nome completo do ${title.toLowerCase()}`}
+                value={state.full_name}
+                onChange={(e: any) => setState((p: any) => ({ ...p, full_name: e.target.value }))}
+              />
+              <FormField
+                label="CPF"
+                placeholder="000.000.000-00"
+                value={state.cpf}
+                onChange={(e: any) => setState((p: any) => ({ ...p, cpf: e.target.value }))}
+              />
+              <FormField
+                label="Telefone"
+                placeholder="(00) 00000-0000"
+                value={state.phone}
+                onChange={(e: any) => setState((p: any) => ({ ...p, phone: e.target.value }))}
+              />
+              <FormField
+                label="E-mail"
+                placeholder="email@exemplo.com"
+                value={state.email}
+                onChange={(e: any) => setState((p: any) => ({ ...p, email: e.target.value }))}
+              />
+            </div>
+            <div className="flex flex-wrap gap-4 mt-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={state.is_financial}
+                  onChange={(e) => setState((p: any) => ({ ...p, is_financial: e.target.checked }))}
+                  className="w-4 h-4 rounded border-border text-secondary focus:ring-secondary"
+                />
+                <span className="text-sm text-primary">Responsável financeiro</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={state.is_pedagogical}
+                  onChange={(e) => setState((p: any) => ({ ...p, is_pedagogical: e.target.checked }))}
+                  className="w-4 h-4 rounded border-border text-secondary focus:ring-secondary"
+                />
+                <span className="text-sm text-primary">Responsável pedagógico</span>
+              </label>
+            </div>
+          </div>
+        ))}
+      </div>
 
       {/* Checklist de documentos */}
       <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow mt-6">
