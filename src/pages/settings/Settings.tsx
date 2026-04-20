@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import TeacherRegistrationTab from "@/components/settings/TeacherRegistrationTab";
 import TemplatesTab from "@/components/settings/TemplatesTab";
+import SignaturesTab from "@/components/settings/SignaturesTab";
 
 const tabs = [
   { id: "escola", label: "Dados da Escola", icon: "ri-building-line" },
