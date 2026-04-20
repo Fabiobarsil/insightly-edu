@@ -148,8 +148,18 @@ const StudentsCreate = () => {
       blood_type: s.blood_type || "",
       status: s.status || "ativo",
       notes: s.notes || "",
+      zip_code: s.zip_code || "",
+      address: s.address || "",
+      number: s.number || "",
+      complement: s.complement || "",
+      district: s.district || "",
+      city: s.city || "",
+      state: s.state || "",
     });
     if (s.photo_url) {
+      setExistingPhotoUrl(s.photo_url);
+      setPhotoPreview(s.photo_url);
+    }
       setExistingPhotoUrl(s.photo_url);
       setPhotoPreview(s.photo_url);
     }
