@@ -428,12 +428,6 @@ const StudentsDetail = () => {
           >
             <i className="ri-file-chart-line" /> Prontuário
           </Link>
-          <Link
-            to={`/secretaria/matricula/${id}`}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-[12px] border border-border text-sm font-bold text-muted-foreground hover:bg-accent transition-colors"
-          >
-            <i className="ri-pencil-line" /> Editar (Secretaria)
-          </Link>
         </div>
       </div>
 
