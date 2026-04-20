@@ -124,22 +124,34 @@ const StudentsCreate = () => {
       if (error) throw error;
 
       // Cria vínculo formal em student_enrollments com tipo no campo notes
-      const enrollmentLabel = form.enrollment_type === "matricula"
-        ? "Matrícula"
-        : form.enrollment_type === "renovacao"
-        ? "Renovação"
-        : "Transferência";
+      const selectedEnrollmentType = form.enrollment_type;
+      console.log("Tipo de vínculo:", selectedEnrollmentType);
 
-      const { error: enrollErr } = await supabase.from("student_enrollments").insert({
+      if (!selectedEnrollmentType) {
+        throw new Error("Tipo de vínculo não selecionado");
+      }
+
+      const enrollmentPayload = {
         student_id: student.id,
         school_id: schoolId,
         class_id: form.class_id,
         academic_year: academicYear,
         status: "ativo" as const,
         start_date: new Date().toISOString().split("T")[0],
-        notes: `Tipo de vínculo: ${enrollmentLabel}`,
-      } as any);
-      if (enrollErr) throw enrollErr;
+        notes: selectedEnrollmentType,
+      };
+      console.log("Payload student_enrollments:", enrollmentPayload);
+
+      const { data: enrollData, error: enrollErr } = await supabase
+        .from("student_enrollments")
+        .insert(enrollmentPayload as any)
+        .select("id, notes")
+        .single();
+      if (enrollErr) {
+        console.error("Erro ao criar matrícula:", enrollErr);
+        throw enrollErr;
+      }
+      console.log("Matrícula criada:", enrollData);
 
       if (form.guardian_id && student) {
         await supabase.from("student_guardians").insert({
