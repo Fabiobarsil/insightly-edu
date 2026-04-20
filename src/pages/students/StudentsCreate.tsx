@@ -31,6 +31,8 @@ const docChecklist = [
 const emptyParent = () => ({
   id: null as string | null,
   full_name: "", cpf: "", phone: "", email: "",
+  marital_status: "",
+  same_address: true,
   is_financial: false, is_pedagogical: false,
 });
 
