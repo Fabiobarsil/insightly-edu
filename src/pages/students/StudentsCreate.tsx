@@ -132,6 +132,7 @@ const StudentsCreate = () => {
       academic_year: s.academic_year ? String(s.academic_year) : "",
       modality: s.modality || "",
       enrollment_type: (studentData.enrollment as any)?.notes || "matricula",
+      blood_type: s.blood_type || "",
     });
     if (s.photo_url) {
       setExistingPhotoUrl(s.photo_url);
