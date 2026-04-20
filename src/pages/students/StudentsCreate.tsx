@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AppLayout from "@/components/layout/AppLayout";
 import PageHeader from "@/components/shared/PageHeader";
@@ -18,27 +18,31 @@ const docChecklist = [
   { key: "laudo_medico", label: "Laudo Médico (PcD)", obrigatorio: false },
 ];
 
+const emptyParent = () => ({
+  id: null as string | null,
+  full_name: "", cpf: "", phone: "", email: "",
+  is_financial: false, is_pedagogical: false,
+});
+
 const StudentsCreate = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { schoolId } = useSchoolId();
+  const { id: studentIdParam } = useParams<{ id?: string }>();
+  const isEdit = !!studentIdParam;
+
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     full_name: "", birth_date: "", class_id: "", guardian_id: "",
     cpf: "", rg: "", email: "", academic_year: "", modality: "",
     enrollment_type: "",
   });
-  const [father, setFather] = useState({
-    full_name: "", cpf: "", phone: "", email: "",
-    is_financial: true, is_pedagogical: true,
-  });
-  const [mother, setMother] = useState({
-    full_name: "", cpf: "", phone: "", email: "",
-    is_financial: false, is_pedagogical: false,
-  });
+  const [father, setFather] = useState<any>({ ...emptyParent(), is_financial: true, is_pedagogical: true });
+  const [mother, setMother] = useState<any>(emptyParent());
   const [docs, setDocs] = useState<Record<string, boolean>>({});
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [existingPhotoUrl, setExistingPhotoUrl] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [guardianModalOpen, setGuardianModalOpen] = useState(false);
 
@@ -83,6 +87,90 @@ const StudentsCreate = () => {
     enabled: !!schoolId,
   });
 
+  // Pré-carrega aluno + responsáveis quando em modo edição
+  const { data: studentData } = useQuery({
+    queryKey: ["student-edit", studentIdParam],
+    queryFn: async () => {
+      if (!studentIdParam) return null;
+      const { data: student, error } = await supabase
+        .from("students")
+        .select("*")
+        .eq("id", studentIdParam)
+        .maybeSingle();
+      if (error) throw error;
+
+      const { data: links } = await supabase
+        .from("student_guardians")
+        .select("guardian_id, guardians:guardian_id(*)")
+        .eq("student_id", studentIdParam);
+
+      const { data: enrollment } = await supabase
+        .from("student_enrollments")
+        .select("notes, academic_year, class_id, status")
+        .eq("student_id", studentIdParam)
+        .eq("status", "ativo")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      return { student, links: links || [], enrollment };
+    },
+    enabled: isEdit && !!studentIdParam,
+  });
+
+  useEffect(() => {
+    if (!studentData?.student) return;
+    const s = studentData.student as any;
+    setForm({
+      full_name: s.full_name || "",
+      birth_date: s.birth_date || "",
+      class_id: s.class_id || "",
+      guardian_id: "",
+      cpf: s.cpf || "",
+      rg: s.rg || "",
+      email: s.email || "",
+      academic_year: s.academic_year ? String(s.academic_year) : "",
+      modality: s.modality || "",
+      enrollment_type: (studentData.enrollment as any)?.notes || "matricula",
+    });
+    if (s.photo_url) {
+      setExistingPhotoUrl(s.photo_url);
+      setPhotoPreview(s.photo_url);
+    }
+
+    const linkedGuardians = (studentData.links || [])
+      .map((l: any) => l.guardians)
+      .filter(Boolean);
+
+    const pai = linkedGuardians.find((g: any) => g.relationship_type === "pai");
+    const mae = linkedGuardians.find((g: any) => g.relationship_type === "mae");
+    const outro = linkedGuardians.find((g: any) => g.relationship_type !== "pai" && g.relationship_type !== "mae");
+
+    if (pai) {
+      setFather({
+        id: pai.id,
+        full_name: pai.full_name || "",
+        cpf: pai.cpf || "",
+        phone: pai.phone || "",
+        email: pai.email || "",
+        is_financial: !!pai.is_financial,
+        is_pedagogical: !!pai.is_pedagogical,
+      });
+    }
+    if (mae) {
+      setMother({
+        id: mae.id,
+        full_name: mae.full_name || "",
+        cpf: mae.cpf || "",
+        phone: mae.phone || "",
+        email: mae.email || "",
+        is_financial: !!mae.is_financial,
+        is_pedagogical: !!mae.is_pedagogical,
+      });
+    }
+    if (outro) setForm((prev) => ({ ...prev, guardian_id: outro.id }));
+  }, [studentData]);
+
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
@@ -98,13 +186,48 @@ const StudentsCreate = () => {
     }
   };
 
+  const upsertGuardian = async (parent: any, relationship: "pai" | "mae"): Promise<string | null> => {
+    if (!parent.full_name.trim()) return null;
+    const payload = {
+      school_id: schoolId,
+      full_name: parent.full_name.trim(),
+      cpf: parent.cpf || null,
+      phone: parent.phone || null,
+      email: parent.email || null,
+      relationship_type: relationship,
+      is_financial: parent.is_financial,
+      is_pedagogical: parent.is_pedagogical,
+      is_primary: parent.is_financial || parent.is_pedagogical,
+    };
+    if (parent.id) {
+      const { error } = await supabase.from("guardians").update(payload).eq("id", parent.id);
+      if (error) throw error;
+      return parent.id;
+    }
+    if (parent.cpf) {
+      const { data: existing } = await supabase
+        .from("guardians")
+        .select("id")
+        .eq("school_id", schoolId)
+        .eq("cpf", parent.cpf)
+        .maybeSingle();
+      if (existing?.id) {
+        await supabase.from("guardians").update(payload).eq("id", existing.id);
+        return existing.id;
+      }
+    }
+    const { data: created, error } = await supabase.from("guardians").insert(payload).select("id").single();
+    if (error) throw error;
+    return created.id;
+  };
+
   const mutation = useMutation({
     mutationFn: async () => {
-      console.log("Criando matrícula...");
+      console.log(isEdit ? "Atualizando matrícula..." : "Criando matrícula...");
       if (!schoolId) throw new Error("Nenhuma escola vinculada");
       if (!form.full_name.trim()) throw new Error("Nome do aluno é obrigatório");
       if (!form.enrollment_type) throw new Error("Selecione o tipo de vínculo");
-      if (!form.class_id) throw new Error("Selecione a turma para criar a matrícula");
+      if (!form.class_id) throw new Error("Selecione a turma");
       if (!father.full_name.trim() && !mother.full_name.trim()) {
         throw new Error("Informe ao menos um responsável (pai ou mãe)");
       }
@@ -115,7 +238,7 @@ const StudentsCreate = () => {
         throw new Error("Marque o responsável pedagógico (pai ou mãe)");
       }
 
-      let photo_url: string | null = null;
+      let photo_url: string | null = existingPhotoUrl;
       if (photoFile) {
         const filePath = `${schoolId}/photos/${Date.now()}_${photoFile.name}`;
         const { error: upErr } = await supabase.storage.from("student-assets").upload(filePath, photoFile);
@@ -126,7 +249,7 @@ const StudentsCreate = () => {
 
       const academicYear = form.academic_year ? parseInt(form.academic_year) : new Date().getFullYear();
 
-      const { data: student, error } = await supabase.from("students").insert({
+      const studentPayload = {
         full_name: form.full_name.trim(),
         birth_date: form.birth_date || null,
         class_id: form.class_id || null,
@@ -138,117 +261,82 @@ const StudentsCreate = () => {
         email: form.email || null,
         academic_year: academicYear,
         modality: form.modality || null,
-      } as any).select("id").single();
-      if (error) throw error;
+      };
 
-      const selectedEnrollmentType = form.enrollment_type;
+      let studentId: string;
 
-      // Reforço backend: bloqueia se já existe matrícula ativa no mesmo ano
+      if (isEdit && studentIdParam) {
+        const { error } = await supabase
+          .from("students")
+          .update(studentPayload as any)
+          .eq("id", studentIdParam);
+        if (error) throw error;
+        studentId = studentIdParam;
+      } else {
+        const { data: student, error } = await supabase
+          .from("students")
+          .insert(studentPayload as any)
+          .select("id")
+          .single();
+        if (error) throw error;
+        studentId = student.id;
+      }
+
+      // Matrícula: só cria se não houver ativa naquele ano
       const { data: existingActive, error: checkErr } = await supabase
         .from("student_enrollments")
-        .select("id")
-        .eq("student_id", student.id)
+        .select("id, class_id")
+        .eq("student_id", studentId)
         .eq("academic_year", academicYear)
         .eq("status", "ativo")
         .maybeSingle();
       if (checkErr) throw checkErr;
+
       if (existingActive) {
-        throw new Error("Aluno já possui matrícula ativa neste ano");
+        if (isEdit) {
+          // Atualiza turma/notes na matrícula ativa existente
+          await supabase
+            .from("student_enrollments")
+            .update({ class_id: form.class_id, notes: form.enrollment_type })
+            .eq("id", existingActive.id);
+        } else {
+          throw new Error("Aluno já possui matrícula ativa neste ano");
+        }
+      } else {
+        const enrollmentPayload = {
+          student_id: studentId,
+          school_id: schoolId,
+          class_id: form.class_id,
+          academic_year: academicYear,
+          status: "ativo" as const,
+          start_date: new Date().toISOString().split("T")[0],
+          notes: form.enrollment_type,
+        };
+        const { error: enrollErr } = await supabase
+          .from("student_enrollments")
+          .insert(enrollmentPayload as any);
+        if (enrollErr) throw enrollErr;
       }
 
-      const enrollmentPayload = {
-        student_id: student.id,
-        school_id: schoolId,
-        class_id: form.class_id,
-        academic_year: academicYear,
-        status: "ativo" as const,
-        start_date: new Date().toISOString().split("T")[0],
-        notes: selectedEnrollmentType,
-      };
-
-      const { error: enrollErr } = await supabase
-        .from("student_enrollments")
-        .insert(enrollmentPayload as any);
-      if (enrollErr) throw enrollErr;
-
-      // Cria/vincula responsáveis (Pai e Mãe) e o terceiro autorizado
+      // Responsáveis: cria/atualiza pai e mãe
       const guardianIdsToLink: string[] = [];
-
-      if (father.full_name.trim()) {
-        // Tenta reaproveitar guardian existente por CPF se informado
-        let fatherId: string | null = null;
-        if (father.cpf) {
-          const { data: existing } = await supabase
-            .from("guardians")
-            .select("id")
-            .eq("school_id", schoolId)
-            .eq("cpf", father.cpf)
-            .maybeSingle();
-          if (existing?.id) fatherId = existing.id;
-        }
-        if (!fatherId) {
-          const { data: fatherRow, error: fErr } = await supabase
-            .from("guardians")
-            .insert({
-              school_id: schoolId,
-              full_name: father.full_name.trim(),
-              cpf: father.cpf || null,
-              phone: father.phone || null,
-              email: father.email || null,
-              relationship_type: "pai",
-              is_financial: father.is_financial,
-              is_pedagogical: father.is_pedagogical,
-              is_primary: father.is_financial || father.is_pedagogical,
-            })
-            .select("id")
-            .single();
-          if (fErr) throw fErr;
-          fatherId = fatherRow.id;
-        }
-        guardianIdsToLink.push(fatherId);
-      }
-
-      if (mother.full_name.trim()) {
-        let motherId: string | null = null;
-        if (mother.cpf) {
-          const { data: existing } = await supabase
-            .from("guardians")
-            .select("id")
-            .eq("school_id", schoolId)
-            .eq("cpf", mother.cpf)
-            .maybeSingle();
-          if (existing?.id) motherId = existing.id;
-        }
-        if (!motherId) {
-          const { data: motherRow, error: mErr } = await supabase
-            .from("guardians")
-            .insert({
-              school_id: schoolId,
-              full_name: mother.full_name.trim(),
-              cpf: mother.cpf || null,
-              phone: mother.phone || null,
-              email: mother.email || null,
-              relationship_type: "mae",
-              is_financial: mother.is_financial,
-              is_pedagogical: mother.is_pedagogical,
-              is_primary: mother.is_financial || mother.is_pedagogical,
-            })
-            .select("id")
-            .single();
-          if (mErr) throw mErr;
-          motherId = motherRow.id;
-        }
-        guardianIdsToLink.push(motherId);
-      }
-
+      const fatherId = await upsertGuardian(father, "pai");
+      if (fatherId) guardianIdsToLink.push(fatherId);
+      const motherId = await upsertGuardian(mother, "mae");
+      if (motherId) guardianIdsToLink.push(motherId);
       if (form.guardian_id) guardianIdsToLink.push(form.guardian_id);
 
       if (guardianIdsToLink.length === 0) {
         throw new Error("Aluno deve ter ao menos um responsável vinculado");
       }
 
+      // Em modo edição, remove vínculos antigos antes de re-vincular
+      if (isEdit) {
+        await supabase.from("student_guardians").delete().eq("student_id", studentId);
+      }
+
       const links = guardianIdsToLink.map((gid) => ({
-        student_id: student.id,
+        student_id: studentId,
         guardian_id: gid,
         school_id: schoolId,
       }));
@@ -257,10 +345,11 @@ const StudentsCreate = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["students", schoolId] });
-      toast.success("Aluno matriculado!");
-      navigate("/admin/alunos");
+      queryClient.invalidateQueries({ queryKey: ["student-edit", studentIdParam] });
+      toast.success(isEdit ? "Matrícula atualizada!" : "Aluno matriculado!");
+      navigate(isEdit ? `/admin/alunos/${studentIdParam}` : "/admin/alunos");
     },
-    onError: (err: any) => toast.error(err.message || "Erro ao cadastrar"),
+    onError: (err: any) => toast.error(err.message || "Erro ao salvar"),
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -276,9 +365,16 @@ const StudentsCreate = () => {
 
   const missingRequired = docChecklist.filter((d) => d.obrigatorio && !docs[d.key]);
 
+  const pageTitle = isEdit ? "Editar Matrícula" : "Cadastrar Aluno";
+  const pageDesc = isEdit ? "Atualize os dados do aluno e da matrícula" : "Preencha os dados do novo aluno";
+  const breadcrumbs = isEdit
+    ? [{ label: "Secretaria", href: "/admin/dashboard" }, { label: "Alunos", href: "/admin/alunos" }, { label: "Editar Matrícula" }]
+    : [{ label: "Alunos", href: "/admin/alunos" }, { label: "Novo Aluno" }];
+  const cancelHref = isEdit ? `/admin/alunos/${studentIdParam}` : "/admin/alunos";
+
   return (
-    <AppLayout title="Novo Aluno" breadcrumbs={[{ label: "Alunos", href: "/admin/alunos" }, { label: "Novo Aluno" }]}>
-      <PageHeader title="Cadastrar Aluno" description="Preencha os dados do novo aluno" />
+    <AppLayout title={pageTitle} breadcrumbs={breadcrumbs}>
+      <PageHeader title={pageTitle} description={pageDesc} />
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Dados do Aluno */}
         <div className="bg-card border border-border/60 rounded-xl certus-shadow p-6">
@@ -461,7 +557,7 @@ const StudentsCreate = () => {
             <i className={loading ? "ri-loader-4-line animate-spin" : "ri-check-line"} />
             {loading ? "Salvando..." : "Salvar"}
           </button>
-          <Link to="/admin/alunos" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[14px] font-bold text-sm border border-border hover:bg-accent transition-colors text-muted-foreground">
+          <Link to={cancelHref} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[14px] font-bold text-sm border border-border hover:bg-accent transition-colors text-muted-foreground">
             Cancelar
           </Link>
         </div>
