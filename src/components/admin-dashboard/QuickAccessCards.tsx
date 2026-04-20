@@ -40,10 +40,12 @@ const navCards = [
 const QuickAccessCards = ({ onNewRequest }: QuickAccessCardsProps) => {
   const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const drawerActions = [
     { icon: FilePlus2, label: "Nova Solicitação", onClick: () => { setDrawerOpen(false); onNewRequest?.(); } },
     { icon: ClipboardList, label: "Nova Matrícula", onClick: () => { setDrawerOpen(false); navigate("/admin/alunos/novo"); } },
+    { icon: UserSearch, label: "Alunos", onClick: () => { setDrawerOpen(false); setSearchOpen(true); } },
     { icon: FileText, label: "Novo Documento", onClick: () => { setDrawerOpen(false); navigate("/admin/documentos"); } },
   ];
 
