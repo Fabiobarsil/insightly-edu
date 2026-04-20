@@ -218,16 +218,27 @@ const StudentsCreate = () => {
 
   const upsertGuardian = async (parent: any, relationship: "pai" | "mae"): Promise<string | null> => {
     if (!parent.full_name.trim()) return null;
-    const payload = {
+    const addressFromStudent = parent.same_address ? {
+      zipcode: form.zip_code || null,
+      address: form.address || null,
+      number: form.number || null,
+      complement: form.complement || null,
+      district: form.district || null,
+      city: form.city || null,
+      state: form.state || null,
+    } : {};
+    const payload: any = {
       school_id: schoolId,
       full_name: parent.full_name.trim(),
       cpf: parent.cpf || null,
       phone: parent.phone || null,
       email: parent.email || null,
+      marital_status: parent.marital_status || null,
       relationship_type: relationship,
       is_financial: parent.is_financial,
       is_pedagogical: parent.is_pedagogical,
       is_primary: parent.is_financial || parent.is_pedagogical,
+      ...addressFromStudent,
     };
     if (parent.id) {
       const { error } = await supabase.from("guardians").update(payload).eq("id", parent.id);
@@ -249,6 +260,47 @@ const StudentsCreate = () => {
     const { data: created, error } = await supabase.from("guardians").insert(payload).select("id").single();
     if (error) throw error;
     return created.id;
+  };
+
+  const handleStudentZipChange = async (val: string) => {
+    const masked = applyMask("cep", val);
+    setForm((p) => ({ ...p, zip_code: masked }));
+    const clean = masked.replace(/\D/g, "");
+    if (clean.length === 8) {
+      const data = await fetchAddressByCEP(clean);
+      if (!data) return;
+      setForm((p) => ({
+        ...p,
+        address: p.address || data.address,
+        district: p.district || data.district,
+        city: p.city || data.city,
+        state: p.state || data.state,
+      }));
+    }
+  };
+
+  // Guardian autorizado (modal de edição/criação rápida quando "mesmo endereço" desmarcado)
+  const [editGuardianRel, setEditGuardianRel] = useState<"pai" | "mae" | null>(null);
+
+  const openParentDetails = async (rel: "pai" | "mae") => {
+    const parent = rel === "pai" ? father : mother;
+    // Garante que o guardian existe antes de abrir o modal de edição completa
+    if (!parent.id) {
+      try {
+        const newId = await upsertGuardian(parent, rel);
+        if (newId) {
+          if (rel === "pai") setFather((p: any) => ({ ...p, id: newId }));
+          else setMother((p: any) => ({ ...p, id: newId }));
+          setEditGuardianRel(rel);
+        } else {
+          toast.error("Preencha pelo menos o nome antes de abrir os detalhes");
+        }
+      } catch (e: any) {
+        toast.error(e.message || "Erro ao preparar responsável");
+      }
+      return;
+    }
+    setEditGuardianRel(rel);
   };
 
   const mutation = useMutation({
