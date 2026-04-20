@@ -328,23 +328,7 @@ const Settings = () => {
 
       {/* ========== ASSINATURAS ========== */}
       {tab === "assinaturas" && (
-        <div className="space-y-4">
-          {["Diretor(a)", "Coordenador(a)", "Secretário(a)"].map((cargo, i) => (
-            <div key={i} className="bg-card border border-border/60 rounded-xl p-5 certus-shadow">
-              <h4 className="text-sm font-bold text-primary mb-4">{cargo}</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-muted-foreground mb-1.5">Nome</label>
-                  <input placeholder={`Nome do(a) ${cargo}`} className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-muted-foreground mb-1.5">Registro</label>
-                  <input placeholder="Número do registro" className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <SignaturesTab schoolId={schoolId} />
       )}
 
       {/* ========== USUÁRIOS ========== */}
