@@ -26,6 +26,7 @@ const StudentsCreate = () => {
   const [form, setForm] = useState({
     full_name: "", birth_date: "", class_id: "", guardian_id: "",
     cpf: "", rg: "", email: "", academic_year: "", modality: "",
+    enrollment_type: "",
   });
   const [docs, setDocs] = useState<Record<string, boolean>>({});
   const [photoFile, setPhotoFile] = useState<File | null>(null);
