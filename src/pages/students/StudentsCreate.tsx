@@ -94,6 +94,8 @@ const StudentsCreate = () => {
     mutationFn: async () => {
       if (!schoolId) throw new Error("Nenhuma escola vinculada");
       if (!form.full_name.trim()) throw new Error("Nome é obrigatório");
+      if (!form.enrollment_type) throw new Error("Selecione o tipo de vínculo");
+      if (!form.class_id) throw new Error("Selecione a turma para criar a matrícula");
 
       let photo_url: string | null = null;
       if (photoFile) {
@@ -103,6 +105,8 @@ const StudentsCreate = () => {
         const { data: urlData } = supabase.storage.from("student-assets").getPublicUrl(filePath);
         photo_url = urlData.publicUrl;
       }
+
+      const academicYear = form.academic_year ? parseInt(form.academic_year) : new Date().getFullYear();
 
       const { data: student, error } = await supabase.from("students").insert({
         full_name: form.full_name.trim(),
@@ -114,10 +118,29 @@ const StudentsCreate = () => {
         cpf: form.cpf || null,
         rg: form.rg || null,
         email: form.email || null,
-        academic_year: form.academic_year ? parseInt(form.academic_year) : null,
+        academic_year: academicYear,
         modality: form.modality || null,
       } as any).select("id").single();
       if (error) throw error;
+
+      // Cria vínculo formal em student_enrollments com tipo no campo notes
+      const enrollmentLabel = form.enrollment_type === "matricula"
+        ? "Matrícula"
+        : form.enrollment_type === "renovacao"
+        ? "Renovação"
+        : "Transferência";
+
+      const { error: enrollErr } = await supabase.from("student_enrollments").insert({
+        student_id: student.id,
+        school_id: schoolId,
+        class_id: form.class_id,
+        academic_year: academicYear,
+        status: "ativo" as const,
+        start_date: new Date().toISOString().split("T")[0],
+        notes: `Tipo de vínculo: ${enrollmentLabel}`,
+      } as any);
+      if (enrollErr) throw enrollErr;
+
       if (form.guardian_id && student) {
         await supabase.from("student_guardians").insert({
           student_id: student.id,
