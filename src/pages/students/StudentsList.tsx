@@ -1,12 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import AppLayout from "@/components/layout/AppLayout";
 import PageHeader from "@/components/shared/PageHeader";
 import DataTable from "@/components/shared/DataTable";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
-import { toast } from "sonner";
 
 const statusMap: Record<string, { status: string; label: string }> = {
   ativo: { status: "active", label: "Ativo" },
@@ -45,8 +43,6 @@ const columns = [
 
 const StudentsList = () => {
   const { schoolId, isLoading: loadingSchool } = useSchoolId();
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
 
   const { data: students = [], isLoading } = useQuery({
     queryKey: ["students", schoolId],
@@ -70,28 +66,16 @@ const StudentsList = () => {
     enabled: !!schoolId,
   });
 
-  const deactivateMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("students")
-        .update({ status: "inativo" as const })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["students", schoolId] });
-      toast.success("Aluno inativado com sucesso!");
-    },
-    onError: (err: any) => toast.error(err.message || "Erro ao inativar aluno"),
-  });
-
   const total = students.length;
   const ativos = students.filter((s: any) => s.status === "ativo").length;
   const loading = loadingSchool || isLoading;
 
   return (
     <AppLayout title="Alunos" breadcrumbs={[{ label: "Alunos" }]}>
-      <PageHeader title="Alunos" description="Gerencie os alunos matriculados" action={{ label: "Novo Aluno", icon: "ri-add-line", to: "/admin/alunos/novo" }} />
+      <PageHeader
+        title="Alunos"
+        description="Consulta dos alunos matriculados. Novas matrículas, renovações e desativações são realizadas pela Secretaria."
+      />
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         {[
           { icon: "ri-group-line", label: "Total de Alunos", value: String(total), color: "text-primary" },
@@ -123,7 +107,6 @@ const StudentsList = () => {
           actions={(row) => [
             { label: "Ver", icon: "ri-eye-line", to: `/admin/alunos/${row.id}` },
             { label: "Editar", icon: "ri-pencil-line", to: `/admin/alunos/${row.id}/editar` },
-            { label: "Inativar", icon: "ri-forbid-line", onClick: () => deactivateMutation.mutate(row.id) },
           ]}
         />
       )}
