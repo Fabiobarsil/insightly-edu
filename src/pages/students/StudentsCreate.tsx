@@ -570,7 +570,34 @@ const StudentsCreate = () => {
           </div>
         </div>
 
-        {/* Pai e Mãe — obrigatórios na ficha */}
+        {/* Endereço do Aluno */}
+        <div className="bg-card border border-border/60 rounded-xl certus-shadow p-6">
+          <h3 className="text-lg font-bold text-primary mb-6">Endereço do Aluno</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-muted-foreground mb-1.5">CEP</label>
+              <input
+                type="text"
+                value={form.zip_code}
+                onChange={(e) => handleStudentZipChange(e.target.value)}
+                placeholder="00000-000"
+                inputMode="numeric"
+                className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">Preenche endereço, bairro, cidade e UF automaticamente</p>
+            </div>
+            <div className="md:col-span-2">
+              <FormField label="Endereço" placeholder="Rua, Avenida..." mask="name" value={form.address} onChange={set("address")} />
+            </div>
+            <FormField label="Número" placeholder="Nº" value={form.number} onChange={set("number")} />
+            <FormField label="Complemento" placeholder="Apto, Bloco..." value={form.complement} onChange={set("complement")} />
+            <FormField label="Bairro" placeholder="Bairro" mask="name" value={form.district} onChange={set("district")} />
+            <FormField label="Cidade" placeholder="Cidade" mask="name" value={form.city} onChange={set("city")} />
+            <FormField label="Estado" placeholder="UF" value={form.state} onChange={set("state")} />
+          </div>
+        </div>
+
+
         <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow">
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-sm font-bold text-primary">Filiação</h4>
