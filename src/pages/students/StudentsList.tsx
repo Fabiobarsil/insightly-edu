@@ -1,7 +1,8 @@
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import AppLayout from "@/components/layout/AppLayout";
 import PageHeader from "@/components/shared/PageHeader";
-import DataTable from "@/components/shared/DataTable";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
@@ -14,35 +15,12 @@ const statusMap: Record<string, { status: string; label: string }> = {
   inativo: { status: "inactive", label: "Inativo" },
 };
 
-const columns = [
-  {
-    key: "full_name", label: "Nome",
-    render: (_val: string, row: any) => (
-      <div className="flex items-center gap-3">
-        {row.photo_url ? (
-          <img src={row.photo_url} alt={row.full_name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
-        ) : (
-          <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
-            <i className="ri-user-line text-muted-foreground" />
-          </div>
-        )}
-        <span className="font-medium">{row.full_name}</span>
-      </div>
-    ),
-  },
-  { key: "class_name", label: "Turma" },
-  { key: "birth_date", label: "Nascimento" },
-  {
-    key: "status", label: "Status",
-    render: (val: string) => {
-      const mapped = statusMap[val] || statusMap.ativo;
-      return <StatusBadge {...mapped} />;
-    },
-  },
-];
-
 const StudentsList = () => {
   const { schoolId, isLoading: loadingSchool } = useSchoolId();
+  const [search, setSearch] = useState("");
+  const [classFilter, setClassFilter] = useState("");
+  const [gradeFilter, setGradeFilter] = useState("");
+  const [shiftFilter, setShiftFilter] = useState("");
 
   const { data: students = [], isLoading } = useQuery({
     queryKey: ["students", schoolId],
@@ -50,15 +28,18 @@ const StudentsList = () => {
       if (!schoolId) return [];
       const { data, error } = await supabase
         .from("students")
-        .select("id, full_name, status, birth_date, photo_url, class_id, classes(name)")
+        .select("id, full_name, status, birth_date, photo_url, class_id, created_at, classes(name, grade, shift)")
         .eq("school_id", schoolId)
-        .order("full_name");
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return (data || []).map((s: any) => ({
         id: s.id,
         full_name: s.full_name,
         photo_url: s.photo_url,
+        class_id: s.class_id,
         class_name: s.classes?.name || "—",
+        grade: s.classes?.grade || "—",
+        shift: s.classes?.shift || "—",
         birth_date: s.birth_date || "—",
         status: s.status || "ativo",
       }));
@@ -66,9 +47,41 @@ const StudentsList = () => {
     enabled: !!schoolId,
   });
 
+  const classOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    students.forEach((s: any) => { if (s.class_id && s.class_name !== "—") map.set(s.class_id, s.class_name); });
+    return Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+  }, [students]);
+
+  const gradeOptions = useMemo(() => {
+    const set = new Set<string>();
+    students.forEach((s: any) => { if (s.grade && s.grade !== "—") set.add(s.grade); });
+    return Array.from(set).sort();
+  }, [students]);
+
+  const shiftOptions = useMemo(() => {
+    const set = new Set<string>();
+    students.forEach((s: any) => { if (s.shift && s.shift !== "—") set.add(s.shift); });
+    return Array.from(set).sort();
+  }, [students]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return students.filter((s: any) => {
+      if (q && !s.full_name?.toLowerCase().includes(q)) return false;
+      if (classFilter && s.class_id !== classFilter) return false;
+      if (gradeFilter && s.grade !== gradeFilter) return false;
+      if (shiftFilter && s.shift !== shiftFilter) return false;
+      return true;
+    });
+  }, [students, search, classFilter, gradeFilter, shiftFilter]);
+
   const total = students.length;
   const ativos = students.filter((s: any) => s.status === "ativo").length;
   const loading = loadingSchool || isLoading;
+
+  const clearFilters = () => { setSearch(""); setClassFilter(""); setGradeFilter(""); setShiftFilter(""); };
+  const hasFilter = search || classFilter || gradeFilter || shiftFilter;
 
   return (
     <AppLayout title="Alunos" breadcrumbs={[{ label: "Alunos" }]}>
@@ -88,26 +101,123 @@ const StudentsList = () => {
             </div>
             <div>
               <div className="text-lg font-bold text-primary">{s.value}</div>
-              <div className="text-xs text-muted">{s.label}</div>
+              <div className="text-xs text-muted-foreground">{s.label}</div>
             </div>
           </div>
         ))}
       </div>
+
       {loading ? (
-        <div className="text-center py-12 text-muted">Carregando alunos...</div>
+        <div className="text-center py-12 text-muted-foreground">Carregando alunos...</div>
       ) : !schoolId ? (
-        <div className="text-center py-12 text-muted">Nenhuma escola vinculada ao usuário.</div>
-      ) : students.length === 0 ? (
-        <div className="text-center py-12 text-muted">Nenhum aluno cadastrado ainda.</div>
+        <div className="text-center py-12 text-muted-foreground">Nenhuma escola vinculada ao usuário.</div>
       ) : (
-        <DataTable
-          columns={columns}
-          data={students}
-          searchPlaceholder="Buscar aluno..."
-          actions={(row) => [
-            { label: "Ver", icon: "ri-eye-line", to: `/admin/alunos/${row.id}` },
-          ]}
-        />
+        <div className="bg-card border border-border/60 rounded-xl certus-shadow">
+          {/* Filtros */}
+          <div className="p-4 border-b border-border/40 grid grid-cols-1 md:grid-cols-12 gap-3">
+            <div className="md:col-span-4 flex items-center gap-2 border border-border rounded-[12px] px-3 py-2 bg-background">
+              <i className="ri-search-line text-muted-foreground" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="flex-1 bg-transparent text-sm outline-none"
+                placeholder="Buscar aluno por nome..."
+              />
+            </div>
+            <select
+              value={classFilter}
+              onChange={(e) => setClassFilter(e.target.value)}
+              className="md:col-span-3 border border-border rounded-[12px] px-3 py-2 bg-background text-sm outline-none"
+            >
+              <option value="">Todas as turmas</option>
+              {classOptions.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+            </select>
+            <select
+              value={gradeFilter}
+              onChange={(e) => setGradeFilter(e.target.value)}
+              className="md:col-span-2 border border-border rounded-[12px] px-3 py-2 bg-background text-sm outline-none"
+            >
+              <option value="">Todas as séries</option>
+              {gradeOptions.map((g) => <option key={g} value={g}>{g}</option>)}
+            </select>
+            <select
+              value={shiftFilter}
+              onChange={(e) => setShiftFilter(e.target.value)}
+              className="md:col-span-2 border border-border rounded-[12px] px-3 py-2 bg-background text-sm outline-none"
+            >
+              <option value="">Todos os turnos</option>
+              {shiftOptions.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+            {hasFilter && (
+              <button
+                onClick={clearFilters}
+                className="md:col-span-1 border border-border rounded-[12px] px-3 py-2 text-xs font-bold text-muted-foreground hover:bg-accent transition-colors"
+              >
+                Limpar
+              </button>
+            )}
+          </div>
+
+          {/* Tabela */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border/40">
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Nome</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Turma</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Série</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Turno</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-right text-xs font-bold text-muted-foreground uppercase tracking-wider">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr><td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
+                    {hasFilter ? "Nenhum aluno encontrado com os filtros aplicados." : "Nenhum aluno cadastrado ainda."}
+                  </td></tr>
+                ) : (
+                  filtered.map((row: any) => {
+                    const mapped = statusMap[row.status] || statusMap.ativo;
+                    return (
+                      <tr key={row.id} className="border-b border-border/20 hover:bg-accent/40 transition-colors">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            {row.photo_url ? (
+                              <img src={row.photo_url} alt={row.full_name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
+                                <i className="ri-user-line text-muted-foreground" />
+                              </div>
+                            )}
+                            <span className="font-medium text-foreground">{row.full_name}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-foreground">{row.class_name}</td>
+                        <td className="px-4 py-3 text-foreground">{row.grade}</td>
+                        <td className="px-4 py-3 text-foreground">{row.shift}</td>
+                        <td className="px-4 py-3"><StatusBadge {...mapped} /></td>
+                        <td className="px-4 py-3 text-right">
+                          <Link
+                            to={`/admin/alunos/${row.id}`}
+                            className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent transition-colors inline-flex"
+                            title="Ver"
+                          >
+                            <i className="ri-eye-line" />
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="p-4 border-t border-border/40 text-xs text-muted-foreground">
+            Mostrando {filtered.length} de {total} registros
+          </div>
+        </div>
       )}
     </AppLayout>
   );

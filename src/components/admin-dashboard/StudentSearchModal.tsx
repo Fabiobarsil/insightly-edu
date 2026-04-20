@@ -25,6 +25,9 @@ const StudentSearchModal = ({ open, onOpenChange }: StudentSearchModalProps) => 
   const navigate = useNavigate();
   const { schoolId } = useSchoolId();
   const [query, setQuery] = useState("");
+  const [classFilter, setClassFilter] = useState("");
+  const [gradeFilter, setGradeFilter] = useState("");
+  const [shiftFilter, setShiftFilter] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const { data: students = [], isLoading } = useQuery({
@@ -33,26 +36,52 @@ const StudentSearchModal = ({ open, onOpenChange }: StudentSearchModalProps) => 
       if (!schoolId) return [];
       const { data, error } = await supabase
         .from("students")
-        .select("id, full_name, photo_url, status, classes(name)")
+        .select("id, full_name, photo_url, status, class_id, created_at, classes(name, grade, shift)")
         .eq("school_id", schoolId)
-        .order("full_name", { ascending: true })
-        .limit(500);
+        .order("created_at", { ascending: false })
+        .limit(1000);
       if (error) throw error;
       return data || [];
     },
     enabled: !!schoolId && open,
   });
 
+  const classOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    students.forEach((s: any) => { if (s.class_id && s.classes?.name) map.set(s.class_id, s.classes.name); });
+    return Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+  }, [students]);
+
+  const gradeOptions = useMemo(() => {
+    const set = new Set<string>();
+    students.forEach((s: any) => { if (s.classes?.grade) set.add(s.classes.grade); });
+    return Array.from(set).sort();
+  }, [students]);
+
+  const shiftOptions = useMemo(() => {
+    const set = new Set<string>();
+    students.forEach((s: any) => { if (s.classes?.shift) set.add(s.classes.shift); });
+    return Array.from(set).sort();
+  }, [students]);
+
   const filtered = useMemo(() => {
-    if (!query.trim()) return students;
     const q = query.toLowerCase().trim();
-    return students.filter((s: any) => s.full_name?.toLowerCase().includes(q));
-  }, [students, query]);
+    return students.filter((s: any) => {
+      if (q && !s.full_name?.toLowerCase().includes(q)) return false;
+      if (classFilter && s.class_id !== classFilter) return false;
+      if (gradeFilter && s.classes?.grade !== gradeFilter) return false;
+      if (shiftFilter && s.classes?.shift !== shiftFilter) return false;
+      return true;
+    });
+  }, [students, query, classFilter, gradeFilter, shiftFilter]);
 
   const selected = filtered.find((s: any) => s.id === selectedId);
 
   const reset = () => {
     setQuery("");
+    setClassFilter("");
+    setGradeFilter("");
+    setShiftFilter("");
     setSelectedId(null);
   };
 
@@ -69,23 +98,51 @@ const StudentSearchModal = ({ open, onOpenChange }: StudentSearchModalProps) => 
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) reset(); onOpenChange(v); }}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Buscar Aluno</DialogTitle>
           <DialogDescription>
-            Pesquise pelo nome do aluno e abra o cadastro completo na Secretaria.
+            Pesquise por nome e refine por turma, série ou turno. Lista ordenada do mais recente.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            autoFocus
-            placeholder="Digite o nome do aluno..."
-            value={query}
-            onChange={(e) => { setQuery(e.target.value); setSelectedId(null); }}
-            className="pl-9"
-          />
+        <div className="space-y-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              autoFocus
+              placeholder="Digite o nome do aluno..."
+              value={query}
+              onChange={(e) => { setQuery(e.target.value); setSelectedId(null); }}
+              className="pl-9"
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <select
+              value={classFilter}
+              onChange={(e) => { setClassFilter(e.target.value); setSelectedId(null); }}
+              className="border border-border rounded-md px-2 py-2 bg-background text-sm outline-none"
+            >
+              <option value="">Todas as turmas</option>
+              {classOptions.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+            </select>
+            <select
+              value={gradeFilter}
+              onChange={(e) => { setGradeFilter(e.target.value); setSelectedId(null); }}
+              className="border border-border rounded-md px-2 py-2 bg-background text-sm outline-none"
+            >
+              <option value="">Todas as séries</option>
+              {gradeOptions.map((g) => <option key={g} value={g}>{g}</option>)}
+            </select>
+            <select
+              value={shiftFilter}
+              onChange={(e) => { setShiftFilter(e.target.value); setSelectedId(null); }}
+              className="border border-border rounded-md px-2 py-2 bg-background text-sm outline-none"
+            >
+              <option value="">Todos os turnos</option>
+              {shiftOptions.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
         </div>
 
         <ScrollArea className="h-[280px] rounded-md border border-border/40">
@@ -93,7 +150,7 @@ const StudentSearchModal = ({ open, onOpenChange }: StudentSearchModalProps) => 
             <div className="p-6 text-center text-sm text-muted-foreground">Carregando...</div>
           ) : filtered.length === 0 ? (
             <div className="p-6 text-center text-sm text-muted-foreground">
-              {query ? "Nenhum aluno encontrado." : "Nenhum aluno cadastrado."}
+              {query || classFilter || gradeFilter || shiftFilter ? "Nenhum aluno encontrado." : "Nenhum aluno cadastrado."}
             </div>
           ) : (
             <ul className="divide-y divide-border/40">
@@ -120,6 +177,8 @@ const StudentSearchModal = ({ open, onOpenChange }: StudentSearchModalProps) => 
                         <p className="text-sm font-medium text-foreground truncate">{s.full_name}</p>
                         <p className="text-xs text-muted-foreground truncate">
                           {s.classes?.name || "Sem turma"}
+                          {s.classes?.grade ? ` · ${s.classes.grade}` : ""}
+                          {s.classes?.shift ? ` · ${s.classes.shift}` : ""}
                         </p>
                       </div>
                     </button>
