@@ -143,6 +143,19 @@ const StudentsCreate = () => {
       const selectedEnrollmentType = form.enrollment_type;
       if (!selectedEnrollmentType) throw new Error("Tipo de vínculo não selecionado");
 
+      // Integridade: bloqueia se já existe matrícula ativa no mesmo ano para o aluno
+      const { data: existingActive, error: checkErr } = await supabase
+        .from("student_enrollments")
+        .select("id")
+        .eq("student_id", student.id)
+        .eq("academic_year", academicYear)
+        .eq("status", "ativo")
+        .maybeSingle();
+      if (checkErr) throw checkErr;
+      if (existingActive) {
+        throw new Error("Aluno já possui matrícula ativa neste ano");
+      }
+
       const enrollmentPayload = {
         student_id: student.id,
         school_id: schoolId,
