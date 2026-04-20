@@ -8,6 +8,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
 import { toast } from "sonner";
 import GuardianFormModal from "@/components/guardians/GuardianFormModal";
+import { fetchAddressByCEP } from "@/utils/cep";
+import { applyMask } from "@/utils/formatters";
+
+const maritalOptions = [
+  { value: "solteiro", label: "Solteiro(a)" },
+  { value: "casado", label: "Casado(a)" },
+  { value: "divorciado", label: "Divorciado(a)" },
+  { value: "viuvo", label: "Viúvo(a)" },
+  { value: "uniao_estavel", label: "União Estável" },
+];
 
 const docChecklist = [
   { key: "certidao_nascimento", label: "Certidão de Nascimento", obrigatorio: true },
@@ -21,6 +31,8 @@ const docChecklist = [
 const emptyParent = () => ({
   id: null as string | null,
   full_name: "", cpf: "", phone: "", email: "",
+  marital_status: "",
+  same_address: true,
   is_financial: false, is_pedagogical: false,
 });
 
@@ -36,6 +48,7 @@ const StudentsCreate = () => {
     full_name: "", birth_date: "", class_id: "", guardian_id: "",
     cpf: "", rg: "", email: "", academic_year: "", modality: "",
     enrollment_type: "", blood_type: "", status: "ativo", notes: "",
+    zip_code: "", address: "", number: "", complement: "", district: "", city: "", state: "",
   });
   const [father, setFather] = useState<any>({ ...emptyParent(), is_financial: true, is_pedagogical: true });
   const [mother, setMother] = useState<any>(emptyParent());
@@ -135,6 +148,13 @@ const StudentsCreate = () => {
       blood_type: s.blood_type || "",
       status: s.status || "ativo",
       notes: s.notes || "",
+      zip_code: s.zip_code || "",
+      address: s.address || "",
+      number: s.number || "",
+      complement: s.complement || "",
+      district: s.district || "",
+      city: s.city || "",
+      state: s.state || "",
     });
     if (s.photo_url) {
       setExistingPhotoUrl(s.photo_url);
@@ -149,6 +169,9 @@ const StudentsCreate = () => {
     const mae = linkedGuardians.find((g: any) => g.relationship_type === "mae");
     const outro = linkedGuardians.find((g: any) => g.relationship_type !== "pai" && g.relationship_type !== "mae");
 
+    const sameAddr = (g: any) =>
+      !!g.zipcode && !!s.zip_code && (g.zipcode || "").replace(/\D/g, "") === (s.zip_code || "").replace(/\D/g, "");
+
     if (pai) {
       setFather({
         id: pai.id,
@@ -156,6 +179,8 @@ const StudentsCreate = () => {
         cpf: pai.cpf || "",
         phone: pai.phone || "",
         email: pai.email || "",
+        marital_status: pai.marital_status || "",
+        same_address: sameAddr(pai),
         is_financial: !!pai.is_financial,
         is_pedagogical: !!pai.is_pedagogical,
       });
@@ -167,6 +192,8 @@ const StudentsCreate = () => {
         cpf: mae.cpf || "",
         phone: mae.phone || "",
         email: mae.email || "",
+        marital_status: mae.marital_status || "",
+        same_address: sameAddr(mae),
         is_financial: !!mae.is_financial,
         is_pedagogical: !!mae.is_pedagogical,
       });
@@ -191,16 +218,27 @@ const StudentsCreate = () => {
 
   const upsertGuardian = async (parent: any, relationship: "pai" | "mae"): Promise<string | null> => {
     if (!parent.full_name.trim()) return null;
-    const payload = {
+    const addressFromStudent = parent.same_address ? {
+      zipcode: form.zip_code || null,
+      address: form.address || null,
+      number: form.number || null,
+      complement: form.complement || null,
+      district: form.district || null,
+      city: form.city || null,
+      state: form.state || null,
+    } : {};
+    const payload: any = {
       school_id: schoolId,
       full_name: parent.full_name.trim(),
       cpf: parent.cpf || null,
       phone: parent.phone || null,
       email: parent.email || null,
+      marital_status: parent.marital_status || null,
       relationship_type: relationship,
       is_financial: parent.is_financial,
       is_pedagogical: parent.is_pedagogical,
       is_primary: parent.is_financial || parent.is_pedagogical,
+      ...addressFromStudent,
     };
     if (parent.id) {
       const { error } = await supabase.from("guardians").update(payload).eq("id", parent.id);
@@ -222,6 +260,47 @@ const StudentsCreate = () => {
     const { data: created, error } = await supabase.from("guardians").insert(payload).select("id").single();
     if (error) throw error;
     return created.id;
+  };
+
+  const handleStudentZipChange = async (val: string) => {
+    const masked = applyMask("cep", val);
+    setForm((p) => ({ ...p, zip_code: masked }));
+    const clean = masked.replace(/\D/g, "");
+    if (clean.length === 8) {
+      const data = await fetchAddressByCEP(clean);
+      if (!data) return;
+      setForm((p) => ({
+        ...p,
+        address: p.address || data.address,
+        district: p.district || data.district,
+        city: p.city || data.city,
+        state: p.state || data.state,
+      }));
+    }
+  };
+
+  // Guardian autorizado (modal de edição/criação rápida quando "mesmo endereço" desmarcado)
+  const [editGuardianRel, setEditGuardianRel] = useState<"pai" | "mae" | null>(null);
+
+  const openParentDetails = async (rel: "pai" | "mae") => {
+    const parent = rel === "pai" ? father : mother;
+    // Garante que o guardian existe antes de abrir o modal de edição completa
+    if (!parent.id) {
+      try {
+        const newId = await upsertGuardian(parent, rel);
+        if (newId) {
+          if (rel === "pai") setFather((p: any) => ({ ...p, id: newId }));
+          else setMother((p: any) => ({ ...p, id: newId }));
+          setEditGuardianRel(rel);
+        } else {
+          toast.error("Preencha pelo menos o nome antes de abrir os detalhes");
+        }
+      } catch (e: any) {
+        toast.error(e.message || "Erro ao preparar responsável");
+      }
+      return;
+    }
+    setEditGuardianRel(rel);
   };
 
   const mutation = useMutation({
@@ -266,6 +345,13 @@ const StudentsCreate = () => {
         modality: form.modality || null,
         blood_type: form.blood_type || null,
         notes: form.notes || null,
+        zip_code: form.zip_code || null,
+        address: form.address || null,
+        number: form.number || null,
+        complement: form.complement || null,
+        district: form.district || null,
+        city: form.city || null,
+        state: form.state || null,
       };
 
       let studentId: string;
@@ -484,7 +570,34 @@ const StudentsCreate = () => {
           </div>
         </div>
 
-        {/* Pai e Mãe — obrigatórios na ficha */}
+        {/* Endereço do Aluno */}
+        <div className="bg-card border border-border/60 rounded-xl certus-shadow p-6">
+          <h3 className="text-lg font-bold text-primary mb-6">Endereço do Aluno</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-muted-foreground mb-1.5">CEP</label>
+              <input
+                type="text"
+                value={form.zip_code}
+                onChange={(e) => handleStudentZipChange(e.target.value)}
+                placeholder="00000-000"
+                inputMode="numeric"
+                className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">Preenche endereço, bairro, cidade e UF automaticamente</p>
+            </div>
+            <div className="md:col-span-2">
+              <FormField label="Endereço" placeholder="Rua, Avenida..." mask="name" value={form.address} onChange={set("address")} />
+            </div>
+            <FormField label="Número" placeholder="Nº" value={form.number} onChange={set("number")} />
+            <FormField label="Complemento" placeholder="Apto, Bloco..." value={form.complement} onChange={set("complement")} />
+            <FormField label="Bairro" placeholder="Bairro" mask="name" value={form.district} onChange={set("district")} />
+            <FormField label="Cidade" placeholder="Cidade" mask="name" value={form.city} onChange={set("city")} />
+            <FormField label="Estado" placeholder="UF" value={form.state} onChange={set("state")} />
+          </div>
+        </div>
+
+
         <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow">
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-sm font-bold text-primary">Filiação</h4>
@@ -526,8 +639,14 @@ const StudentsCreate = () => {
                   value={state.email}
                   onChange={(e: any) => setState((p: any) => ({ ...p, email: e.target.value }))}
                 />
+                <FormField
+                  label="Estado Civil"
+                  options={maritalOptions}
+                  value={state.marital_status}
+                  onChange={(e: any) => setState((p: any) => ({ ...p, marital_status: e.target.value }))}
+                />
               </div>
-              <div className="flex flex-wrap gap-4 mt-3">
+              <div className="flex flex-wrap items-center gap-4 mt-3">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -546,6 +665,31 @@ const StudentsCreate = () => {
                   />
                   <span className="text-sm text-primary">Responsável pedagógico</span>
                 </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={state.same_address}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setState((p: any) => ({ ...p, same_address: checked }));
+                      if (!checked) {
+                        // Abre modal de cadastro completo do responsável para informar endereço próprio
+                        openParentDetails(key === "father" ? "pai" : "mae");
+                      }
+                    }}
+                    className="w-4 h-4 rounded border-border text-secondary focus:ring-secondary"
+                  />
+                  <span className="text-sm text-primary">Mesmo endereço do aluno</span>
+                </label>
+                {!state.same_address && (
+                  <button
+                    type="button"
+                    onClick={() => openParentDetails(key === "father" ? "pai" : "mae")}
+                    className="text-xs font-bold text-secondary hover:underline inline-flex items-center gap-1"
+                  >
+                    <i className="ri-edit-line" /> Editar endereço/dados completos
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -599,6 +743,14 @@ const StudentsCreate = () => {
         onCreated={(guardian) => {
           setForm((prev) => ({ ...prev, guardian_id: guardian.id }));
         }}
+      />
+
+      {/* Modal para completar dados do pai/mãe quando endereço é diferente */}
+      <GuardianFormModal
+        open={!!editGuardianRel}
+        onOpenChange={(o) => { if (!o) setEditGuardianRel(null); }}
+        schoolId={schoolId}
+        guardianId={editGuardianRel === "pai" ? father.id : editGuardianRel === "mae" ? mother.id : null}
       />
     </AppLayout>
   );
