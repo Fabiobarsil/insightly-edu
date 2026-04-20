@@ -35,7 +35,7 @@ const StudentsCreate = () => {
   const [form, setForm] = useState({
     full_name: "", birth_date: "", class_id: "", guardian_id: "",
     cpf: "", rg: "", email: "", academic_year: "", modality: "",
-    enrollment_type: "", blood_type: "",
+    enrollment_type: "", blood_type: "", status: "ativo", notes: "",
   });
   const [father, setFather] = useState<any>({ ...emptyParent(), is_financial: true, is_pedagogical: true });
   const [mother, setMother] = useState<any>(emptyParent());
@@ -133,6 +133,8 @@ const StudentsCreate = () => {
       modality: s.modality || "",
       enrollment_type: (studentData.enrollment as any)?.notes || "matricula",
       blood_type: s.blood_type || "",
+      status: s.status || "ativo",
+      notes: s.notes || "",
     });
     if (s.photo_url) {
       setExistingPhotoUrl(s.photo_url);
@@ -255,7 +257,7 @@ const StudentsCreate = () => {
         birth_date: form.birth_date || null,
         class_id: form.class_id || null,
         school_id: schoolId,
-        status: "ativo" as const,
+        status: (form.status as any) || "ativo",
         photo_url,
         cpf: form.cpf || null,
         rg: form.rg || null,
@@ -263,6 +265,7 @@ const StudentsCreate = () => {
         academic_year: academicYear,
         modality: form.modality || null,
         blood_type: form.blood_type || null,
+        notes: form.notes || null,
       };
 
       let studentId: string;
@@ -445,6 +448,15 @@ const StudentsCreate = () => {
                 </select>
               </div>
             )}
+            <FormField
+              label="Status do Aluno"
+              options={[
+                { value: "ativo", label: "Ativo" },
+                { value: "inativo", label: "Inativo" },
+              ]}
+              value={form.status}
+              onChange={set("status")}
+            />
             <div className="md:col-span-2">
               <label className="block text-xs font-bold text-muted-foreground mb-1.5">
                 Outro responsável autorizado <span className="font-normal text-muted-foreground/70">(opcional — avô, avó, tio(a), transporte escolar etc.)</span>
@@ -459,6 +471,15 @@ const StudentsCreate = () => {
                   <i className="ri-add-line" /> Novo
                 </button>
               </div>
+            </div>
+            <div className="md:col-span-2">
+              <FormField
+                label="Observações"
+                placeholder="Informações adicionais sobre o aluno (alergias, necessidades especiais, observações pedagógicas etc.)"
+                textarea
+                value={form.notes}
+                onChange={set("notes")}
+              />
             </div>
           </div>
         </div>
