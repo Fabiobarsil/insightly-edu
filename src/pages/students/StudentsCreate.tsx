@@ -8,6 +8,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
 import { toast } from "sonner";
 import GuardianFormModal from "@/components/guardians/GuardianFormModal";
+import { fetchAddressByCEP } from "@/utils/cep";
+import { applyMask } from "@/utils/formatters";
+
+const maritalOptions = [
+  { value: "solteiro", label: "Solteiro(a)" },
+  { value: "casado", label: "Casado(a)" },
+  { value: "divorciado", label: "Divorciado(a)" },
+  { value: "viuvo", label: "Viúvo(a)" },
+  { value: "uniao_estavel", label: "União Estável" },
+];
 
 const docChecklist = [
   { key: "certidao_nascimento", label: "Certidão de Nascimento", obrigatorio: true },
