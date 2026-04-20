@@ -101,9 +101,17 @@ const StudentsCreate = () => {
   const mutation = useMutation({
     mutationFn: async () => {
       if (!schoolId) throw new Error("Nenhuma escola vinculada");
-      if (!form.full_name.trim()) throw new Error("Nome é obrigatório");
+      if (!form.full_name.trim()) throw new Error("Nome do aluno é obrigatório");
       if (!form.enrollment_type) throw new Error("Selecione o tipo de vínculo");
       if (!form.class_id) throw new Error("Selecione a turma para criar a matrícula");
+      if (!father.full_name.trim()) throw new Error("Nome do pai é obrigatório");
+      if (!mother.full_name.trim()) throw new Error("Nome da mãe é obrigatório");
+      if (!father.is_financial && !mother.is_financial) {
+        throw new Error("Marque o responsável financeiro (pai ou mãe)");
+      }
+      if (!father.is_pedagogical && !mother.is_pedagogical) {
+        throw new Error("Marque o responsável pedagógico (pai ou mãe)");
+      }
 
       let photo_url: string | null = null;
       if (photoFile) {
@@ -133,11 +141,7 @@ const StudentsCreate = () => {
 
       // Cria vínculo formal em student_enrollments com tipo no campo notes
       const selectedEnrollmentType = form.enrollment_type;
-      console.log("Tipo de vínculo:", selectedEnrollmentType);
-
-      if (!selectedEnrollmentType) {
-        throw new Error("Tipo de vínculo não selecionado");
-      }
+      if (!selectedEnrollmentType) throw new Error("Tipo de vínculo não selecionado");
 
       const enrollmentPayload = {
         student_id: student.id,
@@ -148,30 +152,65 @@ const StudentsCreate = () => {
         start_date: new Date().toISOString().split("T")[0],
         notes: selectedEnrollmentType,
       };
-      console.log("Payload student_enrollments:", enrollmentPayload);
 
-      const { data: enrollData, error: enrollErr } = await supabase
+      const { error: enrollErr } = await supabase
         .from("student_enrollments")
-        .insert(enrollmentPayload as any)
-        .select("id, notes")
-        .single();
-      if (enrollErr) {
-        console.error("Erro ao criar matrícula:", enrollErr);
-        throw enrollErr;
-      }
-      console.log("Matrícula criada:", enrollData);
+        .insert(enrollmentPayload as any);
+      if (enrollErr) throw enrollErr;
 
-      if (form.guardian_id && student) {
-        await supabase.from("student_guardians").insert({
-          student_id: student.id,
-          guardian_id: form.guardian_id,
+      // Cria Pai e Mãe como guardians e vincula ao aluno
+      const guardianIdsToLink: string[] = [];
+
+      const { data: fatherRow, error: fErr } = await supabase
+        .from("guardians")
+        .insert({
           school_id: schoolId,
-        });
-      }
+          full_name: father.full_name.trim(),
+          cpf: father.cpf || null,
+          phone: father.phone || null,
+          email: father.email || null,
+          relationship_type: "pai",
+          is_financial: father.is_financial,
+          is_pedagogical: father.is_pedagogical,
+          is_primary: father.is_financial || father.is_pedagogical,
+        })
+        .select("id")
+        .single();
+      if (fErr) throw fErr;
+      guardianIdsToLink.push(fatherRow.id);
+
+      const { data: motherRow, error: mErr } = await supabase
+        .from("guardians")
+        .insert({
+          school_id: schoolId,
+          full_name: mother.full_name.trim(),
+          cpf: mother.cpf || null,
+          phone: mother.phone || null,
+          email: mother.email || null,
+          relationship_type: "mae",
+          is_financial: mother.is_financial,
+          is_pedagogical: mother.is_pedagogical,
+          is_primary: mother.is_financial || mother.is_pedagogical,
+        })
+        .select("id")
+        .single();
+      if (mErr) throw mErr;
+      guardianIdsToLink.push(motherRow.id);
+
+      // Terceiro responsável escolhido no modal (avô, tio, transporte, etc.)
+      if (form.guardian_id) guardianIdsToLink.push(form.guardian_id);
+
+      const links = guardianIdsToLink.map((gid) => ({
+        student_id: student.id,
+        guardian_id: gid,
+        school_id: schoolId,
+      }));
+      const { error: linkErr } = await supabase.from("student_guardians").insert(links);
+      if (linkErr) throw linkErr;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["students", schoolId] });
-      toast.success("Aluno cadastrado!");
+      toast.success("Aluno matriculado!");
       navigate("/admin/alunos");
     },
     onError: (err: any) => toast.error(err.message || "Erro ao cadastrar"),
