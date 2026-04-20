@@ -345,6 +345,13 @@ const StudentsCreate = () => {
         modality: form.modality || null,
         blood_type: form.blood_type || null,
         notes: form.notes || null,
+        zip_code: form.zip_code || null,
+        address: form.address || null,
+        number: form.number || null,
+        complement: form.complement || null,
+        district: form.district || null,
+        city: form.city || null,
+        state: form.state || null,
       };
 
       let studentId: string;
