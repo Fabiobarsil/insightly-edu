@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate, useParams } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -92,6 +92,12 @@ const LegacyRedirect = ({ path }: { path: string }) => {
     : "";
 
   return <Navigate to={`${prefix}${path}`} replace />;
+};
+
+/** Redireciona edição de aluno para o fluxo centralizado da Secretaria */
+const StudentEditRedirect = () => {
+  const { id } = useParams();
+  return <Navigate to={`/secretaria/matricula/${id}`} replace />;
 };
 
 const App = () => (
