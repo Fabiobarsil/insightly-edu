@@ -84,6 +84,7 @@ const Settings = () => {
         name: school.name || "", address: school.address || "", complement: (school as any).complement || "", cnpj: school.cnpj || "",
         mec_authorization_code: school.mec_authorization_code || "", director_name: school.director_name || "",
         director_role: school.director_role || "", logo_url: school.logo_url || "",
+        offers_ensino_fundamental: (school as any).offers_ensino_fundamental ?? false,
         offers_ensino_medio: (school as any).offers_ensino_medio ?? true,
         offers_eja: (school as any).offers_eja ?? false,
         offers_curso_tecnico: (school as any).offers_curso_tecnico ?? false,
