@@ -92,7 +92,7 @@ const Settings = () => {
     }
   }, [school]);
 
-  const toggleOffer = (key: "offers_ensino_medio" | "offers_eja" | "offers_curso_tecnico") =>
+  const toggleOffer = (key: "offers_ensino_fundamental" | "offers_ensino_medio" | "offers_eja" | "offers_curso_tecnico") =>
     setForm((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const updateMutation = useMutation({
