@@ -247,8 +247,9 @@ const Settings = () => {
               </div>
               <div className="md:col-span-2">
                 <label className="block text-xs font-bold text-muted-foreground mb-2">Modalidades Oferecidas</label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {[
+                    { key: "offers_ensino_fundamental" as const, label: "Ensino Fundamental" },
                     { key: "offers_ensino_medio" as const, label: "Ensino Médio" },
                     { key: "offers_eja" as const, label: "Educação de Jovens e Adultos (EJA)" },
                     { key: "offers_curso_tecnico" as const, label: "Curso Técnico" },
