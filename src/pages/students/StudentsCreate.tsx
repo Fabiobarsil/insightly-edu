@@ -35,7 +35,7 @@ const StudentsCreate = () => {
   const [form, setForm] = useState({
     full_name: "", birth_date: "", class_id: "", guardian_id: "",
     cpf: "", rg: "", email: "", academic_year: "", modality: "",
-    enrollment_type: "",
+    enrollment_type: "", blood_type: "",
   });
   const [father, setFather] = useState<any>({ ...emptyParent(), is_financial: true, is_pedagogical: true });
   const [mother, setMother] = useState<any>(emptyParent());
