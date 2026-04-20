@@ -48,6 +48,7 @@ const StudentsCreate = () => {
     full_name: "", birth_date: "", class_id: "", guardian_id: "",
     cpf: "", rg: "", email: "", academic_year: "", modality: "",
     enrollment_type: "", blood_type: "", status: "ativo", notes: "",
+    zip_code: "", address: "", number: "", complement: "", district: "", city: "", state: "",
   });
   const [father, setFather] = useState<any>({ ...emptyParent(), is_financial: true, is_pedagogical: true });
   const [mother, setMother] = useState<any>(emptyParent());
