@@ -26,6 +26,7 @@ const StudentsCreate = () => {
   const [form, setForm] = useState({
     full_name: "", birth_date: "", class_id: "", guardian_id: "",
     cpf: "", rg: "", email: "", academic_year: "", modality: "",
+    enrollment_type: "",
   });
   const [docs, setDocs] = useState<Record<string, boolean>>({});
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -93,6 +94,8 @@ const StudentsCreate = () => {
     mutationFn: async () => {
       if (!schoolId) throw new Error("Nenhuma escola vinculada");
       if (!form.full_name.trim()) throw new Error("Nome é obrigatório");
+      if (!form.enrollment_type) throw new Error("Selecione o tipo de vínculo");
+      if (!form.class_id) throw new Error("Selecione a turma para criar a matrícula");
 
       let photo_url: string | null = null;
       if (photoFile) {
@@ -102,6 +105,8 @@ const StudentsCreate = () => {
         const { data: urlData } = supabase.storage.from("student-assets").getPublicUrl(filePath);
         photo_url = urlData.publicUrl;
       }
+
+      const academicYear = form.academic_year ? parseInt(form.academic_year) : new Date().getFullYear();
 
       const { data: student, error } = await supabase.from("students").insert({
         full_name: form.full_name.trim(),
@@ -113,10 +118,29 @@ const StudentsCreate = () => {
         cpf: form.cpf || null,
         rg: form.rg || null,
         email: form.email || null,
-        academic_year: form.academic_year ? parseInt(form.academic_year) : null,
+        academic_year: academicYear,
         modality: form.modality || null,
       } as any).select("id").single();
       if (error) throw error;
+
+      // Cria vínculo formal em student_enrollments com tipo no campo notes
+      const enrollmentLabel = form.enrollment_type === "matricula"
+        ? "Matrícula"
+        : form.enrollment_type === "renovacao"
+        ? "Renovação"
+        : "Transferência";
+
+      const { error: enrollErr } = await supabase.from("student_enrollments").insert({
+        student_id: student.id,
+        school_id: schoolId,
+        class_id: form.class_id,
+        academic_year: academicYear,
+        status: "ativo" as const,
+        start_date: new Date().toISOString().split("T")[0],
+        notes: `Tipo de vínculo: ${enrollmentLabel}`,
+      } as any);
+      if (enrollErr) throw enrollErr;
+
       if (form.guardian_id && student) {
         await supabase.from("student_guardians").insert({
           student_id: student.id,
@@ -158,6 +182,22 @@ const StudentsCreate = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-bold text-muted-foreground mb-1.5">
+              Tipo de vínculo <span className="text-destructive">*</span>
+            </label>
+            <select
+              value={form.enrollment_type}
+              onChange={set("enrollment_type")}
+              required
+              className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+            >
+              <option value="">Selecionar...</option>
+              <option value="matricula">Matrícula</option>
+              <option value="renovacao">Renovação</option>
+              <option value="transferencia">Transferência</option>
+            </select>
+          </div>
           <FormField label="Nome Completo" placeholder="Nome do aluno" value={form.full_name} onChange={set("full_name")} />
           <FormField label="Data de Nascimento" type="date" value={form.birth_date} onChange={set("birth_date")} />
           <FormField label="CPF" placeholder="000.000.000-00" value={form.cpf} onChange={set("cpf")} />
