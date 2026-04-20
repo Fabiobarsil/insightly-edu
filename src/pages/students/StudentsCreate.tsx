@@ -639,8 +639,14 @@ const StudentsCreate = () => {
                   value={state.email}
                   onChange={(e: any) => setState((p: any) => ({ ...p, email: e.target.value }))}
                 />
+                <FormField
+                  label="Estado Civil"
+                  options={maritalOptions}
+                  value={state.marital_status}
+                  onChange={(e: any) => setState((p: any) => ({ ...p, marital_status: e.target.value }))}
+                />
               </div>
-              <div className="flex flex-wrap gap-4 mt-3">
+              <div className="flex flex-wrap items-center gap-4 mt-3">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -659,6 +665,31 @@ const StudentsCreate = () => {
                   />
                   <span className="text-sm text-primary">Responsável pedagógico</span>
                 </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={state.same_address}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setState((p: any) => ({ ...p, same_address: checked }));
+                      if (!checked) {
+                        // Abre modal de cadastro completo do responsável para informar endereço próprio
+                        openParentDetails(key === "father" ? "pai" : "mae");
+                      }
+                    }}
+                    className="w-4 h-4 rounded border-border text-secondary focus:ring-secondary"
+                  />
+                  <span className="text-sm text-primary">Mesmo endereço do aluno</span>
+                </label>
+                {!state.same_address && (
+                  <button
+                    type="button"
+                    onClick={() => openParentDetails(key === "father" ? "pai" : "mae")}
+                    className="text-xs font-bold text-secondary hover:underline inline-flex items-center gap-1"
+                  >
+                    <i className="ri-edit-line" /> Editar endereço/dados completos
+                  </button>
+                )}
               </div>
             </div>
           ))}
