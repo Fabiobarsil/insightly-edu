@@ -138,22 +138,22 @@ const StudentsEdit = () => {
       queryClient.invalidateQueries({ queryKey: ["students", schoolId] });
       queryClient.invalidateQueries({ queryKey: ["student", id] });
       toast.success("Aluno atualizado com sucesso!");
-      navigate("/admin/alunos");
+      navigate(`/admin/alunos/${id}`);
     },
     onError: (err: any) => toast.error(err.message || "Erro ao atualizar aluno"),
   });
 
   if (isLoading || !form) return (
-    <AppLayout title="Editar Aluno" breadcrumbs={[{ label: "Alunos", href: "/admin/alunos" }, { label: "Editar" }]}>
+    <AppLayout title="Edição de Matrícula" breadcrumbs={[{ label: "Secretaria", href: "/admin/dashboard" }, { label: "Matrícula" }]}>
       <div className="text-center py-12 text-muted">Carregando...</div>
     </AppLayout>
   );
 
   return (
-    <AppLayout title="Editar Aluno" breadcrumbs={[{ label: "Alunos", href: "/admin/alunos" }, { label: "Editar Aluno" }]}>
-      <PageHeader title="Editar Aluno" description="Atualize os dados do aluno" />
+    <AppLayout title="Edição de Matrícula" breadcrumbs={[{ label: "Secretaria", href: "/admin/dashboard" }, { label: "Alunos", href: "/admin/alunos" }, { label: "Editar Matrícula" }]}>
+      <PageHeader title="Edição de Matrícula (Secretaria)" description="Toda alteração de dados do aluno é centralizada na Secretaria." />
       <div className="space-y-6">
-        <FormCard title="Dados do Aluno" cancelTo="/admin/alunos" onSubmit={() => mutation.mutate()}>
+        <FormCard title="Dados do Aluno" cancelTo={`/admin/alunos/${id}`} onSubmit={() => mutation.mutate()}>
           {/* Foto */}
           <div className="mb-4">
             <label className="block text-xs font-bold text-muted-foreground mb-2">Foto do Aluno</label>
