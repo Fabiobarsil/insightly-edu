@@ -75,7 +75,7 @@ const Settings = () => {
   const [form, setForm] = useState({
     name: "", address: "", complement: "", cnpj: "", mec_authorization_code: "",
     director_name: "", director_role: "", logo_url: "",
-    offers_ensino_medio: true, offers_eja: false, offers_curso_tecnico: false,
+    offers_ensino_fundamental: false, offers_ensino_medio: true, offers_eja: false, offers_curso_tecnico: false,
   });
 
   useEffect(() => {
