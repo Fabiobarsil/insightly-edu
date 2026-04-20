@@ -188,6 +188,29 @@ const StudentsCreate = () => {
           <FormField label="RG" placeholder="Número do RG" value={form.rg} onChange={set("rg")} />
           <FormField label="E-mail" placeholder="email@exemplo.com" value={form.email} onChange={set("email")} />
           <FormField label="Ano Letivo" placeholder="2026" value={form.academic_year} onChange={set("academic_year")} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-bold text-muted-foreground mb-1.5">
+              Tipo de vínculo <span className="text-destructive">*</span>
+            </label>
+            <select
+              value={form.enrollment_type}
+              onChange={set("enrollment_type")}
+              required
+              className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+            >
+              <option value="">Selecionar...</option>
+              <option value="matricula">Matrícula</option>
+              <option value="renovacao">Renovação</option>
+              <option value="transferencia">Transferência</option>
+            </select>
+          </div>
+          <FormField label="Nome Completo" placeholder="Nome do aluno" value={form.full_name} onChange={set("full_name")} />
+          <FormField label="Data de Nascimento" type="date" value={form.birth_date} onChange={set("birth_date")} />
+          <FormField label="CPF" placeholder="000.000.000-00" value={form.cpf} onChange={set("cpf")} />
+          <FormField label="RG" placeholder="Número do RG" value={form.rg} onChange={set("rg")} />
+          <FormField label="E-mail" placeholder="email@exemplo.com" value={form.email} onChange={set("email")} />
+          <FormField label="Ano Letivo" placeholder="2026" value={form.academic_year} onChange={set("academic_year")} />
           <FormField label="Turma" options={classes.map((c: any) => ({ value: c.id, label: c.name }))} value={form.class_id} onChange={set("class_id")} />
           {modalityOptions.length > 0 && (
             <div>
