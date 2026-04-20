@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate, useParams } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -94,6 +94,12 @@ const LegacyRedirect = ({ path }: { path: string }) => {
   return <Navigate to={`${prefix}${path}`} replace />;
 };
 
+/** Redireciona edição de aluno para o fluxo centralizado da Secretaria */
+const StudentEditRedirect = () => {
+  const { id } = useParams();
+  return <Navigate to={`/secretaria/matricula/${id}`} replace />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -114,7 +120,8 @@ const App = () => (
             <Route path="/admin/alunos" element={<RoleRoute allowedRoles={["admin"]}><StudentsList /></RoleRoute>} />
             <Route path="/admin/alunos/novo" element={<RoleRoute allowedRoles={["admin"]}><StudentsCreate /></RoleRoute>} />
             <Route path="/admin/alunos/:id" element={<RoleRoute allowedRoles={["admin"]}><StudentsDetail /></RoleRoute>} />
-            <Route path="/admin/alunos/:id/editar" element={<RoleRoute allowedRoles={["admin"]}><StudentsEdit /></RoleRoute>} />
+            {/* Edição centralizada na Secretaria — redireciona */}
+            <Route path="/admin/alunos/:id/editar" element={<StudentEditRedirect />} />
             <Route path="/admin/alunos/:id/prontuario" element={<RoleRoute allowedRoles={["admin"]}><StudentRecord /></RoleRoute>} />
             <Route path="/admin/responsaveis" element={<RoleRoute allowedRoles={["admin"]}><GuardiansList /></RoleRoute>} />
             <Route path="/admin/responsaveis/novo" element={<RoleRoute allowedRoles={["admin"]}><GuardiansCreate /></RoleRoute>} />
@@ -139,6 +146,7 @@ const App = () => (
             {/* Secretaria routes */}
             <Route path="/secretaria/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="/secretaria/alunos" element={<RoleRoute allowedRoles={["secretaria"]}><StudentsList /></RoleRoute>} />
+            <Route path="/secretaria/matricula/:id" element={<RoleRoute allowedRoles={["admin", "secretaria"]}><StudentsEdit /></RoleRoute>} />
             <Route path="/secretaria/responsaveis" element={<RoleRoute allowedRoles={["secretaria"]}><GuardiansList /></RoleRoute>} />
             <Route path="/secretaria/turmas" element={<RoleRoute allowedRoles={["secretaria"]}><ClassesList /></RoleRoute>} />
             <Route path="/secretaria/professores" element={<RoleRoute allowedRoles={["secretaria"]}><TeachersList /></RoleRoute>} />
