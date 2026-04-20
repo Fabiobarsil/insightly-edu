@@ -182,13 +182,6 @@ const StudentsCreate = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField label="Nome Completo" placeholder="Nome do aluno" value={form.full_name} onChange={set("full_name")} />
-          <FormField label="Data de Nascimento" type="date" value={form.birth_date} onChange={set("birth_date")} />
-          <FormField label="CPF" placeholder="000.000.000-00" value={form.cpf} onChange={set("cpf")} />
-          <FormField label="RG" placeholder="Número do RG" value={form.rg} onChange={set("rg")} />
-          <FormField label="E-mail" placeholder="email@exemplo.com" value={form.email} onChange={set("email")} />
-          <FormField label="Ano Letivo" placeholder="2026" value={form.academic_year} onChange={set("academic_year")} />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold text-muted-foreground mb-1.5">
               Tipo de vínculo <span className="text-destructive">*</span>
