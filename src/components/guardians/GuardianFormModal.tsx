@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { fetchAddressByCEP } from "@/utils/cep";
+import { applyMask, MaskType } from "@/utils/formatters";
 
 const relationshipTypes = [
   { value: "pai", label: "Pai" },
@@ -44,13 +45,21 @@ const emptyForm = {
   notes: "",
 };
 
-const FieldInput = ({ label, value, onChange, placeholder, type = "text" }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string;
+const FieldInput = ({ label, value, onChange, placeholder, type = "text", mask }: {
+  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string; mask?: MaskType;
 }) => (
   <div>
     <label className="block text-xs font-bold text-muted-foreground mb-1">{label}</label>
-    <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-      className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+    <input
+      type={type}
+      value={value}
+      onChange={(e) => onChange(mask ? applyMask(mask, e.target.value) : e.target.value)}
+      placeholder={placeholder}
+      inputMode={mask === "cpf" || mask === "phone" || mask === "cep" ? "numeric" : undefined}
+      autoCapitalize={mask === "email" ? "none" : undefined}
+      autoCorrect={mask === "email" ? "off" : undefined}
+      className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+    />
   </div>
 );
 
@@ -212,12 +221,12 @@ export default function GuardianFormModal({ open, onOpenChange, schoolId, studen
         <div className="space-y-1 pt-2">
           <SectionTitle>Identificação</SectionTitle>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <FieldInput label="Nome Completo *" value={gf.full_name} onChange={gSet("full_name")} placeholder="Nome completo" />
-            <FieldInput label="CPF" value={gf.cpf} onChange={gSet("cpf")} placeholder="000.000.000-00" />
-            <FieldInput label="RG" value={gf.rg} onChange={gSet("rg")} placeholder="Número do RG" />
+            <FieldInput label="Nome Completo *" mask="name" value={gf.full_name} onChange={gSet("full_name")} placeholder="Nome completo" />
+            <FieldInput label="CPF" mask="cpf" value={gf.cpf} onChange={gSet("cpf")} placeholder="000.000.000-00" />
+            <FieldInput label="RG" mask="rg" value={gf.rg} onChange={gSet("rg")} placeholder="Número do RG" />
             <FieldInput label="Data de Nascimento" value={gf.birth_date} onChange={gSet("birth_date")} type="date" />
             <FieldSelect label="Sexo" value={gf.gender} onChange={gSet("gender")} options={genderOptions} />
-            <FieldInput label="Nacionalidade" value={gf.nationality} onChange={gSet("nationality")} placeholder="Brasileiro(a)" />
+            <FieldInput label="Nacionalidade" mask="name" value={gf.nationality} onChange={gSet("nationality")} placeholder="Brasileiro(a)" />
             <FieldSelect label="Estado Civil" value={gf.marital_status} onChange={gSet("marital_status")} options={maritalOptions} />
           </div>
 
@@ -234,10 +243,10 @@ export default function GuardianFormModal({ open, onOpenChange, schoolId, studen
 
           <SectionTitle>Contato</SectionTitle>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <FieldInput label="Telefone Principal" value={gf.phone} onChange={gSet("phone")} placeholder="(00) 00000-0000" />
-            <FieldInput label="Telefone Secundário" value={gf.phone_secondary} onChange={gSet("phone_secondary")} placeholder="(00) 00000-0000" />
-            <FieldInput label="E-mail Principal" value={gf.email} onChange={gSet("email")} placeholder="email@exemplo.com" />
-            <FieldInput label="E-mail Secundário" value={gf.email_secondary} onChange={gSet("email_secondary")} placeholder="email2@exemplo.com" />
+            <FieldInput label="Telefone Principal" mask="phone" value={gf.phone} onChange={gSet("phone")} placeholder="(00) 00000-0000" />
+            <FieldInput label="Telefone Secundário" mask="phone" value={gf.phone_secondary} onChange={gSet("phone_secondary")} placeholder="(00) 00000-0000" />
+            <FieldInput label="E-mail Principal" mask="email" value={gf.email} onChange={gSet("email")} placeholder="email@exemplo.com" />
+            <FieldInput label="E-mail Secundário" mask="email" value={gf.email_secondary} onChange={gSet("email_secondary")} placeholder="email2@exemplo.com" />
           </div>
           <div className="mt-2">
             <FieldCheck label="WhatsApp habilitado" checked={gf.whatsapp_enabled} onChange={gCheck("whatsapp_enabled")} />
@@ -245,23 +254,23 @@ export default function GuardianFormModal({ open, onOpenChange, schoolId, studen
 
           <SectionTitle>Endereço</SectionTitle>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <FieldInput label="CEP" value={gf.zipcode} onChange={handleZipChange} placeholder="00000-000" />
+            <FieldInput label="CEP" mask="cep" value={gf.zipcode} onChange={handleZipChange} placeholder="00000-000" />
             <div className="md:col-span-2">
-              <FieldInput label="Endereço" value={gf.address} onChange={gSet("address")} placeholder="Rua, Avenida..." />
+              <FieldInput label="Endereço" mask="name" value={gf.address} onChange={gSet("address")} placeholder="Rua, Avenida..." />
             </div>
             <FieldInput label="Número" value={gf.number} onChange={gSet("number")} placeholder="Nº" />
             <FieldInput label="Complemento" value={gf.complement} onChange={gSet("complement")} placeholder="Apto, Bloco..." />
-            <FieldInput label="Bairro" value={gf.district} onChange={gSet("district")} placeholder="Bairro" />
-            <FieldInput label="Cidade" value={gf.city} onChange={gSet("city")} placeholder="Cidade" />
+            <FieldInput label="Bairro" mask="name" value={gf.district} onChange={gSet("district")} placeholder="Bairro" />
+            <FieldInput label="Cidade" mask="name" value={gf.city} onChange={gSet("city")} placeholder="Cidade" />
             <FieldInput label="Estado" value={gf.state} onChange={gSet("state")} placeholder="UF" />
           </div>
 
           <SectionTitle>Dados Profissionais</SectionTitle>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <FieldInput label="Profissão" value={gf.profession} onChange={gSet("profession")} placeholder="Profissão" />
-            <FieldInput label="Empresa" value={gf.company} onChange={gSet("company")} placeholder="Empresa" />
+            <FieldInput label="Profissão" mask="name" value={gf.profession} onChange={gSet("profession")} placeholder="Profissão" />
+            <FieldInput label="Empresa" mask="name" value={gf.company} onChange={gSet("company")} placeholder="Empresa" />
             <FieldSelect label="Faixa de Renda" value={gf.income_range} onChange={gSet("income_range")} options={incomeOptions} />
-            <FieldInput label="Telefone Comercial" value={gf.work_phone} onChange={gSet("work_phone")} placeholder="(00) 0000-0000" />
+            <FieldInput label="Telefone Comercial" mask="phone" value={gf.work_phone} onChange={gSet("work_phone")} placeholder="(00) 0000-0000" />
           </div>
 
           <SectionTitle>Permissões</SectionTitle>
