@@ -262,6 +262,7 @@ const StudentsCreate = () => {
         email: form.email || null,
         academic_year: academicYear,
         modality: form.modality || null,
+        blood_type: form.blood_type || null,
       };
 
       let studentId: string;
