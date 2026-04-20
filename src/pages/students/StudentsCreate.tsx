@@ -35,7 +35,7 @@ const StudentsCreate = () => {
   const [form, setForm] = useState({
     full_name: "", birth_date: "", class_id: "", guardian_id: "",
     cpf: "", rg: "", email: "", academic_year: "", modality: "",
-    enrollment_type: "",
+    enrollment_type: "", blood_type: "",
   });
   const [father, setFather] = useState<any>({ ...emptyParent(), is_financial: true, is_pedagogical: true });
   const [mother, setMother] = useState<any>(emptyParent());
@@ -132,6 +132,7 @@ const StudentsCreate = () => {
       academic_year: s.academic_year ? String(s.academic_year) : "",
       modality: s.modality || "",
       enrollment_type: (studentData.enrollment as any)?.notes || "matricula",
+      blood_type: s.blood_type || "",
     });
     if (s.photo_url) {
       setExistingPhotoUrl(s.photo_url);
@@ -261,6 +262,7 @@ const StudentsCreate = () => {
         email: form.email || null,
         academic_year: academicYear,
         modality: form.modality || null,
+        blood_type: form.blood_type || null,
       };
 
       let studentId: string;
@@ -419,6 +421,12 @@ const StudentsCreate = () => {
             <FormField label="Data de Nascimento" type="date" value={form.birth_date} onChange={set("birth_date")} />
             <FormField label="CPF" placeholder="000.000.000-00" mask="cpf" value={form.cpf} onChange={set("cpf")} />
             <FormField label="RG" placeholder="Número do RG" mask="rg" value={form.rg} onChange={set("rg")} />
+            <FormField label="Tipo Sanguíneo" options={[
+              { value: "A+", label: "A+" }, { value: "A-", label: "A-" },
+              { value: "B+", label: "B+" }, { value: "B-", label: "B-" },
+              { value: "AB+", label: "AB+" }, { value: "AB-", label: "AB-" },
+              { value: "O+", label: "O+" }, { value: "O-", label: "O-" },
+            ]} value={form.blood_type} onChange={set("blood_type")} />
             <FormField label="E-mail" placeholder="email@exemplo.com" mask="email" value={form.email} onChange={set("email")} />
             <FormField label="Ano Letivo" placeholder="2026" value={form.academic_year} onChange={set("academic_year")} />
             <FormField label="Turma" options={classes.map((c: any) => ({ value: c.id, label: c.name }))} value={form.class_id} onChange={set("class_id")} />
