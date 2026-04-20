@@ -43,9 +43,9 @@ const GuardiansCreate = () => {
       <PageHeader title="Cadastrar Responsável" description="Preencha os dados do responsável" />
       <FormCard title="Dados do Responsável" cancelTo="/admin/responsaveis" onSubmit={() => mutation.mutate()}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField label="Nome Completo" placeholder="Nome do responsável" value={form.full_name} onChange={set("full_name")} />
-          <FormField label="Telefone" placeholder="(00) 00000-0000" value={form.phone} onChange={set("phone")} />
-          <FormField label="E-mail" type="email" placeholder="email@exemplo.com" value={form.email} onChange={set("email")} />
+          <FormField label="Nome Completo" placeholder="Nome do responsável" mask="name" value={form.full_name} onChange={set("full_name")} />
+          <FormField label="Telefone" placeholder="(00) 00000-0000" mask="phone" value={form.phone} onChange={set("phone")} />
+          <FormField label="E-mail" type="email" placeholder="email@exemplo.com" mask="email" value={form.email} onChange={set("email")} />
         </div>
       </FormCard>
     </AppLayout>

@@ -59,9 +59,9 @@ const GuardiansEdit = () => {
       <PageHeader title="Editar Responsável" description="Atualize os dados do responsável" />
       <FormCard title="Dados do Responsável" cancelTo="/admin/responsaveis" onSubmit={() => mutation.mutate()}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField label="Nome Completo" value={form.full_name || ""} onChange={set("full_name")} />
-          <FormField label="Telefone" value={form.phone || ""} onChange={set("phone")} />
-          <FormField label="E-mail" type="email" value={form.email || ""} onChange={set("email")} />
+          <FormField label="Nome Completo" mask="name" value={form.full_name || ""} onChange={set("full_name")} />
+          <FormField label="Telefone" mask="phone" value={form.phone || ""} onChange={set("phone")} />
+          <FormField label="E-mail" type="email" mask="email" value={form.email || ""} onChange={set("email")} />
         </div>
       </FormCard>
     </AppLayout>

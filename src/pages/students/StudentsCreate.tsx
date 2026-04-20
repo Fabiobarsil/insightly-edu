@@ -257,11 +257,11 @@ const StudentsCreate = () => {
               <option value="transferencia">Transferência</option>
             </select>
           </div>
-          <FormField label="Nome Completo" placeholder="Nome do aluno" value={form.full_name} onChange={set("full_name")} />
+          <FormField label="Nome Completo" placeholder="Nome do aluno" mask="name" value={form.full_name} onChange={set("full_name")} />
           <FormField label="Data de Nascimento" type="date" value={form.birth_date} onChange={set("birth_date")} />
-          <FormField label="CPF" placeholder="000.000.000-00" value={form.cpf} onChange={set("cpf")} />
-          <FormField label="RG" placeholder="Número do RG" value={form.rg} onChange={set("rg")} />
-          <FormField label="E-mail" placeholder="email@exemplo.com" value={form.email} onChange={set("email")} />
+          <FormField label="CPF" placeholder="000.000.000-00" mask="cpf" value={form.cpf} onChange={set("cpf")} />
+          <FormField label="RG" placeholder="Número do RG" mask="rg" value={form.rg} onChange={set("rg")} />
+          <FormField label="E-mail" placeholder="email@exemplo.com" mask="email" value={form.email} onChange={set("email")} />
           <FormField label="Ano Letivo" placeholder="2026" value={form.academic_year} onChange={set("academic_year")} />
           <FormField label="Turma" options={classes.map((c: any) => ({ value: c.id, label: c.name }))} value={form.class_id} onChange={set("class_id")} />
           {modalityOptions.length > 0 && (
@@ -314,24 +314,28 @@ const StudentsCreate = () => {
               <FormField
                 label={`Nome do ${title.toLowerCase()} *`}
                 placeholder={`Nome completo do ${title.toLowerCase()}`}
+                mask="name"
                 value={state.full_name}
                 onChange={(e: any) => setState((p: any) => ({ ...p, full_name: e.target.value }))}
               />
               <FormField
                 label="CPF"
                 placeholder="000.000.000-00"
+                mask="cpf"
                 value={state.cpf}
                 onChange={(e: any) => setState((p: any) => ({ ...p, cpf: e.target.value }))}
               />
               <FormField
                 label="Telefone"
                 placeholder="(00) 00000-0000"
+                mask="phone"
                 value={state.phone}
                 onChange={(e: any) => setState((p: any) => ({ ...p, phone: e.target.value }))}
               />
               <FormField
                 label="E-mail"
                 placeholder="email@exemplo.com"
+                mask="email"
                 value={state.email}
                 onChange={(e: any) => setState((p: any) => ({ ...p, email: e.target.value }))}
               />
