@@ -28,6 +28,14 @@ const StudentsCreate = () => {
     cpf: "", rg: "", email: "", academic_year: "", modality: "",
     enrollment_type: "",
   });
+  const [father, setFather] = useState({
+    full_name: "", cpf: "", phone: "", email: "",
+    is_financial: true, is_pedagogical: true,
+  });
+  const [mother, setMother] = useState({
+    full_name: "", cpf: "", phone: "", email: "",
+    is_financial: false, is_pedagogical: false,
+  });
   const [docs, setDocs] = useState<Record<string, boolean>>({});
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -93,9 +101,17 @@ const StudentsCreate = () => {
   const mutation = useMutation({
     mutationFn: async () => {
       if (!schoolId) throw new Error("Nenhuma escola vinculada");
-      if (!form.full_name.trim()) throw new Error("Nome é obrigatório");
+      if (!form.full_name.trim()) throw new Error("Nome do aluno é obrigatório");
       if (!form.enrollment_type) throw new Error("Selecione o tipo de vínculo");
       if (!form.class_id) throw new Error("Selecione a turma para criar a matrícula");
+      if (!father.full_name.trim()) throw new Error("Nome do pai é obrigatório");
+      if (!mother.full_name.trim()) throw new Error("Nome da mãe é obrigatório");
+      if (!father.is_financial && !mother.is_financial) {
+        throw new Error("Marque o responsável financeiro (pai ou mãe)");
+      }
+      if (!father.is_pedagogical && !mother.is_pedagogical) {
+        throw new Error("Marque o responsável pedagógico (pai ou mãe)");
+      }
 
       let photo_url: string | null = null;
       if (photoFile) {
@@ -125,11 +141,7 @@ const StudentsCreate = () => {
 
       // Cria vínculo formal em student_enrollments com tipo no campo notes
       const selectedEnrollmentType = form.enrollment_type;
-      console.log("Tipo de vínculo:", selectedEnrollmentType);
-
-      if (!selectedEnrollmentType) {
-        throw new Error("Tipo de vínculo não selecionado");
-      }
+      if (!selectedEnrollmentType) throw new Error("Tipo de vínculo não selecionado");
 
       const enrollmentPayload = {
         student_id: student.id,
@@ -140,30 +152,65 @@ const StudentsCreate = () => {
         start_date: new Date().toISOString().split("T")[0],
         notes: selectedEnrollmentType,
       };
-      console.log("Payload student_enrollments:", enrollmentPayload);
 
-      const { data: enrollData, error: enrollErr } = await supabase
+      const { error: enrollErr } = await supabase
         .from("student_enrollments")
-        .insert(enrollmentPayload as any)
-        .select("id, notes")
-        .single();
-      if (enrollErr) {
-        console.error("Erro ao criar matrícula:", enrollErr);
-        throw enrollErr;
-      }
-      console.log("Matrícula criada:", enrollData);
+        .insert(enrollmentPayload as any);
+      if (enrollErr) throw enrollErr;
 
-      if (form.guardian_id && student) {
-        await supabase.from("student_guardians").insert({
-          student_id: student.id,
-          guardian_id: form.guardian_id,
+      // Cria Pai e Mãe como guardians e vincula ao aluno
+      const guardianIdsToLink: string[] = [];
+
+      const { data: fatherRow, error: fErr } = await supabase
+        .from("guardians")
+        .insert({
           school_id: schoolId,
-        });
-      }
+          full_name: father.full_name.trim(),
+          cpf: father.cpf || null,
+          phone: father.phone || null,
+          email: father.email || null,
+          relationship_type: "pai",
+          is_financial: father.is_financial,
+          is_pedagogical: father.is_pedagogical,
+          is_primary: father.is_financial || father.is_pedagogical,
+        })
+        .select("id")
+        .single();
+      if (fErr) throw fErr;
+      guardianIdsToLink.push(fatherRow.id);
+
+      const { data: motherRow, error: mErr } = await supabase
+        .from("guardians")
+        .insert({
+          school_id: schoolId,
+          full_name: mother.full_name.trim(),
+          cpf: mother.cpf || null,
+          phone: mother.phone || null,
+          email: mother.email || null,
+          relationship_type: "mae",
+          is_financial: mother.is_financial,
+          is_pedagogical: mother.is_pedagogical,
+          is_primary: mother.is_financial || mother.is_pedagogical,
+        })
+        .select("id")
+        .single();
+      if (mErr) throw mErr;
+      guardianIdsToLink.push(motherRow.id);
+
+      // Terceiro responsável escolhido no modal (avô, tio, transporte, etc.)
+      if (form.guardian_id) guardianIdsToLink.push(form.guardian_id);
+
+      const links = guardianIdsToLink.map((gid) => ({
+        student_id: student.id,
+        guardian_id: gid,
+        school_id: schoolId,
+      }));
+      const { error: linkErr } = await supabase.from("student_guardians").insert(links);
+      if (linkErr) throw linkErr;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["students", schoolId] });
-      toast.success("Aluno cadastrado!");
+      toast.success("Aluno matriculado!");
       navigate("/admin/alunos");
     },
     onError: (err: any) => toast.error(err.message || "Erro ao cadastrar"),
@@ -232,8 +279,10 @@ const StudentsCreate = () => {
               </select>
             </div>
           )}
-          <div>
-            <label className="block text-xs font-bold text-muted-foreground mb-1.5">Responsável</label>
+          <div className="md:col-span-2">
+            <label className="block text-xs font-bold text-muted-foreground mb-1.5">
+              Outro responsável autorizado <span className="font-normal text-muted-foreground/70">(opcional — avô, avó, tio(a), transporte escolar etc.)</span>
+            </label>
             <div className="flex items-center gap-2">
               <select value={form.guardian_id} onChange={set("guardian_id")} className="flex-1 border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors">
                 <option value="">Selecionar...</option>
@@ -247,6 +296,69 @@ const StudentsCreate = () => {
           </div>
         </div>
       </FormCard>
+
+      {/* Pai e Mãe — obrigatórios na ficha */}
+      <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow mt-6">
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="text-sm font-bold text-primary">Filiação</h4>
+          <span className="text-[11px] text-muted-foreground">Marque quem é o responsável financeiro e pedagógico</span>
+        </div>
+
+        {[
+          { title: "Pai", state: father, setState: setFather, key: "father" },
+          { title: "Mãe", state: mother, setState: setMother, key: "mother" },
+        ].map(({ title, state, setState, key }) => (
+          <div key={key} className="mb-5 last:mb-0">
+            <h5 className="text-xs font-bold text-secondary uppercase tracking-wider mb-3">{title}</h5>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <FormField
+                label={`Nome do ${title.toLowerCase()} *`}
+                placeholder={`Nome completo do ${title.toLowerCase()}`}
+                value={state.full_name}
+                onChange={(e: any) => setState((p: any) => ({ ...p, full_name: e.target.value }))}
+              />
+              <FormField
+                label="CPF"
+                placeholder="000.000.000-00"
+                value={state.cpf}
+                onChange={(e: any) => setState((p: any) => ({ ...p, cpf: e.target.value }))}
+              />
+              <FormField
+                label="Telefone"
+                placeholder="(00) 00000-0000"
+                value={state.phone}
+                onChange={(e: any) => setState((p: any) => ({ ...p, phone: e.target.value }))}
+              />
+              <FormField
+                label="E-mail"
+                placeholder="email@exemplo.com"
+                value={state.email}
+                onChange={(e: any) => setState((p: any) => ({ ...p, email: e.target.value }))}
+              />
+            </div>
+            <div className="flex flex-wrap gap-4 mt-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={state.is_financial}
+                  onChange={(e) => setState((p: any) => ({ ...p, is_financial: e.target.checked }))}
+                  className="w-4 h-4 rounded border-border text-secondary focus:ring-secondary"
+                />
+                <span className="text-sm text-primary">Responsável financeiro</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={state.is_pedagogical}
+                  onChange={(e) => setState((p: any) => ({ ...p, is_pedagogical: e.target.checked }))}
+                  className="w-4 h-4 rounded border-border text-secondary focus:ring-secondary"
+                />
+                <span className="text-sm text-primary">Responsável pedagógico</span>
+              </label>
+            </div>
+          </div>
+        ))}
+      </div>
 
       {/* Checklist de documentos */}
       <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow mt-6">
