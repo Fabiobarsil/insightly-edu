@@ -169,6 +169,9 @@ const StudentsCreate = () => {
     const mae = linkedGuardians.find((g: any) => g.relationship_type === "mae");
     const outro = linkedGuardians.find((g: any) => g.relationship_type !== "pai" && g.relationship_type !== "mae");
 
+    const sameAddr = (g: any) =>
+      !!g.zipcode && !!s.zip_code && (g.zipcode || "").replace(/\D/g, "") === (s.zip_code || "").replace(/\D/g, "");
+
     if (pai) {
       setFather({
         id: pai.id,
@@ -176,6 +179,8 @@ const StudentsCreate = () => {
         cpf: pai.cpf || "",
         phone: pai.phone || "",
         email: pai.email || "",
+        marital_status: pai.marital_status || "",
+        same_address: sameAddr(pai),
         is_financial: !!pai.is_financial,
         is_pedagogical: !!pai.is_pedagogical,
       });
@@ -187,6 +192,8 @@ const StudentsCreate = () => {
         cpf: mae.cpf || "",
         phone: mae.phone || "",
         email: mae.email || "",
+        marital_status: mae.marital_status || "",
+        same_address: sameAddr(mae),
         is_financial: !!mae.is_financial,
         is_pedagogical: !!mae.is_pedagogical,
       });
