@@ -257,7 +257,7 @@ const StudentsCreate = () => {
         birth_date: form.birth_date || null,
         class_id: form.class_id || null,
         school_id: schoolId,
-        status: "ativo" as const,
+        status: (form.status as any) || "ativo",
         photo_url,
         cpf: form.cpf || null,
         rg: form.rg || null,
@@ -265,6 +265,7 @@ const StudentsCreate = () => {
         academic_year: academicYear,
         modality: form.modality || null,
         blood_type: form.blood_type || null,
+        notes: form.notes || null,
       };
 
       let studentId: string;
