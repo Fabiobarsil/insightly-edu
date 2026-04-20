@@ -472,6 +472,15 @@ const StudentsCreate = () => {
                 </button>
               </div>
             </div>
+            <div className="md:col-span-2">
+              <FormField
+                label="Observações"
+                placeholder="Informações adicionais sobre o aluno (alergias, necessidades especiais, observações pedagógicas etc.)"
+                textarea
+                value={form.notes}
+                onChange={set("notes")}
+              />
+            </div>
           </div>
         </div>
 
