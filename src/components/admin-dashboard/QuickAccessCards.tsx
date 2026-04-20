@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FileText, Compass, Users, FolderOpen, ClipboardList, FilePlus2, Plus } from "lucide-react";
+import { FileText, Compass, Users, FolderOpen, ClipboardList, FilePlus2, Plus, UserSearch } from "lucide-react";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import StudentSearchModal from "./StudentSearchModal";
 
 interface QuickAccessCardsProps {
   onNewRequest?: () => void;
@@ -39,10 +40,12 @@ const navCards = [
 const QuickAccessCards = ({ onNewRequest }: QuickAccessCardsProps) => {
   const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const drawerActions = [
     { icon: FilePlus2, label: "Nova Solicitação", onClick: () => { setDrawerOpen(false); onNewRequest?.(); } },
     { icon: ClipboardList, label: "Nova Matrícula", onClick: () => { setDrawerOpen(false); navigate("/admin/alunos/novo"); } },
+    { icon: UserSearch, label: "Alunos", onClick: () => { setDrawerOpen(false); setSearchOpen(true); } },
     { icon: FileText, label: "Novo Documento", onClick: () => { setDrawerOpen(false); navigate("/admin/documentos"); } },
   ];
 
@@ -104,6 +107,8 @@ const QuickAccessCards = ({ onNewRequest }: QuickAccessCardsProps) => {
           </div>
         </SheetContent>
       </Sheet>
+
+      <StudentSearchModal open={searchOpen} onOpenChange={setSearchOpen} />
     </>
   );
 };
