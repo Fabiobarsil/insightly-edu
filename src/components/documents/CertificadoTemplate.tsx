@@ -88,6 +88,7 @@ export default function CertificadoTemplate({ data }: Props) {
           alt="Brasão"
           style={{
             width: "100px",
+            transform: "translateX(110px)",
             marginTop: "10px",
           }}
         />
@@ -112,7 +113,7 @@ export default function CertificadoTemplate({ data }: Props) {
           alt="Logo"
           style={{
             width: "80px",
-            transform: "translateX(-80px)",
+            transform: "translateX(-110px)",
             marginTop: "10px",
           }}
         />
