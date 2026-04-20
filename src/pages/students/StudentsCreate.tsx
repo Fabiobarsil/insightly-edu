@@ -421,6 +421,12 @@ const StudentsCreate = () => {
             <FormField label="Data de Nascimento" type="date" value={form.birth_date} onChange={set("birth_date")} />
             <FormField label="CPF" placeholder="000.000.000-00" mask="cpf" value={form.cpf} onChange={set("cpf")} />
             <FormField label="RG" placeholder="Número do RG" mask="rg" value={form.rg} onChange={set("rg")} />
+            <FormField label="Tipo Sanguíneo" options={[
+              { value: "A+", label: "A+" }, { value: "A-", label: "A-" },
+              { value: "B+", label: "B+" }, { value: "B-", label: "B-" },
+              { value: "AB+", label: "AB+" }, { value: "AB-", label: "AB-" },
+              { value: "O+", label: "O+" }, { value: "O-", label: "O-" },
+            ]} value={form.blood_type} onChange={set("blood_type")} />
             <FormField label="E-mail" placeholder="email@exemplo.com" mask="email" value={form.email} onChange={set("email")} />
             <FormField label="Ano Letivo" placeholder="2026" value={form.academic_year} onChange={set("academic_year")} />
             <FormField label="Turma" options={classes.map((c: any) => ({ value: c.id, label: c.name }))} value={form.class_id} onChange={set("class_id")} />
