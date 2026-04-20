@@ -448,6 +448,15 @@ const StudentsCreate = () => {
                 </select>
               </div>
             )}
+            <FormField
+              label="Status do Aluno"
+              options={[
+                { value: "ativo", label: "Ativo" },
+                { value: "inativo", label: "Inativo" },
+              ]}
+              value={form.status}
+              onChange={set("status")}
+            />
             <div className="md:col-span-2">
               <label className="block text-xs font-bold text-muted-foreground mb-1.5">
                 Outro responsável autorizado <span className="font-normal text-muted-foreground/70">(opcional — avô, avó, tio(a), transporte escolar etc.)</span>
