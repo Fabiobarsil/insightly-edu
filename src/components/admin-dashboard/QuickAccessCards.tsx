@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FileText, Compass, Users, FolderOpen, ClipboardList, FilePlus2, Plus } from "lucide-react";
+import { FileText, Compass, Users, FolderOpen, ClipboardList, FilePlus2, Plus, UserSearch } from "lucide-react";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import StudentSearchModal from "./StudentSearchModal";
 
 interface QuickAccessCardsProps {
   onNewRequest?: () => void;
