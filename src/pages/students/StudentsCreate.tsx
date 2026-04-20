@@ -28,6 +28,14 @@ const StudentsCreate = () => {
     cpf: "", rg: "", email: "", academic_year: "", modality: "",
     enrollment_type: "",
   });
+  const [father, setFather] = useState({
+    full_name: "", cpf: "", phone: "", email: "",
+    is_financial: true, is_pedagogical: true,
+  });
+  const [mother, setMother] = useState({
+    full_name: "", cpf: "", phone: "", email: "",
+    is_financial: false, is_pedagogical: false,
+  });
   const [docs, setDocs] = useState<Record<string, boolean>>({});
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
