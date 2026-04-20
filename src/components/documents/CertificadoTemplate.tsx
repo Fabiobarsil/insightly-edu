@@ -112,7 +112,7 @@ export default function CertificadoTemplate({ data }: Props) {
           alt="Logo"
           style={{
             width: "80px",
-            transform: "translateX(-40px)",
+            transform: "translateX(-80px)",
             marginTop: "10px",
           }}
         />
