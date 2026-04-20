@@ -1,9 +1,8 @@
 import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AppLayout from "@/components/layout/AppLayout";
 import PageHeader from "@/components/shared/PageHeader";
-import FormCard from "@/components/shared/FormCard";
 import FormField from "@/components/shared/FormField";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
@@ -23,6 +22,7 @@ const StudentsCreate = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { schoolId } = useSchoolId();
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     full_name: "", birth_date: "", class_id: "", guardian_id: "",
     cpf: "", rg: "", email: "", academic_year: "", modality: "",
@@ -100,12 +100,14 @@ const StudentsCreate = () => {
 
   const mutation = useMutation({
     mutationFn: async () => {
+      console.log("Criando matrícula...");
       if (!schoolId) throw new Error("Nenhuma escola vinculada");
       if (!form.full_name.trim()) throw new Error("Nome do aluno é obrigatório");
       if (!form.enrollment_type) throw new Error("Selecione o tipo de vínculo");
       if (!form.class_id) throw new Error("Selecione a turma para criar a matrícula");
-      if (!father.full_name.trim()) throw new Error("Nome do pai é obrigatório");
-      if (!mother.full_name.trim()) throw new Error("Nome da mãe é obrigatório");
+      if (!father.full_name.trim() && !mother.full_name.trim()) {
+        throw new Error("Informe ao menos um responsável (pai ou mãe)");
+      }
       if (!father.is_financial && !mother.is_financial) {
         throw new Error("Marque o responsável financeiro (pai ou mãe)");
       }
@@ -139,11 +141,9 @@ const StudentsCreate = () => {
       } as any).select("id").single();
       if (error) throw error;
 
-      // Cria vínculo formal em student_enrollments com tipo no campo notes
       const selectedEnrollmentType = form.enrollment_type;
-      if (!selectedEnrollmentType) throw new Error("Tipo de vínculo não selecionado");
 
-      // Integridade: bloqueia se já existe matrícula ativa no mesmo ano para o aluno
+      // Reforço backend: bloqueia se já existe matrícula ativa no mesmo ano
       const { data: existingActive, error: checkErr } = await supabase
         .from("student_enrollments")
         .select("id")
@@ -171,47 +171,81 @@ const StudentsCreate = () => {
         .insert(enrollmentPayload as any);
       if (enrollErr) throw enrollErr;
 
-      // Cria Pai e Mãe como guardians e vincula ao aluno
+      // Cria/vincula responsáveis (Pai e Mãe) e o terceiro autorizado
       const guardianIdsToLink: string[] = [];
 
-      const { data: fatherRow, error: fErr } = await supabase
-        .from("guardians")
-        .insert({
-          school_id: schoolId,
-          full_name: father.full_name.trim(),
-          cpf: father.cpf || null,
-          phone: father.phone || null,
-          email: father.email || null,
-          relationship_type: "pai",
-          is_financial: father.is_financial,
-          is_pedagogical: father.is_pedagogical,
-          is_primary: father.is_financial || father.is_pedagogical,
-        })
-        .select("id")
-        .single();
-      if (fErr) throw fErr;
-      guardianIdsToLink.push(fatherRow.id);
+      if (father.full_name.trim()) {
+        // Tenta reaproveitar guardian existente por CPF se informado
+        let fatherId: string | null = null;
+        if (father.cpf) {
+          const { data: existing } = await supabase
+            .from("guardians")
+            .select("id")
+            .eq("school_id", schoolId)
+            .eq("cpf", father.cpf)
+            .maybeSingle();
+          if (existing?.id) fatherId = existing.id;
+        }
+        if (!fatherId) {
+          const { data: fatherRow, error: fErr } = await supabase
+            .from("guardians")
+            .insert({
+              school_id: schoolId,
+              full_name: father.full_name.trim(),
+              cpf: father.cpf || null,
+              phone: father.phone || null,
+              email: father.email || null,
+              relationship_type: "pai",
+              is_financial: father.is_financial,
+              is_pedagogical: father.is_pedagogical,
+              is_primary: father.is_financial || father.is_pedagogical,
+            })
+            .select("id")
+            .single();
+          if (fErr) throw fErr;
+          fatherId = fatherRow.id;
+        }
+        guardianIdsToLink.push(fatherId);
+      }
 
-      const { data: motherRow, error: mErr } = await supabase
-        .from("guardians")
-        .insert({
-          school_id: schoolId,
-          full_name: mother.full_name.trim(),
-          cpf: mother.cpf || null,
-          phone: mother.phone || null,
-          email: mother.email || null,
-          relationship_type: "mae",
-          is_financial: mother.is_financial,
-          is_pedagogical: mother.is_pedagogical,
-          is_primary: mother.is_financial || mother.is_pedagogical,
-        })
-        .select("id")
-        .single();
-      if (mErr) throw mErr;
-      guardianIdsToLink.push(motherRow.id);
+      if (mother.full_name.trim()) {
+        let motherId: string | null = null;
+        if (mother.cpf) {
+          const { data: existing } = await supabase
+            .from("guardians")
+            .select("id")
+            .eq("school_id", schoolId)
+            .eq("cpf", mother.cpf)
+            .maybeSingle();
+          if (existing?.id) motherId = existing.id;
+        }
+        if (!motherId) {
+          const { data: motherRow, error: mErr } = await supabase
+            .from("guardians")
+            .insert({
+              school_id: schoolId,
+              full_name: mother.full_name.trim(),
+              cpf: mother.cpf || null,
+              phone: mother.phone || null,
+              email: mother.email || null,
+              relationship_type: "mae",
+              is_financial: mother.is_financial,
+              is_pedagogical: mother.is_pedagogical,
+              is_primary: mother.is_financial || mother.is_pedagogical,
+            })
+            .select("id")
+            .single();
+          if (mErr) throw mErr;
+          motherId = motherRow.id;
+        }
+        guardianIdsToLink.push(motherId);
+      }
 
-      // Terceiro responsável escolhido no modal (avô, tio, transporte, etc.)
       if (form.guardian_id) guardianIdsToLink.push(form.guardian_id);
+
+      if (guardianIdsToLink.length === 0) {
+        throw new Error("Aluno deve ter ao menos um responsável vinculado");
+      }
 
       const links = guardianIdsToLink.map((gid) => ({
         student_id: student.id,
@@ -229,178 +263,209 @@ const StudentsCreate = () => {
     onError: (err: any) => toast.error(err.message || "Erro ao cadastrar"),
   });
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loading) return;
+    setLoading(true);
+    try {
+      await mutation.mutateAsync();
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const missingRequired = docChecklist.filter((d) => d.obrigatorio && !docs[d.key]);
 
   return (
     <AppLayout title="Novo Aluno" breadcrumbs={[{ label: "Alunos", href: "/admin/alunos" }, { label: "Novo Aluno" }]}>
       <PageHeader title="Cadastrar Aluno" description="Preencha os dados do novo aluno" />
-      <FormCard title="Dados do Aluno" cancelTo="/admin/alunos" onSubmit={() => mutation.mutate()}>
-        {/* Foto do Aluno */}
-        <div className="mb-4">
-          <label className="block text-xs font-bold text-muted-foreground mb-2">Foto do Aluno</label>
-          <div className="flex items-center gap-4">
-            {photoPreview ? (
-              <img src={photoPreview} alt="Preview" className="w-16 h-16 rounded-full object-cover border-2 border-secondary/30" />
-            ) : (
-              <div className="w-16 h-16 rounded-full bg-accent flex items-center justify-center">
-                <i className="ri-camera-line text-xl text-muted-foreground" />
-              </div>
-            )}
-            <button type="button" onClick={() => photoInputRef.current?.click()} className="inline-flex items-center gap-2 px-3 py-2 rounded-[12px] border border-border text-sm font-medium text-muted-foreground hover:bg-accent transition-colors">
-              <i className="ri-upload-2-line" /> {photoPreview ? "Trocar foto" : "Selecionar foto"}
-            </button>
-            <input ref={photoInputRef} type="file" className="hidden" accept="image/*" onChange={handlePhotoSelect} />
-          </div>
-        </div>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Dados do Aluno */}
+        <div className="bg-card border border-border/60 rounded-xl certus-shadow p-6">
+          <h3 className="text-lg font-bold text-primary mb-6">Dados do Aluno</h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-bold text-muted-foreground mb-1.5">
-              Tipo de vínculo <span className="text-destructive">*</span>
-            </label>
-            <select
-              value={form.enrollment_type}
-              onChange={set("enrollment_type")}
-              required
-              className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
-            >
-              <option value="">Selecionar...</option>
-              <option value="matricula">Matrícula</option>
-              <option value="renovacao">Renovação</option>
-              <option value="transferencia">Transferência</option>
-            </select>
+          {/* Foto do Aluno */}
+          <div className="mb-4">
+            <label className="block text-xs font-bold text-muted-foreground mb-2">Foto do Aluno</label>
+            <div className="flex items-center gap-4">
+              {photoPreview ? (
+                <img src={photoPreview} alt="Preview" className="w-16 h-16 rounded-full object-cover border-2 border-secondary/30" />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-accent flex items-center justify-center">
+                  <i className="ri-camera-line text-xl text-muted-foreground" />
+                </div>
+              )}
+              <button type="button" onClick={() => photoInputRef.current?.click()} className="inline-flex items-center gap-2 px-3 py-2 rounded-[12px] border border-border text-sm font-medium text-muted-foreground hover:bg-accent transition-colors">
+                <i className="ri-upload-2-line" /> {photoPreview ? "Trocar foto" : "Selecionar foto"}
+              </button>
+              <input ref={photoInputRef} type="file" className="hidden" accept="image/*" onChange={handlePhotoSelect} />
+            </div>
           </div>
-          <FormField label="Nome Completo" placeholder="Nome do aluno" mask="name" value={form.full_name} onChange={set("full_name")} />
-          <FormField label="Data de Nascimento" type="date" value={form.birth_date} onChange={set("birth_date")} />
-          <FormField label="CPF" placeholder="000.000.000-00" mask="cpf" value={form.cpf} onChange={set("cpf")} />
-          <FormField label="RG" placeholder="Número do RG" mask="rg" value={form.rg} onChange={set("rg")} />
-          <FormField label="E-mail" placeholder="email@exemplo.com" mask="email" value={form.email} onChange={set("email")} />
-          <FormField label="Ano Letivo" placeholder="2026" value={form.academic_year} onChange={set("academic_year")} />
-          <FormField label="Turma" options={classes.map((c: any) => ({ value: c.id, label: c.name }))} value={form.class_id} onChange={set("class_id")} />
-          {modalityOptions.length > 0 && (
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-muted-foreground mb-1.5">Modalidade</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1.5">
+                Tipo de vínculo <span className="text-destructive">*</span>
+              </label>
               <select
-                value={form.modality}
-                onChange={set("modality")}
+                value={form.enrollment_type}
+                onChange={set("enrollment_type")}
+                required
                 className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
               >
                 <option value="">Selecionar...</option>
-                {modalityOptions.map((m) => (
-                  <option key={m.value} value={m.value}>{m.label}</option>
-                ))}
+                <option value="matricula">Matrícula</option>
+                <option value="renovacao">Renovação</option>
+                <option value="transferencia">Transferência</option>
               </select>
             </div>
-          )}
-          <div className="md:col-span-2">
-            <label className="block text-xs font-bold text-muted-foreground mb-1.5">
-              Outro responsável autorizado <span className="font-normal text-muted-foreground/70">(opcional — avô, avó, tio(a), transporte escolar etc.)</span>
-            </label>
-            <div className="flex items-center gap-2">
-              <select value={form.guardian_id} onChange={set("guardian_id")} className="flex-1 border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors">
-                <option value="">Selecionar...</option>
-                {guardians.map((g: any) => <option key={g.id} value={g.id}>{g.full_name}</option>)}
-              </select>
-              <button type="button" onClick={() => setGuardianModalOpen(true)}
-                className="inline-flex items-center gap-1 px-3 py-2.5 rounded-[12px] bg-secondary text-secondary-foreground text-sm font-bold hover:bg-secondary/90 transition-colors whitespace-nowrap">
-                <i className="ri-add-line" /> Novo
-              </button>
+            <FormField label="Nome Completo" placeholder="Nome do aluno" mask="name" value={form.full_name} onChange={set("full_name")} />
+            <FormField label="Data de Nascimento" type="date" value={form.birth_date} onChange={set("birth_date")} />
+            <FormField label="CPF" placeholder="000.000.000-00" mask="cpf" value={form.cpf} onChange={set("cpf")} />
+            <FormField label="RG" placeholder="Número do RG" mask="rg" value={form.rg} onChange={set("rg")} />
+            <FormField label="E-mail" placeholder="email@exemplo.com" mask="email" value={form.email} onChange={set("email")} />
+            <FormField label="Ano Letivo" placeholder="2026" value={form.academic_year} onChange={set("academic_year")} />
+            <FormField label="Turma" options={classes.map((c: any) => ({ value: c.id, label: c.name }))} value={form.class_id} onChange={set("class_id")} />
+            {modalityOptions.length > 0 && (
+              <div>
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5">Modalidade</label>
+                <select
+                  value={form.modality}
+                  onChange={set("modality")}
+                  className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+                >
+                  <option value="">Selecionar...</option>
+                  {modalityOptions.map((m) => (
+                    <option key={m.value} value={m.value}>{m.label}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <div className="md:col-span-2">
+              <label className="block text-xs font-bold text-muted-foreground mb-1.5">
+                Outro responsável autorizado <span className="font-normal text-muted-foreground/70">(opcional — avô, avó, tio(a), transporte escolar etc.)</span>
+              </label>
+              <div className="flex items-center gap-2">
+                <select value={form.guardian_id} onChange={set("guardian_id")} className="flex-1 border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors">
+                  <option value="">Selecionar...</option>
+                  {guardians.map((g: any) => <option key={g.id} value={g.id}>{g.full_name}</option>)}
+                </select>
+                <button type="button" onClick={() => setGuardianModalOpen(true)}
+                  className="inline-flex items-center gap-1 px-3 py-2.5 rounded-[12px] bg-secondary text-secondary-foreground text-sm font-bold hover:bg-secondary/90 transition-colors whitespace-nowrap">
+                  <i className="ri-add-line" /> Novo
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </FormCard>
 
-      {/* Pai e Mãe — obrigatórios na ficha */}
-      <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow mt-6">
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="text-sm font-bold text-primary">Filiação</h4>
-          <span className="text-[11px] text-muted-foreground">Marque quem é o responsável financeiro e pedagógico</span>
-        </div>
-
-        {[
-          { title: "Pai", state: father, setState: setFather, key: "father" },
-          { title: "Mãe", state: mother, setState: setMother, key: "mother" },
-        ].map(({ title, state, setState, key }) => (
-          <div key={key} className="mb-5 last:mb-0">
-            <h5 className="text-xs font-bold text-secondary uppercase tracking-wider mb-3">{title}</h5>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <FormField
-                label={`Nome do ${title.toLowerCase()} *`}
-                placeholder={`Nome completo do ${title.toLowerCase()}`}
-                mask="name"
-                value={state.full_name}
-                onChange={(e: any) => setState((p: any) => ({ ...p, full_name: e.target.value }))}
-              />
-              <FormField
-                label="CPF"
-                placeholder="000.000.000-00"
-                mask="cpf"
-                value={state.cpf}
-                onChange={(e: any) => setState((p: any) => ({ ...p, cpf: e.target.value }))}
-              />
-              <FormField
-                label="Telefone"
-                placeholder="(00) 00000-0000"
-                mask="phone"
-                value={state.phone}
-                onChange={(e: any) => setState((p: any) => ({ ...p, phone: e.target.value }))}
-              />
-              <FormField
-                label="E-mail"
-                placeholder="email@exemplo.com"
-                mask="email"
-                value={state.email}
-                onChange={(e: any) => setState((p: any) => ({ ...p, email: e.target.value }))}
-              />
-            </div>
-            <div className="flex flex-wrap gap-4 mt-3">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={state.is_financial}
-                  onChange={(e) => setState((p: any) => ({ ...p, is_financial: e.target.checked }))}
-                  className="w-4 h-4 rounded border-border text-secondary focus:ring-secondary"
-                />
-                <span className="text-sm text-primary">Responsável financeiro</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={state.is_pedagogical}
-                  onChange={(e) => setState((p: any) => ({ ...p, is_pedagogical: e.target.checked }))}
-                  className="w-4 h-4 rounded border-border text-secondary focus:ring-secondary"
-                />
-                <span className="text-sm text-primary">Responsável pedagógico</span>
-              </label>
-            </div>
+        {/* Pai e Mãe — obrigatórios na ficha */}
+        <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-sm font-bold text-primary">Filiação</h4>
+            <span className="text-[11px] text-muted-foreground">Marque quem é o responsável financeiro e pedagógico</span>
           </div>
-        ))}
-      </div>
 
-      {/* Checklist de documentos */}
-      <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow mt-6">
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="text-sm font-bold text-primary">Documentos de Matrícula</h4>
-          {missingRequired.length > 0 && (
-            <span className="text-xs font-bold text-destructive">
-              {missingRequired.length} obrigatório(s) pendente(s)
-            </span>
-          )}
-        </div>
-        <div className="space-y-2">
-          {docChecklist.map((d) => (
-            <label key={d.key} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-accent/30 transition-colors cursor-pointer">
-              <input type="checkbox" checked={!!docs[d.key]} onChange={() => toggleDoc(d.key)} className="w-4 h-4 rounded border-border text-secondary focus:ring-secondary" />
-              <span className="text-sm text-primary font-medium flex-1">{d.label}</span>
-              {d.obrigatorio ? (
-                <span className="text-[10px] font-bold text-warning-foreground bg-warning/15 px-2 py-0.5 rounded-full">Obrigatório</span>
-              ) : (
-                <span className="text-[10px] font-bold text-muted-foreground bg-accent px-2 py-0.5 rounded-full">Opcional</span>
-              )}
-            </label>
+          {[
+            { title: "Pai", state: father, setState: setFather, key: "father" },
+            { title: "Mãe", state: mother, setState: setMother, key: "mother" },
+          ].map(({ title, state, setState, key }) => (
+            <div key={key} className="mb-5 last:mb-0">
+              <h5 className="text-xs font-bold text-secondary uppercase tracking-wider mb-3">{title}</h5>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <FormField
+                  label={`Nome do ${title.toLowerCase()} *`}
+                  placeholder={`Nome completo do ${title.toLowerCase()}`}
+                  mask="name"
+                  value={state.full_name}
+                  onChange={(e: any) => setState((p: any) => ({ ...p, full_name: e.target.value }))}
+                />
+                <FormField
+                  label="CPF"
+                  placeholder="000.000.000-00"
+                  mask="cpf"
+                  value={state.cpf}
+                  onChange={(e: any) => setState((p: any) => ({ ...p, cpf: e.target.value }))}
+                />
+                <FormField
+                  label="Telefone"
+                  placeholder="(00) 00000-0000"
+                  mask="phone"
+                  value={state.phone}
+                  onChange={(e: any) => setState((p: any) => ({ ...p, phone: e.target.value }))}
+                />
+                <FormField
+                  label="E-mail"
+                  placeholder="email@exemplo.com"
+                  mask="email"
+                  value={state.email}
+                  onChange={(e: any) => setState((p: any) => ({ ...p, email: e.target.value }))}
+                />
+              </div>
+              <div className="flex flex-wrap gap-4 mt-3">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={state.is_financial}
+                    onChange={(e) => setState((p: any) => ({ ...p, is_financial: e.target.checked }))}
+                    className="w-4 h-4 rounded border-border text-secondary focus:ring-secondary"
+                  />
+                  <span className="text-sm text-primary">Responsável financeiro</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={state.is_pedagogical}
+                    onChange={(e) => setState((p: any) => ({ ...p, is_pedagogical: e.target.checked }))}
+                    className="w-4 h-4 rounded border-border text-secondary focus:ring-secondary"
+                  />
+                  <span className="text-sm text-primary">Responsável pedagógico</span>
+                </label>
+              </div>
+            </div>
           ))}
         </div>
-      </div>
+
+        {/* Checklist de documentos */}
+        <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-sm font-bold text-primary">Documentos de Matrícula</h4>
+            {missingRequired.length > 0 && (
+              <span className="text-xs font-bold text-destructive">
+                {missingRequired.length} obrigatório(s) pendente(s)
+              </span>
+            )}
+          </div>
+          <div className="space-y-2">
+            {docChecklist.map((d) => (
+              <label key={d.key} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-accent/30 transition-colors cursor-pointer">
+                <input type="checkbox" checked={!!docs[d.key]} onChange={() => toggleDoc(d.key)} className="w-4 h-4 rounded border-border text-secondary focus:ring-secondary" />
+                <span className="text-sm text-primary font-medium flex-1">{d.label}</span>
+                {d.obrigatorio ? (
+                  <span className="text-[10px] font-bold text-warning-foreground bg-warning/15 px-2 py-0.5 rounded-full">Obrigatório</span>
+                ) : (
+                  <span className="text-[10px] font-bold text-muted-foreground bg-accent px-2 py-0.5 rounded-full">Opcional</span>
+                )}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Botões finais — único ponto de submit */}
+        <div className="flex items-center gap-3 pt-2">
+          <button
+            type="submit"
+            disabled={loading}
+            className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground px-5 py-2.5 rounded-[14px] font-bold text-sm hover:bg-secondary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <i className={loading ? "ri-loader-4-line animate-spin" : "ri-check-line"} />
+            {loading ? "Salvando..." : "Salvar"}
+          </button>
+          <Link to="/admin/alunos" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[14px] font-bold text-sm border border-border hover:bg-accent transition-colors text-muted-foreground">
+            Cancelar
+          </Link>
+        </div>
+      </form>
 
       <GuardianFormModal
         open={guardianModalOpen}
