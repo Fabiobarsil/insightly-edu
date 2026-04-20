@@ -744,6 +744,14 @@ const StudentsCreate = () => {
           setForm((prev) => ({ ...prev, guardian_id: guardian.id }));
         }}
       />
+
+      {/* Modal para completar dados do pai/mãe quando endereço é diferente */}
+      <GuardianFormModal
+        open={!!editGuardianRel}
+        onOpenChange={(o) => { if (!o) setEditGuardianRel(null); }}
+        schoolId={schoolId}
+        guardianId={editGuardianRel === "pai" ? father.id : editGuardianRel === "mae" ? mother.id : null}
+      />
     </AppLayout>
   );
 };
