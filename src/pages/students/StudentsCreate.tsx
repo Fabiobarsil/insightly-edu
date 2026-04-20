@@ -160,9 +160,6 @@ const StudentsCreate = () => {
       setExistingPhotoUrl(s.photo_url);
       setPhotoPreview(s.photo_url);
     }
-      setExistingPhotoUrl(s.photo_url);
-      setPhotoPreview(s.photo_url);
-    }
 
     const linkedGuardians = (studentData.links || [])
       .map((l: any) => l.guardians)
