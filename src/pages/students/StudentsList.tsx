@@ -106,7 +106,6 @@ const StudentsList = () => {
           searchPlaceholder="Buscar aluno..."
           actions={(row) => [
             { label: "Ver", icon: "ri-eye-line", to: `/admin/alunos/${row.id}` },
-            { label: "Editar", icon: "ri-pencil-line", to: `/admin/alunos/${row.id}/editar` },
           ]}
         />
       )}
