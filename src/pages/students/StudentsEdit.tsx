@@ -195,6 +195,14 @@ const StudentsEdit = () => {
               { value: "incompleto", label: "Incompleto" },
               { value: "irregular", label: "Irregular" },
             ]} value={form.status || "ativo"} onChange={set("status")} />
+            {modalityOptions.length > 0 && (
+              <FormField
+                label="Modalidade"
+                options={[{ value: "", label: "Selecionar..." }, ...modalityOptions.map((m) => ({ value: m.value, label: m.label }))]}
+                value={form.modality || ""}
+                onChange={set("modality")}
+              />
+            )}
           </div>
 
           <div className="mt-6">
