@@ -173,12 +173,12 @@ const StudentsEdit = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField label="Nome Completo" value={form.full_name || ""} onChange={set("full_name")} />
+            <FormField label="Nome Completo" mask="name" value={form.full_name || ""} onChange={set("full_name")} />
             <FormField label="Data de Nascimento" type="date" value={form.birth_date || ""} onChange={set("birth_date")} />
-            <FormField label="CPF" placeholder="000.000.000-00" value={form.cpf || ""} onChange={set("cpf")} />
-            <FormField label="RG" placeholder="Número do RG" value={form.rg || ""} onChange={set("rg")} />
-            <FormField label="E-mail" placeholder="email@exemplo.com" value={form.email || ""} onChange={set("email")} />
-            <FormField label="Telefone" placeholder="(00) 00000-0000" value={form.phone || ""} onChange={set("phone")} />
+            <FormField label="CPF" placeholder="000.000.000-00" mask="cpf" value={form.cpf || ""} onChange={set("cpf")} />
+            <FormField label="RG" placeholder="Número do RG" mask="rg" value={form.rg || ""} onChange={set("rg")} />
+            <FormField label="E-mail" placeholder="email@exemplo.com" mask="email" value={form.email || ""} onChange={set("email")} />
+            <FormField label="Telefone" placeholder="(00) 00000-0000" mask="phone" value={form.phone || ""} onChange={set("phone")} />
             <FormField label="Tipo Sanguíneo" options={[
               { value: "A+", label: "A+" }, { value: "A-", label: "A-" },
               { value: "B+", label: "B+" }, { value: "B-", label: "B-" },
@@ -208,12 +208,12 @@ const StudentsEdit = () => {
           <div className="mt-6">
             <h3 className="text-sm font-bold text-primary mb-3">Endereço</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField label="CEP" placeholder="00000-000" value={form.zip_code || ""} onChange={handleZipChange} />
-              <FormField label="Rua" placeholder="Nome da rua" value={form.address || ""} onChange={set("address")} />
+              <FormField label="CEP" placeholder="00000-000" mask="cep" value={form.zip_code || ""} onChange={handleZipChange} />
+              <FormField label="Rua" placeholder="Nome da rua" mask="name" value={form.address || ""} onChange={set("address")} />
               <FormField label="Número" placeholder="Nº" value={form.number || ""} onChange={set("number")} />
               <FormField label="Complemento" placeholder="Apto, Bloco..." value={form.complement || ""} onChange={set("complement")} />
-              <FormField label="Bairro" placeholder="Bairro" value={form.district || ""} onChange={set("district")} />
-              <FormField label="Cidade" placeholder="Cidade" value={form.city || ""} onChange={set("city")} />
+              <FormField label="Bairro" placeholder="Bairro" mask="name" value={form.district || ""} onChange={set("district")} />
+              <FormField label="Cidade" placeholder="Cidade" mask="name" value={form.city || ""} onChange={set("city")} />
               <FormField label="Estado" placeholder="UF" value={form.state || ""} onChange={set("state")} />
             </div>
           </div>
