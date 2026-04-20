@@ -48,6 +48,27 @@ const StudentsEdit = () => {
     enabled: !!schoolId,
   });
 
+  const { data: school } = useQuery({
+    queryKey: ["school-modalities", schoolId],
+    queryFn: async () => {
+      if (!schoolId) return null;
+      const { data } = await supabase
+        .from("schools")
+        .select("offers_ensino_fundamental, offers_ensino_medio, offers_eja, offers_curso_tecnico")
+        .eq("id", schoolId)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!schoolId,
+  });
+
+  const modalityOptions = [
+    { value: "ensino_fundamental", label: "Ensino Fundamental", enabled: (school as any)?.offers_ensino_fundamental ?? false },
+    { value: "ensino_medio", label: "Ensino Médio", enabled: (school as any)?.offers_ensino_medio ?? true },
+    { value: "eja", label: "Educação de Jovens e Adultos (EJA)", enabled: (school as any)?.offers_eja ?? false },
+    { value: "curso_tecnico", label: "Curso Técnico", enabled: (school as any)?.offers_curso_tecnico ?? false },
+  ].filter((m) => m.enabled);
+
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((prev: any) => ({ ...prev, [key]: e.target.value }));
 
