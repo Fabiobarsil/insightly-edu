@@ -133,6 +133,8 @@ const StudentsCreate = () => {
       modality: s.modality || "",
       enrollment_type: (studentData.enrollment as any)?.notes || "matricula",
       blood_type: s.blood_type || "",
+      status: s.status || "ativo",
+      notes: s.notes || "",
     });
     if (s.photo_url) {
       setExistingPhotoUrl(s.photo_url);
