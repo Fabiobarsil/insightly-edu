@@ -121,7 +121,7 @@ const App = () => (
             <Route path="/admin/alunos/novo" element={<RoleRoute allowedRoles={["admin"]}><StudentsCreate /></RoleRoute>} />
             <Route path="/admin/alunos/:id" element={<RoleRoute allowedRoles={["admin"]}><StudentsDetail /></RoleRoute>} />
             {/* Edição centralizada na Secretaria — redireciona */}
-            <Route path="/admin/alunos/:id/editar" element={<Navigate to="../../secretaria/matricula/:id" replace />} />
+            <Route path="/admin/alunos/:id/editar" element={<StudentEditRedirect />} />
             <Route path="/admin/alunos/:id/prontuario" element={<RoleRoute allowedRoles={["admin"]}><StudentRecord /></RoleRoute>} />
             <Route path="/admin/responsaveis" element={<RoleRoute allowedRoles={["admin"]}><GuardiansList /></RoleRoute>} />
             <Route path="/admin/responsaveis/novo" element={<RoleRoute allowedRoles={["admin"]}><GuardiansCreate /></RoleRoute>} />
