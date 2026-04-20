@@ -129,6 +129,7 @@ const StudentsEdit = () => {
         zip_code: form.zip_code || null,
         complement: form.complement || null,
         enrollment_number: form.enrollment_number || null,
+        modality: form.modality || null,
         notes: form.notes || null,
       } as any).eq("id", id!);
       if (error) throw error;
