@@ -1439,6 +1439,7 @@ export type Database = {
           name: string
           offers_curso_tecnico: boolean
           offers_eja: boolean
+          offers_ensino_fundamental: boolean
           offers_ensino_medio: boolean
         }
         Insert: {
@@ -1455,6 +1456,7 @@ export type Database = {
           name: string
           offers_curso_tecnico?: boolean
           offers_eja?: boolean
+          offers_ensino_fundamental?: boolean
           offers_ensino_medio?: boolean
         }
         Update: {
@@ -1471,6 +1473,7 @@ export type Database = {
           name?: string
           offers_curso_tecnico?: boolean
           offers_eja?: boolean
+          offers_ensino_fundamental?: boolean
           offers_ensino_medio?: boolean
         }
         Relationships: []
