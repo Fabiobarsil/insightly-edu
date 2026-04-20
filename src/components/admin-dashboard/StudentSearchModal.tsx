@@ -41,26 +41,29 @@ const StudentSearchModal = ({ open, onOpenChange }: StudentSearchModalProps) => 
         .order("created_at", { ascending: false })
         .limit(1000);
       if (error) throw error;
-      return data || [];
+      return (data || []).map((s: any) => {
+        const cls = Array.isArray(s.classes) ? s.classes[0] : s.classes;
+        return { ...s, _class_name: cls?.name || "", _grade: cls?.grade || "", _shift: cls?.shift || "" };
+      });
     },
     enabled: !!schoolId && open,
   });
 
   const classOptions = useMemo(() => {
     const map = new Map<string, string>();
-    students.forEach((s: any) => { if (s.class_id && s.classes?.name) map.set(s.class_id, s.classes.name); });
+    students.forEach((s: any) => { if (s.class_id && s._class_name) map.set(s.class_id, s._class_name); });
     return Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1]));
   }, [students]);
 
   const gradeOptions = useMemo(() => {
     const set = new Set<string>();
-    students.forEach((s: any) => { if (s.classes?.grade) set.add(s.classes.grade); });
+    students.forEach((s: any) => { if (s._grade) set.add(s._grade); });
     return Array.from(set).sort();
   }, [students]);
 
   const shiftOptions = useMemo(() => {
     const set = new Set<string>();
-    students.forEach((s: any) => { if (s.classes?.shift) set.add(s.classes.shift); });
+    students.forEach((s: any) => { if (s._shift) set.add(s._shift); });
     return Array.from(set).sort();
   }, [students]);
 
@@ -69,8 +72,8 @@ const StudentSearchModal = ({ open, onOpenChange }: StudentSearchModalProps) => 
     return students.filter((s: any) => {
       if (q && !s.full_name?.toLowerCase().includes(q)) return false;
       if (classFilter && s.class_id !== classFilter) return false;
-      if (gradeFilter && s.classes?.grade !== gradeFilter) return false;
-      if (shiftFilter && s.classes?.shift !== shiftFilter) return false;
+      if (gradeFilter && s._grade !== gradeFilter) return false;
+      if (shiftFilter && s._shift !== shiftFilter) return false;
       return true;
     });
   }, [students, query, classFilter, gradeFilter, shiftFilter]);
@@ -176,9 +179,9 @@ const StudentSearchModal = ({ open, onOpenChange }: StudentSearchModalProps) => 
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-foreground truncate">{s.full_name}</p>
                         <p className="text-xs text-muted-foreground truncate">
-                          {s.classes?.name || "Sem turma"}
-                          {s.classes?.grade ? ` · ${s.classes.grade}` : ""}
-                          {s.classes?.shift ? ` · ${s.classes.shift}` : ""}
+                          {s._class_name || "Sem turma"}
+                          {s._grade ? ` · ${s._grade}` : ""}
+                          {s._shift ? ` · ${s._shift}` : ""}
                         </p>
                       </div>
                     </button>

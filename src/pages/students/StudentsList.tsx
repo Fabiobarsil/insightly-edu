@@ -32,17 +32,20 @@ const StudentsList = () => {
         .eq("school_id", schoolId)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data || []).map((s: any) => ({
-        id: s.id,
-        full_name: s.full_name,
-        photo_url: s.photo_url,
-        class_id: s.class_id,
-        class_name: s.classes?.name || "—",
-        grade: s.classes?.grade || "—",
-        shift: s.classes?.shift || "—",
-        birth_date: s.birth_date || "—",
-        status: s.status || "ativo",
-      }));
+      return (data || []).map((s: any) => {
+        const cls = Array.isArray(s.classes) ? s.classes[0] : s.classes;
+        return {
+          id: s.id,
+          full_name: s.full_name,
+          photo_url: s.photo_url,
+          class_id: s.class_id,
+          class_name: cls?.name || "—",
+          grade: cls?.grade || "—",
+          shift: cls?.shift || "—",
+          birth_date: s.birth_date || "—",
+          status: s.status || "ativo",
+        };
+      });
     },
     enabled: !!schoolId,
   });
