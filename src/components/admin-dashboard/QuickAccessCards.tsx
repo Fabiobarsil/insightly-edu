@@ -107,6 +107,8 @@ const QuickAccessCards = ({ onNewRequest }: QuickAccessCardsProps) => {
           </div>
         </SheetContent>
       </Sheet>
+
+      <StudentSearchModal open={searchOpen} onOpenChange={setSearchOpen} />
     </>
   );
 };
