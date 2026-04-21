@@ -144,7 +144,13 @@ const StudentsCreate = () => {
         .limit(1)
         .maybeSingle();
 
-      return { student, links: linksWithGuardians, enrollment };
+      // Documentos do aluno (checklist)
+      const { data: studentDocs } = await supabase
+        .from("student_documents")
+        .select("document_type, status")
+        .eq("student_id", studentIdParam);
+
+      return { student, links: linksWithGuardians, enrollment, studentDocs: studentDocs || [] };
     },
     enabled: isEdit && !!studentIdParam,
   });
