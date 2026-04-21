@@ -23,7 +23,7 @@ const StudentsEdit = () => {
   const { isLoading } = useQuery({
     queryKey: ["student", id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("student_enrollments").select("*").eq("id", id!).maybeSingle();
+      const { data, error } = await supabase.from("students").select("*").eq("id", id!).maybeSingle();
       if (error) throw error;
       if (data) {
         setForm(data);
