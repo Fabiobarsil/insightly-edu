@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
 import { FileDown, Eye, Plus, Pencil, Award, Search } from "lucide-react";
+import { DocumentLayout } from "@/lib/documentLayout";
 import { toast } from "sonner";
 import StatusBadge from "@/components/shared/StatusBadge";
 import html2pdf from "html2pdf.js";
-import CertificadoTemplate from "./CertificadoTemplate";
 
 interface CertificadoModalProps {
   open: boolean;
@@ -312,9 +312,9 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
 
     html2pdf()
       .set({
-        margin: 0,
+        margin: [8, 8, 8, 8],
         filename: `certificado-${nomeArquivo}.pdf`,
-        image: { type: "jpeg", quality: 1 },
+        image: { type: "jpeg", quality: 0.98 },
         html2canvas: {
           scale: 2,
           useCORS: true,
@@ -325,6 +325,7 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
           format: [1123, 794],
           orientation: "landscape",
         },
+        pagebreak: { mode: ["css"] },
       })
       .from(el)
       .save();
@@ -678,15 +679,25 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
                 <FileDown className="h-4 w-4 mr-2" /> Exportar PDF
               </Button>
             </div>
-            <div className="flex justify-center overflow-auto bg-muted p-4">
-              <div style={{ transform: "scale(0.7)", transformOrigin: "top center" }}>
-                <div id="certificado-pdf">
-                  <CertificadoPreviewContent
-                    studentId={selectedStudentId}
-                    school={school}
-                    signatures={signatures}
-                    schoolId={schoolId}
-                  />
+            <div className="flex justify-center overflow-auto bg-gray-200">
+                <div style={{ transform: "scale(0.7)", transformOrigin: "top center" }}>
+              <div id="certificado-pdf">
+                {/* PÁGINA 1 */}
+                <div className="pdf-page">
+                  <CertificadoTemplate student={selectedStudent} school={school} />
+                </div>
+
+                {/* PÁGINA 2 (VERSO SIMPLES POR ENQUANTO) */}
+                <div
+                  className="pdf-page"
+                  style={{
+                    width: "1123px",
+                    height: "794px",
+                    background: "#fff",
+                    padding: "40px",
+                  }}
+                >
+                  <h2 style={{ textAlign: "center" }}>VERSO DO CERTIFICADO</h2>
                 </div>
               </div>
             </div>
@@ -787,162 +798,5 @@ const UF_OPTIONS = [
   "SE",
   "TO",
 ].map((uf) => ({ value: uf, label: uf }));
-
-// ===== Preview content (busca dados reais e monta template) =====
-function CertificadoPreviewContent({
-  studentId,
-  school,
-  signatures,
-  schoolId,
-}: {
-  studentId: string;
-  school: any;
-  signatures: any;
-  schoolId: string | null;
-}) {
-  const { data: student } = useQuery({
-    queryKey: ["cert-preview-student", studentId],
-    queryFn: async () => {
-      const { data } = await supabase.from("students").select("*").eq("id", studentId).maybeSingle();
-      return data;
-    },
-    enabled: !!studentId,
-  });
-
-  const { data: cert } = useQuery({
-    queryKey: ["cert-preview-cert", studentId, schoolId],
-    queryFn: async () => {
-      if (!schoolId) return null;
-      const { data } = await supabase
-        .from("student_certificates")
-        .select("*")
-        .eq("student_id", studentId)
-        .eq("school_id", schoolId)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!studentId && !!schoolId,
-  });
-
-  const { data: guardiansLink = [] } = useQuery({
-    queryKey: ["cert-preview-guardians", studentId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("student_guardians")
-        .select("guardian_id, guardians(full_name, relationship_type, gender)")
-        .eq("student_id", studentId);
-      return data || [];
-    },
-    enabled: !!studentId,
-  });
-
-  const { data: subjects = [] } = useQuery({
-    queryKey: ["cert-preview-subjects", schoolId],
-    queryFn: async () => {
-      if (!schoolId) return [];
-      const { data } = await supabase.from("subjects").select("name").eq("school_id", schoolId).order("name");
-      return data || [];
-    },
-    enabled: !!schoolId,
-  });
-
-  // Extrair pai/mãe
-  const findGuardian = (predicates: ((g: any) => boolean)[]) => {
-    for (const p of predicates) {
-      const found = (guardiansLink as any[]).find((gl) => gl.guardians && p(gl.guardians));
-      if (found) return found.guardians.full_name as string;
-    }
-    return "";
-  };
-
-  const motherName = findGuardian([
-    (g) => /m[ãa]e/i.test(g.relationship_type || ""),
-    (g) => (g.gender || "").toLowerCase().startsWith("f"),
-  ]);
-  const fatherName = findGuardian([
-    (g) => /pai/i.test(g.relationship_type || ""),
-    (g) => (g.gender || "").toLowerCase().startsWith("m"),
-  ]);
-
-  // Cabeçalho institucional (estado por extenso)
-  const ufNomes: Record<string, string> = {
-    AC: "ESTADO DO ACRE",
-    AL: "ESTADO DE ALAGOAS",
-    AP: "ESTADO DO AMAPÁ",
-    AM: "ESTADO DO AMAZONAS",
-    BA: "ESTADO DA BAHIA",
-    CE: "ESTADO DO CEARÁ",
-    DF: "DISTRITO FEDERAL",
-    ES: "ESTADO DO ESPÍRITO SANTO",
-    GO: "ESTADO DE GOIÁS",
-    MA: "ESTADO DO MARANHÃO",
-    MT: "ESTADO DO MATO GROSSO",
-    MS: "ESTADO DO MATO GROSSO DO SUL",
-    MG: "ESTADO DE MINAS GERAIS",
-    PA: "ESTADO DO PARÁ",
-    PB: "ESTADO DA PARAÍBA",
-    PR: "ESTADO DO PARANÁ",
-    PE: "ESTADO DE PERNAMBUCO",
-    PI: "ESTADO DO PIAUÍ",
-    RJ: "ESTADO DO RIO DE JANEIRO",
-    RN: "ESTADO DO RIO GRANDE DO NORTE",
-    RS: "ESTADO DO RIO GRANDE DO SUL",
-    RO: "ESTADO DE RONDÔNIA",
-    RR: "ESTADO DE RORAIMA",
-    SC: "ESTADO DE SANTA CATARINA",
-    SP: "ESTADO DE SÃO PAULO",
-    SE: "ESTADO DE SERGIPE",
-    TO: "ESTADO DO TOCANTINS",
-  };
-
-  const stateUf = (cert?.state || (school as any)?.state || "").toUpperCase();
-  const stateUfLong = ufNomes[stateUf] || "";
-
-  const data = {
-    // Aluno
-    full_name: student?.full_name,
-    cpf: student?.cpf,
-    rg: student?.rg,
-    birth_date: student?.birth_date,
-    birth_city: (student as any)?.city,
-    birth_state: (student as any)?.state,
-    mother_name: motherName,
-    father_name: fatherName,
-
-    // Escola / cabeçalho
-    school_name: cert?.institution_name || school?.name,
-    school_address: (school as any)?.address,
-    school_maintainer: (school as any)?.maintainer || "",
-    school_authorization: (school as any)?.mec_authorization_code
-      ? `Portaria/Autorização: ${(school as any).mec_authorization_code}`
-      : "",
-    state_uf_long: stateUfLong,
-
-    // Certificado
-    modality: cert?.course_name,
-    education_type: (school as any)?.education_type,
-    year: cert?.completion_year || student?.academic_year,
-    workload_hours: cert?.workload_hours,
-    city: cert?.city,
-    state: cert?.state,
-    issue_date: cert?.issue_date,
-
-    // Assinaturas
-    director: cert?.director_name || signatures?.diretor?.nome || (school as any)?.director_name || "",
-    secretary: cert?.secretary_name || signatures?.secretario?.nome || "",
-
-    // Verso
-    establishment: cert?.establishment || school?.name,
-    previous_course: "",
-    registry_number: cert?.registry_number,
-    registry_book: cert?.registry_book,
-    registry_page: cert?.registry_page,
-    additional_skills: cert?.additional_skills,
-    notes: cert?.notes,
-    subjects: (subjects as any[]).map((s) => ({ name: s.name, hours: "" })),
-  };
-
-  return <CertificadoTemplate data={data} />;
-}
 
 export default CertificadoModal;
