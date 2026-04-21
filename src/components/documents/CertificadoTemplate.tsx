@@ -53,7 +53,6 @@ export default function CertificadoTemplate({ data }: Props) {
         fontFamily: "'Times New Roman', serif",
         color: "#0f2a44",
         overflow: "hidden",
-        pageBreakInside: "avoid",
       }}
     >
       {/* FUNDO */}
