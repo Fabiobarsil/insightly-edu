@@ -14,6 +14,39 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import TeacherRegistrationTab from "@/components/settings/TeacherRegistrationTab";
 import TemplatesTab from "@/components/settings/TemplatesTab";
 import SignaturesTab from "@/components/settings/SignaturesTab";
+import { fetchAddressByCEP } from "@/utils/cep";
+
+const UF_LIST = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
+
+// Serializa partes em uma única string (compatível com a coluna address existente)
+function composeAddress(parts: { street: string; number: string; district: string; city: string; state: string; zip: string }) {
+  const { street, number, district, city, state, zip } = parts;
+  const left = [street, number].filter(Boolean).join(", ");
+  const middle = [left, district].filter(Boolean).join(" - ");
+  const cityUf = [city, state].filter(Boolean).join(" - ");
+  const right = [middle, cityUf].filter(Boolean).join(", ");
+  return [right, zip].filter(Boolean).join(", ");
+}
+
+// Parse reverso da string única para os campos individuais
+function parseAddress(addr: string) {
+  const empty = { street: "", number: "", district: "", city: "", state: "", zip: "" };
+  if (!addr) return empty;
+  const cepMatch = addr.match(/(\d{5}-?\d{3})\s*$/);
+  const zip = cepMatch?.[1] || "";
+  const withoutZip = (cepMatch ? addr.slice(0, addr.lastIndexOf(cepMatch[1])).replace(/,\s*$/, "") : addr).trim();
+  const cityUfMatch = withoutZip.match(/,\s*([^,]+?)\s*-\s*([A-Z]{2})\s*$/);
+  const city = cityUfMatch?.[1]?.trim() || "";
+  const state = cityUfMatch?.[2]?.trim() || "";
+  const beforeCity = (cityUfMatch ? withoutZip.slice(0, withoutZip.lastIndexOf(cityUfMatch[0])) : withoutZip).trim();
+  const districtMatch = beforeCity.match(/\s-\s([^,-]+)$/);
+  const district = districtMatch?.[1]?.trim() || "";
+  const beforeDistrict = (districtMatch ? beforeCity.slice(0, beforeCity.lastIndexOf(districtMatch[0])) : beforeCity).trim();
+  const parts = beforeDistrict.split(",").map((p) => p.trim()).filter(Boolean);
+  const street = parts[0] || "";
+  const number = parts[1] || "";
+  return { street, number, district, city, state, zip };
+}
 
 const tabs = [
   { id: "escola", label: "Dados da Escola", icon: "ri-building-line" },
