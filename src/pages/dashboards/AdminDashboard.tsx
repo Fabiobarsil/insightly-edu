@@ -4,6 +4,7 @@ import OperationalMetrics from "@/components/admin-dashboard/OperationalMetrics"
 import SecretaryWorkQueue from "@/components/admin-dashboard/SecretaryWorkQueue";
 import SecretarySmartAlerts from "@/components/admin-dashboard/SecretarySmartAlerts";
 import QuickActionsPanel from "@/components/admin-dashboard/QuickActionsPanel";
+import QuickOverview from "@/components/admin-dashboard/QuickOverview";
 import AdminAgenda from "@/components/admin-dashboard/AdminAgenda";
 
 const AdminDashboard = () => {
@@ -28,6 +29,9 @@ const AdminDashboard = () => {
           <div className="flex flex-col gap-6 min-w-0">
             {/* BLOCO 1 — Cards Operacionais */}
             <OperationalMetrics />
+
+            {/* Visão Rápida (amostragem) */}
+            <QuickOverview />
 
             {/* BLOCO 2 — Fila de Trabalho */}
             <SecretaryWorkQueue
