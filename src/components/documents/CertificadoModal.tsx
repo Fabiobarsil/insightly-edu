@@ -301,7 +301,7 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
   };
 
   const handleGerarPDF = () => {
-    const el = document.getElementById("certificado-modal-preview");
+    const el = document.getElementById("certificado-pdf");
     if (!el) {
       console.error("Preview do certificado não encontrado");
       return;
