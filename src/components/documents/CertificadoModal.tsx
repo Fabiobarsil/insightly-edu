@@ -695,14 +695,14 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
                 </div>
 
                 {/* PÁGINA 2 (VERSO SIMPLES POR ENQUANTO) */}
-                <div
-                  className="pdf-page"
+                <div className="pdf-page">
+                  <div
                   style={{
                     width: "1123px",
                     height: "794px",
                     background: "#fff",
                     padding: "20px",
-boxSizing: "border-box",
+                    boxSizing: "border-box",
                   }}
                 >
                   <h2 style={{ textAlign: "center" }}>VERSO DO CERTIFICADO</h2>
