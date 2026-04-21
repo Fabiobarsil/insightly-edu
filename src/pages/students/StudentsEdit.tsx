@@ -72,8 +72,8 @@ const StudentsEdit = () => {
         .select(
           `
           *,
-          students (*),
-          classes (id, name)
+          students:fk_enrollment_student (*),
+          classes:fk_enrollment_class (id, name)
         `,
         )
         .eq("id", id!)
@@ -82,15 +82,19 @@ const StudentsEdit = () => {
       if (error) throw error;
 
       if (data) {
+        const studentRel: any = Array.isArray((data as any).students)
+          ? (data as any).students[0]
+          : (data as any).students;
+
         setForm({
-          ...data.students,
+          ...(studentRel || {}),
           class_id: data.class_id,
           academic_year: data.academic_year,
           enrollment_id: data.id,
         });
 
-        if (data.students?.photo_url) {
-          setPhotoPreview(data.students.photo_url);
+        if (studentRel?.photo_url) {
+          setPhotoPreview(studentRel.photo_url);
         }
       }
 
