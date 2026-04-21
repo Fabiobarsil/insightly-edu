@@ -681,32 +681,12 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
             <div className="flex justify-center overflow-auto bg-muted p-4">
               <div style={{ transform: "scale(0.7)", transformOrigin: "top center" }}>
                 <div id="certificado-pdf">
-                  {/* PÁGINA 1 - FRENTE */}
-                  <div className="pdf-page">
-                    <CertificadoTemplate
-                      data={{
-                        full_name: selectedStudent?.full_name,
-                        school_name: school?.name,
-                        education_type: (school as any)?.education_type,
-                        year: selectedStudent?.academic_year,
-                        director: school?.director_name || "",
-                        secretary: "",
-                      }}
-                    />
-                  </div>
-
-                  {/* PÁGINA 2 - VERSO */}
-                  <div
-                    className="pdf-page"
-                    style={{
-                      width: "1123px",
-                      height: "794px",
-                      background: "#fff",
-                      padding: "40px",
-                    }}
-                  >
-                    <h2 style={{ textAlign: "center" }}>VERSO DO CERTIFICADO</h2>
-                  </div>
+                  <CertificadoPreviewContent
+                    studentId={selectedStudentId}
+                    school={school}
+                    signatures={signatures}
+                    schoolId={schoolId}
+                  />
                 </div>
               </div>
             </div>
