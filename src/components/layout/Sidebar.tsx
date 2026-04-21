@@ -28,7 +28,7 @@ const Sidebar = () => (
       </div>
     </div>
 
-    <nav className="flex-1 p-4 px-[10px] overflow-auto">
+    <nav className="flex-1 p-4 px-[10px] overflow-hidden">
       {navItems.map((item) => (
         <NavLink
           key={item.label}

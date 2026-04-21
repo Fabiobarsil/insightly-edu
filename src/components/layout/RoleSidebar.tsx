@@ -63,7 +63,7 @@ const RoleSidebar = () => {
         </div>
       </div>
 
-      <nav className="flex-1 p-4 px-[10px] overflow-auto">
+      <nav className="flex-1 p-4 px-[10px] overflow-hidden">
         {items.map((item) => (
           <NavLink
             key={item.to}
