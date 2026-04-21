@@ -312,20 +312,19 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
 
     html2pdf()
       .set({
-        margin: [8, 8, 8, 8],
+        margin: 0,
         filename: `certificado-${nomeArquivo}.pdf`,
-        image: { type: "jpeg", quality: 0.98 },
+        image: { type: "jpeg", quality: 1 },
         html2canvas: {
           scale: 2,
           useCORS: true,
           backgroundColor: "#ffffff",
         },
         jsPDF: {
-          unit: "mm",
-          format: "a4",
+          unit: "px",
+          format: [1123, 794],
           orientation: "landscape",
         },
-        pagebreak: { mode: ["avoid-all", "css", "legacy"] },
       })
       .from(el)
       .save();
