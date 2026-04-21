@@ -668,31 +668,16 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
         )}
 
         {/* ===== PREVIEW VIEW ===== */}
-        {view === "preview" && selectedStudent && (
-          <div className="flex-1 overflow-auto px-6 pb-6">
-            <div className="flex items-center justify-between mt-4 mb-4">
-              <Button variant="ghost" size="sm" onClick={() => setView("list")}>
-                ← Voltar
-              </Button>
-              <Button onClick={handleGerarPDF} size="sm">
-                <FileDown className="h-4 w-4 mr-2" /> Exportar PDF
-              </Button>
-            </div>
-            <div className="flex justify-center overflow-auto">
-              <div id="certificado-modal-preview">
-                <CertificadoTemplate
-                  data={{
-                    full_name: selectedStudent?.full_name,
-                    school_name: form.institution_name || school?.name,
-                    education_type: (school as any)?.education_type,
-                    year: form.completion_year,
-                    director: form.director_name || school?.director_name || "",
-                    secretary: form.secretary_name || "",
-                  }}
-                />
-              </div>
-            </div>
-          </div>
+        {view === "preview" && selectedStudentId && (
+          <CertificadoPreview
+            studentId={selectedStudentId}
+            schoolId={schoolId}
+            cert={certByStudent[selectedStudentId]}
+            school={school}
+            signatures={signatures}
+            onBack={() => setView("list")}
+            onExport={handleGerarPDF}
+          />
         )}
       </DialogContent>
     </Dialog>
