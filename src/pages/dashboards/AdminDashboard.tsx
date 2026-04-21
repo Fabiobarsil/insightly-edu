@@ -6,6 +6,7 @@ import SecretarySmartAlerts from "@/components/admin-dashboard/SecretarySmartAle
 import QuickActionsPanel from "@/components/admin-dashboard/QuickActionsPanel";
 import QuickOverview from "@/components/admin-dashboard/QuickOverview";
 import AdminAgenda from "@/components/admin-dashboard/AdminAgenda";
+import SecretaryHealthSummary from "@/components/admin-dashboard/SecretaryHealthSummary";
 
 const AdminDashboard = () => {
   const [refreshKey, setRefreshKey] = useState(0);
@@ -36,14 +37,19 @@ const AdminDashboard = () => {
               onExternalModalChange={setModalOpen}
             />
 
-            {/* BLOCO 3 — Visão Rápida (secundário, gráficos compactos) */}
+            {/* BLOCO 3 — Alertas da Secretaria (compacto, full width) */}
+            <SecretarySmartAlerts />
+
+            {/* BLOCO 4 — Visão Rápida (secundário, gráficos compactos) */}
             <QuickOverview />
+
+            {/* BLOCO 5 — Saúde da Secretaria (resumo discreto) */}
+            <SecretaryHealthSummary />
           </div>
 
           {/* Coluna lateral — cresce junto com a página, sem scroll interno */}
           <aside className="flex flex-col gap-4" id="agenda-section">
             <QuickActionsPanel onNewRequest={() => setModalOpen(true)} />
-            <SecretarySmartAlerts />
             <AdminAgenda />
             <div className="bg-muted/20 border border-border/30 rounded-lg px-3 py-2">
               <p className="text-[11px] text-muted-foreground leading-relaxed truncate">
