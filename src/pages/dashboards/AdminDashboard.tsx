@@ -39,15 +39,23 @@ const AdminDashboard = () => {
               onExternalModalChange={setModalOpen}
             />
 
-            {/* BLOCO 4 — Alertas + Agenda lado a lado */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6" id="agenda-section">
+            {/* BLOCO 4 — Alertas */}
+            <div id="agenda-section">
               <SecretarySmartAlerts />
-              <AdminAgenda />
             </div>
           </div>
 
-          {/* BLOCO 3 — Painel de Ações Sticky */}
-          <QuickActionsPanel onNewRequest={() => setModalOpen(true)} />
+          {/* BLOCO 3 — Painel lateral: Ações + Agenda + Dica */}
+          <div className="lg:sticky lg:top-4 self-start flex flex-col gap-4">
+            <QuickActionsPanel onNewRequest={() => setModalOpen(true)} />
+            <AdminAgenda />
+            <div className="bg-muted/30 border border-border/40 rounded-xl p-3">
+              <p className="text-[11px] font-semibold text-muted-foreground mb-1">Dica do dia</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                💧 Pausas curtas aumentam o foco. Se possível, beba água e respire por 1 minuto.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </RoleLayout>

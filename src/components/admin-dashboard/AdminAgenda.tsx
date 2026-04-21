@@ -79,7 +79,7 @@ const AdminAgenda = () => {
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
           <CalendarDays className="h-4 w-4 text-muted-foreground" />
-          Minha Agenda
+          Agenda da Secretaria
         </h3>
         {!isFormOpen && (
           <button onClick={() => { setAdding(true); setForm({ time: "", title: "", type: "aula" }); }} className="flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
@@ -109,7 +109,7 @@ const AdminAgenda = () => {
         </div>
       )}
 
-      <div className="flex flex-col gap-2 flex-1 overflow-y-auto max-h-[300px] pr-1">
+      <div className="flex flex-col gap-2 flex-1 overflow-y-auto max-h-[220px] pr-1">
         {items.length === 0 && (
           <p className="text-xs text-muted-foreground text-center py-8">Nenhum evento na agenda</p>
         )}
