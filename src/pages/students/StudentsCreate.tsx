@@ -223,6 +223,13 @@ const StudentsCreate = () => {
       });
     }
     if (outro) setForm((prev) => ({ ...prev, guardian_id: outro.id }));
+
+    // Hidrata checklist de documentos
+    const docsMap: Record<string, boolean> = {};
+    ((studentData as any).studentDocs || []).forEach((d: any) => {
+      if (d.document_type) docsMap[d.document_type] = !!d.status;
+    });
+    setDocs(docsMap);
   }, [studentData]);
 
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
