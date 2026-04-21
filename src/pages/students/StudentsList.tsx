@@ -27,7 +27,6 @@ const StudentsList = () => {
     queryFn: async () => {
       if (!schoolId) return [];
 
-      // 1) Busca matrículas ativas com join relacional em students e classes
       const { data: enrollments, error: enrollError } = await supabase
         .from("student_enrollments")
         .select(`
@@ -46,54 +45,28 @@ const StudentsList = () => {
       if (enrollError) throw enrollError;
 
       const seen = new Set<string>();
-      const fromEnrollments = (enrollments || [])
+      return (enrollments || [])
         .map((e: any) => {
-          const stu = Array.isArray(e.students) ? e.students[0] : e.students;
-          const cls = Array.isArray(e.classes) ? e.classes[0] : e.classes;
-          if (!stu?.id) return null;
-          if (seen.has(stu.id)) return null;
-          seen.add(stu.id);
+          const student = Array.isArray(e.students) ? e.students[0] : e.students;
+          const classData = Array.isArray(e.classes) ? e.classes[0] : e.classes;
+          if (!student?.id || seen.has(student.id)) return null;
+
+          seen.add(student.id);
+
           return {
-            id: stu.id,
-            full_name: stu.full_name,
-            photo_url: stu.photo_url,
+            id: student.id,
+            students: student,
+            full_name: student.full_name,
+            photo_url: student.photo_url,
             class_id: e.class_id,
-            class_name: cls?.name || "—",
-            grade: cls?.grade || "—",
-            shift: cls?.shift || "—",
-            birth_date: stu.birth_date || "—",
-            status: stu.status || "ativo",
+            class_name: classData?.name || "—",
+            grade: classData?.grade || "—",
+            shift: classData?.shift || "—",
+            birth_date: student.birth_date || "—",
+            status: student.status || "ativo",
           };
         })
         .filter(Boolean) as any[];
-
-      // 2) Fallback: garante que alunos sem matrícula também apareçam
-      const { data: extras, error: stuError } = await supabase
-        .from("students")
-        .select("id, full_name, status, birth_date, photo_url, class_id, created_at, classes(name, grade, shift)")
-        .eq("school_id", schoolId)
-        .order("created_at", { ascending: false });
-
-      if (stuError) throw stuError;
-
-      (extras || []).forEach((s: any) => {
-        if (seen.has(s.id)) return;
-        seen.add(s.id);
-        const cls = Array.isArray(s.classes) ? s.classes[0] : s.classes;
-        fromEnrollments.push({
-          id: s.id,
-          full_name: s.full_name,
-          photo_url: s.photo_url,
-          class_id: s.class_id,
-          class_name: cls?.name || "—",
-          grade: cls?.grade || "—",
-          shift: cls?.shift || "—",
-          birth_date: s.birth_date || "—",
-          status: s.status || "ativo",
-        });
-      });
-
-      return fromEnrollments;
     },
     enabled: !!schoolId,
   });
