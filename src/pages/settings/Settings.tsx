@@ -295,9 +295,44 @@ const Settings = () => {
                 <label className="block text-xs font-bold text-muted-foreground mb-1.5">CNPJ</label>
                 <input value={form.cnpj} onChange={handleChange("cnpj")} placeholder="00.000.000/0000-00" className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
               </div>
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-muted-foreground mb-1.5">Endereço Completo</label>
-                <input value={form.address} onChange={handleChange("address")} placeholder="Rua, número, bairro, cidade - UF, CEP" className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+              <div>
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5">CEP</label>
+                <div className="relative">
+                  <input
+                    value={form.zip}
+                    onChange={handleChange("zip")}
+                    onBlur={handleCepBlur}
+                    placeholder="00000-000"
+                    maxLength={9}
+                    className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+                  />
+                  {cepLoading && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">buscando...</span>}
+                </div>
+              </div>
+              <div className="md:col-span-1">
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5">Logradouro</label>
+                <input value={form.street} onChange={handleChange("street")} placeholder="Rua, Avenida..." className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5">Número</label>
+                <input value={form.number} onChange={handleChange("number")} placeholder="123" className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5">Bairro</label>
+                <input value={form.district} onChange={handleChange("district")} placeholder="Centro" className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5">Cidade</label>
+                <input value={form.city} onChange={handleChange("city")} placeholder="Cidade" className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5">Estado (UF)</label>
+                <select value={form.state} onChange={handleChange("state")} className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors">
+                  <option value="">Selecione</option>
+                  {UF_LIST.map((uf) => (
+                    <option key={uf} value={uf}>{uf}</option>
+                  ))}
+                </select>
               </div>
               <div className="md:col-span-2">
                 <label className="block text-xs font-bold text-muted-foreground mb-1.5">Complemento</label>
