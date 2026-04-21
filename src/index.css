@@ -82,6 +82,11 @@
 .pdf-page {
   width: 1123px;
   height: 794px;
+  display: block;
   page-break-after: always;
+  break-after: page;
+}
+
+#certificado-pdf {
   display: block;
 }
