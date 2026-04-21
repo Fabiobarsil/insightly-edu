@@ -152,51 +152,48 @@ const SecretarySmartAlerts = () => {
 
   return (
     <div className="bg-card border border-border/60 rounded-xl overflow-hidden">
-      <div className="p-4 border-b border-border/40 flex items-center justify-between">
+      <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
         <h3 className="text-sm font-bold text-foreground">⚠️ Alertas da Secretaria</h3>
-        <span className="text-[11px] font-semibold text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
+        <span className="text-[11px] font-semibold text-muted-foreground bg-muted px-2.5 py-0.5 rounded-full">
           {alerts.length} alerta(s)
         </span>
       </div>
 
       {alerts.length === 0 ? (
-        <div className="p-8 text-center">
-          <p className="text-sm text-muted-foreground">✓ Nenhum alerta no momento. Operação tranquila.</p>
+        <div className="px-4 py-3">
+          <p className="text-xs text-muted-foreground">✓ Nenhum alerta no momento. Operação tranquila.</p>
         </div>
       ) : (
-        <div className="divide-y divide-border/40">
+        <ul className="divide-y divide-border/40">
           {alerts.map((a) => {
             const cfg = LEVEL_STYLES[a.level];
             const Icon = cfg.icon;
             return (
-              <div
+              <li
                 key={a.id}
-                className={`flex items-center gap-4 p-4 border-l-4 ${cfg.border} ${cfg.bg} transition-colors hover:bg-accent/30`}
+                className={`flex items-center gap-3 px-4 py-2.5 border-l-4 ${cfg.border} ${cfg.bg} transition-colors hover:bg-accent/30`}
               >
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${cfg.iconBg}`}>
-                  <Icon className="h-5 w-5" />
+                <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${cfg.iconBg}`}>
+                  <Icon className="h-3.5 w-3.5" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <p className="text-sm font-bold text-foreground">{a.title}</p>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.badge}`}>
-                      {cfg.label}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">{a.description}</p>
-                </div>
+                <p className="text-xs font-semibold text-foreground flex-1 min-w-0 truncate">
+                  {a.title}
+                </p>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${cfg.badge}`}>
+                  {cfg.label}
+                </span>
                 {a.action && (
                   <button
                     onClick={a.action}
-                    className="text-xs font-semibold text-primary hover:underline shrink-0"
+                    className="text-[11px] font-semibold text-primary hover:underline shrink-0"
                   >
                     {a.actionLabel} →
                   </button>
                 )}
-              </div>
+              </li>
             );
           })}
-        </div>
+        </ul>
       )}
     </div>
   );
