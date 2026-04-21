@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
 import { FileDown, Eye, Plus, Pencil, Award, Search } from "lucide-react";
-import { DocumentLayout } from "@/lib/documentLayout";
 import { toast } from "sonner";
 import StatusBadge from "@/components/shared/StatusBadge";
 import html2pdf from "html2pdf.js";
+import CertificadoTemplate from "./CertificadoTemplate";
 
 interface CertificadoModalProps {
   open: boolean;
@@ -312,20 +312,19 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
 
     html2pdf()
       .set({
-        margin: [8, 8, 8, 8],
+        margin: 0,
         filename: `certificado-${nomeArquivo}.pdf`,
-        image: { type: "jpeg", quality: 0.98 },
+        image: { type: "jpeg", quality: 1 },
         html2canvas: {
           scale: 2,
           useCORS: true,
           backgroundColor: "#ffffff",
         },
         jsPDF: {
-          unit: "mm",
-          format: "a4",
+          unit: "px",
+          format: [1123, 794],
           orientation: "landscape",
         },
-        pagebreak: { mode: ["avoid-all", "css", "legacy"] },
       })
       .from(el)
       .save();
@@ -679,25 +678,35 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
                 <FileDown className="h-4 w-4 mr-2" /> Exportar PDF
               </Button>
             </div>
-            <div className="flex justify-center overflow-auto bg-gray-200">
-                <div style={{ transform: "scale(0.7)", transformOrigin: "top center" }}>
-              <div id="certificado-pdf">
-                {/* PÁGINA 1 */}
-                <div className="pdf-page">
-                  <CertificadoTemplate student={selectedStudent} school={school} />
-                </div>
+            <div className="flex justify-center overflow-auto bg-muted p-4">
+              <div style={{ transform: "scale(0.7)", transformOrigin: "top center" }}>
+                <div id="certificado-pdf">
+                  {/* PÁGINA 1 - FRENTE */}
+                  <div className="pdf-page">
+                    <CertificadoTemplate
+                      data={{
+                        full_name: selectedStudent?.full_name,
+                        school_name: school?.name,
+                        education_type: (school as any)?.education_type,
+                        year: selectedStudent?.academic_year,
+                        director: school?.director_name || "",
+                        secretary: "",
+                      }}
+                    />
+                  </div>
 
-                {/* PÁGINA 2 (VERSO SIMPLES POR ENQUANTO) */}
-                <div
-                  className="pdf-page"
-                  style={{
-                    width: "1123px",
-                    height: "794px",
-                    background: "#fff",
-                    padding: "40px",
-                  }}
-                >
-                  <h2 style={{ textAlign: "center" }}>VERSO DO CERTIFICADO</h2>
+                  {/* PÁGINA 2 - VERSO */}
+                  <div
+                    className="pdf-page"
+                    style={{
+                      width: "1123px",
+                      height: "794px",
+                      background: "#fff",
+                      padding: "40px",
+                    }}
+                  >
+                    <h2 style={{ textAlign: "center" }}>VERSO DO CERTIFICADO</h2>
+                  </div>
                 </div>
               </div>
             </div>
