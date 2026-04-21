@@ -332,7 +332,7 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
       orientation: "landscape",
     },
 
-    pagebreak: { mode: ["css"] }, // ⚠️ remove "avoid-all"
+    pagebreak: { mode: ["css", "legacy"] }, // ⚠️ remove "avoid-all"
   })
   .from(el)
   .save();
