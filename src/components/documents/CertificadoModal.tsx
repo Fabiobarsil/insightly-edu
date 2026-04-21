@@ -169,6 +169,29 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
     return Array.from(years).sort().reverse();
   }, [students]);
 
+  // Cursos ofertados pela escola (Configurações > Informações Institucionais)
+  const courseOptions = useMemo(() => {
+    if (!school) return [] as { value: string; label: string }[];
+    const opts: { value: string; label: string }[] = [];
+    if ((school as any).offers_ensino_fundamental) opts.push({ value: "Ensino Fundamental", label: "Ensino Fundamental" });
+    if ((school as any).offers_ensino_medio) opts.push({ value: "Ensino Médio", label: "Ensino Médio" });
+    if ((school as any).offers_eja) opts.push({ value: "Educação de Jovens e Adultos (EJA)", label: "Educação de Jovens e Adultos (EJA)" });
+    if ((school as any).offers_curso_tecnico) opts.push({ value: "Curso Técnico", label: "Curso Técnico" });
+    return opts;
+  }, [school]);
+
+  // Cidade extraída do endereço institucional (esperado: "..., Cidade - UF")
+  const cityOptions = useMemo(() => {
+    const addr = (school as any)?.address as string | undefined;
+    if (!addr) return [] as { value: string; label: string }[];
+    const match = addr.match(/,\s*([^,\-]+?)\s*[-–]\s*[A-Z]{2}\s*$/i);
+    const city = match?.[1]?.trim();
+    if (city) return [{ value: city, label: city }];
+    const parts = addr.split(",").map((p) => p.trim()).filter(Boolean);
+    const last = parts[parts.length - 1];
+    return last ? [{ value: last, label: last }] : [];
+  }, [school]);
+
   // --- Mutations ---
   const saveMutation = useMutation({
     mutationFn: async () => {
