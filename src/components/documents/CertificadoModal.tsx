@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
 import { FileDown, Eye, Plus, Pencil, Award, Search } from "lucide-react";
-import CertificadoTemplate from "@/components/documents/CertificadoTemplate";
+import { DocumentLayout } from "@/lib/documentLayout";
 import { toast } from "sonner";
 import StatusBadge from "@/components/shared/StatusBadge";
 import html2pdf from "html2pdf.js";
@@ -325,8 +325,8 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
           format: "a4",
           orientation: "landscape",
         },
-        pagebreak: { mode: ["css", "legacy"], before: ".html2pdf__page-break" },
-      } as any)
+        pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+      })
       .from(el)
       .save();
   };
@@ -669,16 +669,38 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
         )}
 
         {/* ===== PREVIEW VIEW ===== */}
-        {view === "preview" && selectedStudentId && (
-          <CertificadoPreview
-            studentId={selectedStudentId}
-            schoolId={schoolId}
-            cert={certByStudent[selectedStudentId]}
-            school={school}
-            signatures={signatures}
-            onBack={() => setView("list")}
-            onExport={handleGerarPDF}
-          />
+        {view === "preview" && selectedStudent && (
+          <div className="flex-1 overflow-auto px-6 pb-6">
+            <div className="flex items-center justify-between mt-4 mb-4">
+              <Button variant="ghost" size="sm" onClick={() => setView("list")}>
+                ← Voltar
+              </Button>
+              <Button onClick={handleGerarPDF} size="sm">
+                <FileDown className="h-4 w-4 mr-2" /> Exportar PDF
+              </Button>
+            </div>
+            <div className="flex justify-center overflow-auto">
+              <div id="certificado-pdf">
+                {/* PÁGINA 1 */}
+                <div className="pdf-page">
+                  <CertificadoTemplate student={selectedStudent} school={school} />
+                </div>
+
+                {/* PÁGINA 2 (VERSO SIMPLES POR ENQUANTO) */}
+                <div
+                  className="pdf-page"
+                  style={{
+                    width: "1123px",
+                    height: "794px",
+                    background: "#fff",
+                    padding: "40px",
+                  }}
+                >
+                  <h2 style={{ textAlign: "center" }}>VERSO DO CERTIFICADO</h2>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </DialogContent>
     </Dialog>
@@ -775,137 +797,5 @@ const UF_OPTIONS = [
   "SE",
   "TO",
 ].map((uf) => ({ value: uf, label: uf }));
-
-// --- Preview do Certificado: busca dados reais do aluno e do certificado salvo ---
-function CertificadoPreview({
-  studentId,
-  schoolId,
-  cert,
-  school,
-  signatures,
-  onBack,
-  onExport,
-}: {
-  studentId: string;
-  schoolId: string | null;
-  cert: any;
-  school: any;
-  signatures: any;
-  onBack: () => void;
-  onExport: () => void;
-}) {
-  // Aluno completo (CPF, RG, nascimento, nome)
-  const { data: student } = useQuery({
-    queryKey: ["cert-preview-student", studentId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("students")
-        .select("id, full_name, cpf, rg, birth_date, academic_year")
-        .eq("id", studentId)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!studentId,
-  });
-
-  // Responsáveis (mãe / pai) via student_guardians + guardians
-  const { data: guardians = [] } = useQuery({
-    queryKey: ["cert-preview-guardians", studentId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("student_guardians")
-        .select("guardian_id, guardians(full_name, relationship_type, gender)")
-        .eq("student_id", studentId);
-      return (data || []).map((r: any) => r.guardians).filter(Boolean);
-    },
-    enabled: !!studentId,
-  });
-
-  const motherName = useMemo(() => {
-    const byRel = guardians.find(
-      (g: any) => (g.relationship_type || "").toLowerCase().includes("mae") || (g.relationship_type || "").toLowerCase().includes("mãe"),
-    );
-    if (byRel) return byRel.full_name;
-    const byGender = guardians.find((g: any) => (g.gender || "").toLowerCase().startsWith("f"));
-    return byGender?.full_name || "";
-  }, [guardians]);
-
-  const fatherName = useMemo(() => {
-    const byRel = guardians.find(
-      (g: any) => (g.relationship_type || "").toLowerCase().includes("pai"),
-    );
-    if (byRel) return byRel.full_name;
-    const byGender = guardians.find((g: any) => (g.gender || "").toLowerCase().startsWith("m"));
-    return byGender?.full_name || "";
-  }, [guardians]);
-
-  // Disciplinas vinculadas à escola (com possível carga horária via assessments)
-  const { data: subjectsRaw = [] } = useQuery({
-    queryKey: ["cert-preview-subjects", schoolId],
-    queryFn: async () => {
-      if (!schoolId) return [];
-      const { data } = await supabase
-        .from("subjects")
-        .select("id, name")
-        .eq("school_id", schoolId)
-        .order("name");
-      return data || [];
-    },
-    enabled: !!schoolId,
-  });
-
-  const subjects = useMemo(
-    () =>
-      (subjectsRaw as any[])
-        .filter((s) => s?.name)
-        .map((s) => ({ name: s.name as string, workload: "" })),
-    [subjectsRaw],
-  );
-
-  const data = {
-    full_name: student?.full_name,
-    cpf: student?.cpf,
-    rg: student?.rg,
-    birth_date: student?.birth_date,
-    mother_name: motherName,
-    father_name: fatherName,
-    school_name: cert?.institution_name || school?.name,
-    education_type: school?.education_type,
-    modality: cert?.course_name,
-    year: cert?.completion_year || student?.academic_year,
-    director: cert?.director_name || signatures?.diretor?.nome || school?.director_name || "",
-    secretary: cert?.secretary_name || signatures?.secretario?.nome || "",
-    // Verso
-    course_name: cert?.course_name,
-    establishment: cert?.establishment || cert?.institution_name || school?.name,
-    total_workload: cert?.workload_hours,
-    additional_skills: cert?.additional_skills,
-    notes: cert?.notes,
-    city: cert?.city,
-    registry_number: cert?.registry_number,
-    registry_book: cert?.registry_book,
-    registry_page: cert?.registry_page,
-    issue_date: cert?.issue_date,
-    subjects,
-  };
-
-  return (
-    <div className="flex-1 overflow-auto px-6 pb-6">
-      <div className="flex items-center justify-between mt-4 mb-4">
-        <Button variant="ghost" size="sm" onClick={onBack}>
-          ← Voltar
-        </Button>
-        <Button onClick={onExport} size="sm">
-          <FileDown className="h-4 w-4 mr-2" /> Exportar PDF
-        </Button>
-      </div>
-      <div className="flex justify-center overflow-auto">
-        <div id="certificado-modal-preview">
-          <CertificadoTemplate data={data} />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default CertificadoModal;
