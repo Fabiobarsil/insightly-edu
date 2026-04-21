@@ -180,17 +180,32 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
     return opts;
   }, [school]);
 
-  // Cidade extraída do endereço institucional (esperado: "..., Cidade - UF")
-  const cityOptions = useMemo(() => {
+  // Cidade e Estado extraídos do endereço institucional
+  // Formato canônico: "Logradouro, Nº - Bairro, Cidade - UF, CEP"
+  const institutionalLocation = useMemo(() => {
     const addr = (school as any)?.address as string | undefined;
-    if (!addr) return [] as { value: string; label: string }[];
-    const match = addr.match(/,\s*([^,\-]+?)\s*[-–]\s*[A-Z]{2}\s*$/i);
-    const city = match?.[1]?.trim();
-    if (city) return [{ value: city, label: city }];
+    if (!addr) return { city: "", state: "" };
+    // Tenta capturar "Cidade - UF" em qualquer posição da string
+    const m = addr.match(/([A-Za-zÀ-ÿ\s\.'-]+?)\s*[-–]\s*([A-Z]{2})(?=\s*,|\s*$)/);
+    if (m) {
+      return { city: m[1].trim(), state: m[2].trim().toUpperCase() };
+    }
+    // Fallback: último segmento como cidade
     const parts = addr.split(",").map((p) => p.trim()).filter(Boolean);
-    const last = parts[parts.length - 1];
-    return last ? [{ value: last, label: last }] : [];
+    return { city: parts[parts.length - 1] || "", state: "" };
   }, [school]);
+
+  const cityOptions = useMemo(() => {
+    return institutionalLocation.city
+      ? [{ value: institutionalLocation.city, label: institutionalLocation.city }]
+      : [];
+  }, [institutionalLocation]);
+
+  const stateOptions = useMemo(() => {
+    return institutionalLocation.state
+      ? [{ value: institutionalLocation.state, label: institutionalLocation.state }]
+      : UF_OPTIONS;
+  }, [institutionalLocation]);
 
   // --- Mutations ---
   const saveMutation = useMutation({
