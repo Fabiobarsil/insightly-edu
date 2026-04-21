@@ -189,41 +189,17 @@ const QuickOverview = () => {
     <Card className="p-5">
       <div className="mb-4">
         <h3 className="text-base font-semibold text-foreground">Visão Rápida da Secretaria</h3>
-        <p className="text-xs text-muted-foreground">KPIs, tendências e padrões operacionais</p>
+        <p className="text-xs text-muted-foreground">Tendências, comparações e padrões operacionais</p>
       </div>
 
-      {/* 1. KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        {kpiCards.map((k, i) => {
-          const Icon = k.icon;
-          return (
-            <button
-              key={i}
-              onClick={k.action}
-              className="text-left rounded-lg border border-border bg-background hover:bg-accent/50 hover:border-primary/40 transition p-3"
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <Icon className="h-4 w-4 text-muted-foreground" />
-                <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">{k.label}</span>
-              </div>
-              <div className={`text-2xl font-bold tabular-nums ${toneText(k.tone)}`}>
-                {loading ? "—" : k.value}
-              </div>
-              <div className="text-[11px] text-muted-foreground mt-0.5">{k.sub}</div>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* 2 & 3. Linha + Barras */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        {/* Tendência */}
+      {/* Linha 1 — Tendência (Linha) + Comparação (Barras) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <div className="rounded-lg border border-border bg-background p-4">
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp className="h-4 w-4 text-primary" />
             <h4 className="text-sm font-semibold text-foreground">Tendência (14 dias)</h4>
           </div>
-          <div className="h-[180px]">
+          <div className="h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={trend} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -238,13 +214,33 @@ const QuickOverview = () => {
           </div>
         </div>
 
-        {/* Barras empilhadas — comparação por turma */}
+        <div className="rounded-lg border border-border bg-background p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <BarChart3 className="h-4 w-4 text-primary" />
+            <h4 className="text-sm font-semibold text-foreground">Comparação por turma</h4>
+          </div>
+          <div className="h-[200px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={byClass} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="turma" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} allowDecimals={false} />
+                <Tooltip contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 6, fontSize: 12 }} />
+                <Bar dataKey="abertas" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* Linha 2 — Stacked + Heatmap */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="rounded-lg border border-border bg-background p-4">
           <div className="flex items-center gap-2 mb-3">
             <Layers className="h-4 w-4 text-primary" />
-            <h4 className="text-sm font-semibold text-foreground">Solicitações por turma</h4>
+            <h4 className="text-sm font-semibold text-foreground">Status por turma (empilhado)</h4>
           </div>
-          <div className="h-[180px]">
+          <div className="h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={byClass} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -258,48 +254,47 @@ const QuickOverview = () => {
             </ResponsiveContainer>
           </div>
         </div>
-      </div>
 
-      {/* 4. Heatmap */}
-      <div className="rounded-lg border border-border bg-background p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <Flame className="h-4 w-4 text-primary" />
-          <h4 className="text-sm font-semibold text-foreground">Padrão semanal — solicitações por turma x dia</h4>
-        </div>
-        {classes.length === 0 ? (
-          <p className="text-xs text-muted-foreground py-6 text-center">Sem dados suficientes nos últimos 30 dias.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <div className="inline-grid gap-1" style={{ gridTemplateColumns: `100px repeat(${DAYS.length}, minmax(56px, 1fr))` }}>
-              <div />
-              {DAYS.map((d) => (
-                <div key={d} className="text-[10px] font-medium text-muted-foreground text-center uppercase">{d}</div>
-              ))}
-              {classes.map((turma) => (
-                <>
-                  <div key={`label-${turma}`} className="text-xs text-foreground truncate pr-2 flex items-center">{turma}</div>
-                  {DAYS.map((d) => {
-                    const cell = heat.find((h) => h.turma === turma && h.dia === d);
-                    const v = cell?.value ?? 0;
-                    return (
-                      <div
-                        key={`${turma}-${d}`}
-                        title={`${turma} · ${d}: ${v}`}
-                        className="h-8 rounded flex items-center justify-center text-[11px] font-medium"
-                        style={{
-                          background: heatColor(v),
-                          color: v > maxHeat * 0.5 ? "hsl(var(--primary-foreground))" : "hsl(var(--foreground))",
-                        }}
-                      >
-                        {v > 0 ? v : ""}
-                      </div>
-                    );
-                  })}
-                </>
-              ))}
-            </div>
+        <div className="rounded-lg border border-border bg-background p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Flame className="h-4 w-4 text-primary" />
+            <h4 className="text-sm font-semibold text-foreground">Padrão semanal (turma × dia)</h4>
           </div>
-        )}
+          {classes.length === 0 ? (
+            <p className="text-xs text-muted-foreground py-12 text-center">Sem dados suficientes.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <div className="inline-grid gap-1" style={{ gridTemplateColumns: `80px repeat(${DAYS.length}, minmax(40px, 1fr))` }}>
+                <div />
+                {DAYS.map((d) => (
+                  <div key={d} className="text-[10px] font-medium text-muted-foreground text-center uppercase">{d}</div>
+                ))}
+                {classes.map((turma) => (
+                  <>
+                    <div key={`label-${turma}`} className="text-[11px] text-foreground truncate pr-2 flex items-center">{turma}</div>
+                    {DAYS.map((d) => {
+                      const cell = heat.find((h) => h.turma === turma && h.dia === d);
+                      const v = cell?.value ?? 0;
+                      return (
+                        <div
+                          key={`${turma}-${d}`}
+                          title={`${turma} · ${d}: ${v}`}
+                          className="h-7 rounded flex items-center justify-center text-[10px] font-medium"
+                          style={{
+                            background: heatColor(v),
+                            color: v > maxHeat * 0.5 ? "hsl(var(--primary-foreground))" : "hsl(var(--foreground))",
+                          }}
+                        >
+                          {v > 0 ? v : ""}
+                        </div>
+                      );
+                    })}
+                  </>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </Card>
   );
