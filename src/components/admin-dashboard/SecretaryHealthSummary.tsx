@@ -42,27 +42,22 @@ const SecretaryHealthSummary = () => {
   const ok = pending === 0;
 
   return (
-    <div
-      className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs ${
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold ${
         ok
-          ? "bg-emerald-500/5 border-emerald-500/30 text-emerald-700 dark:text-emerald-400"
-          : "bg-amber-500/5 border-amber-500/30 text-amber-700 dark:text-amber-400"
+          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400"
+          : "bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400"
       }`}
+      title={!ok ? `${pending} item(ns) crítico(s)` : undefined}
     >
       {ok ? (
-        <CheckCircle2 className="h-4 w-4 shrink-0" />
+        <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
       ) : (
-        <AlertTriangle className="h-4 w-4 shrink-0" />
+        <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
       )}
-      <span className="font-semibold">
-        {ok ? "Secretaria em dia" : "Atenção em pendências"}
-      </span>
-      {!ok && (
-        <span className="text-muted-foreground ml-auto">
-          {pending} item(ns) crítico(s)
-        </span>
-      )}
-    </div>
+      <span>{ok ? "Secretaria em dia" : "Atenção em pendências"}</span>
+      {!ok && <span className="opacity-70">· {pending}</span>}
+    </span>
   );
 };
 

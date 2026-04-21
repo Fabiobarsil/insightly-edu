@@ -18,7 +18,10 @@ const AdminDashboard = () => {
     <RoleLayout title="Secretaria Digital">
       <div className="flex flex-col gap-6" key={refreshKey}>
         <div className="flex flex-col gap-1">
-          <h2 className="text-2xl font-bold text-foreground tracking-tight">Secretaria Digital</h2>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h2 className="text-2xl font-bold text-foreground tracking-tight">Secretaria Digital</h2>
+            <SecretaryHealthSummary />
+          </div>
           <p className="text-sm text-muted-foreground">
             Painel operacional — o que precisa ser resolvido agora
           </p>
@@ -42,9 +45,6 @@ const AdminDashboard = () => {
 
             {/* BLOCO 4 — Visão Rápida (secundário, gráficos compactos) */}
             <QuickOverview />
-
-            {/* BLOCO 5 — Saúde da Secretaria (resumo discreto) */}
-            <SecretaryHealthSummary />
           </div>
 
           {/* Coluna lateral — cresce junto com a página, sem scroll interno */}
