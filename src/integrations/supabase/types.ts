@@ -949,6 +949,13 @@ export type Database = {
             referencedRelation: "vw_student_performance"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "grades_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_students_active"
+            referencedColumns: ["id"]
+          },
         ]
       }
       guardians: {
@@ -984,6 +991,7 @@ export type Database = {
           rg: string | null
           school_id: string
           state: string | null
+          updated_at: string | null
           whatsapp_enabled: boolean | null
           work_phone: string | null
           zipcode: string | null
@@ -1020,6 +1028,7 @@ export type Database = {
           rg?: string | null
           school_id: string
           state?: string | null
+          updated_at?: string | null
           whatsapp_enabled?: boolean | null
           work_phone?: string | null
           zipcode?: string | null
@@ -1056,6 +1065,7 @@ export type Database = {
           rg?: string | null
           school_id?: string
           state?: string | null
+          updated_at?: string | null
           whatsapp_enabled?: boolean | null
           work_phone?: string | null
           zipcode?: string | null
@@ -1184,6 +1194,13 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "vw_student_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedagogical_interventions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_students_active"
             referencedColumns: ["id"]
           },
           {
@@ -1555,6 +1572,13 @@ export type Database = {
             referencedRelation: "vw_student_performance"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "secretary_requests_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_students_active"
+            referencedColumns: ["id"]
+          },
         ]
       }
       student_certificates: {
@@ -1636,6 +1660,13 @@ export type Database = {
             referencedRelation: "vw_student_performance"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "student_certificates_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_students_active"
+            referencedColumns: ["id"]
+          },
         ]
       }
       student_dependencies: {
@@ -1683,6 +1714,7 @@ export type Database = {
           start_date: string | null
           status: Database["public"]["Enums"]["enrollment_status"] | null
           student_id: string
+          updated_at: string | null
         }
         Insert: {
           academic_year: number
@@ -1698,6 +1730,7 @@ export type Database = {
           start_date?: string | null
           status?: Database["public"]["Enums"]["enrollment_status"] | null
           student_id: string
+          updated_at?: string | null
         }
         Update: {
           academic_year?: number
@@ -1713,8 +1746,16 @@ export type Database = {
           start_date?: string | null
           status?: Database["public"]["Enums"]["enrollment_status"] | null
           student_id?: string
+          updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_class"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "fk_enrollment_class"
             columns: ["class_id"]
@@ -1764,25 +1805,93 @@ export type Database = {
             referencedRelation: "vw_student_performance"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_enrollment_student"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_students_active"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_student"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_student"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_student_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_student"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_students_active"
+            referencedColumns: ["id"]
+          },
         ]
       }
       student_guardians: {
         Row: {
           guardian_id: string
+          is_financial_responsible: boolean | null
+          is_pedagogical_responsible: boolean | null
+          is_primary: boolean | null
           school_id: string | null
           student_id: string
+          updated_at: string | null
         }
         Insert: {
           guardian_id: string
+          is_financial_responsible?: boolean | null
+          is_pedagogical_responsible?: boolean | null
+          is_primary?: boolean | null
           school_id?: string | null
           student_id: string
+          updated_at?: string | null
         }
         Update: {
           guardian_id?: string
+          is_financial_responsible?: boolean | null
+          is_pedagogical_responsible?: boolean | null
+          is_primary?: boolean | null
           school_id?: string | null
           student_id?: string
+          updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_guardian"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "guardians"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_student_guardian"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_student_guardian"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_student_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_student_guardian"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_students_active"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "student_guardians_guardian_id_fkey"
             columns: ["guardian_id"]
@@ -1809,6 +1918,13 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "vw_student_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_guardians_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_students_active"
             referencedColumns: ["id"]
           },
         ]
@@ -1850,6 +1966,13 @@ export type Database = {
             referencedRelation: "vw_student_performance"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "student_reports_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_students_active"
+            referencedColumns: ["id"]
+          },
         ]
       }
       students: {
@@ -1876,6 +1999,7 @@ export type Database = {
           school_id: string
           state: string | null
           status: Database["public"]["Enums"]["student_status"] | null
+          updated_at: string | null
           zip_code: string | null
         }
         Insert: {
@@ -1901,6 +2025,7 @@ export type Database = {
           school_id: string
           state?: string | null
           status?: Database["public"]["Enums"]["student_status"] | null
+          updated_at?: string | null
           zip_code?: string | null
         }
         Update: {
@@ -1926,6 +2051,7 @@ export type Database = {
           school_id?: string
           state?: string | null
           status?: Database["public"]["Enums"]["student_status"] | null
+          updated_at?: string | null
           zip_code?: string | null
         }
         Relationships: [
@@ -2206,6 +2332,13 @@ export type Database = {
             referencedRelation: "vw_student_performance"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "grades_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_students_active"
+            referencedColumns: ["id"]
+          },
         ]
       }
       vw_student_performance: {
@@ -2218,6 +2351,32 @@ export type Database = {
           status_nota: string | null
         }
         Relationships: []
+      }
+      vw_students_active: {
+        Row: {
+          academic_year: number | null
+          class_id: string | null
+          cpf: string | null
+          full_name: string | null
+          id: string | null
+          status: Database["public"]["Enums"]["enrollment_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_class"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_enrollment_class"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
