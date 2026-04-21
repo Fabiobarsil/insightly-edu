@@ -27,7 +27,10 @@ const StudentsList = () => {
     queryFn: async () => {
       if (!schoolId) return [];
 
-      const { data: enrollments, error: enrollError } = await supabase.from("student_enrollments").select(`
+      const { data: enrollments, error: enrollError } = await supabase
+        .from("student_enrollments")
+        .select(
+          `
           id,
           student_id,
           class_id,
@@ -36,21 +39,9 @@ const StudentsList = () => {
           created_at,
           students ( id, full_name, status, birth_date, photo_url ),
           classes ( id, name, grade, shift )
-        `);
-      const { data: enrollments, error: enrollError } = await supabase
-        .from("student_enrollments")
-        .select(
-          `
-    id,
-    student_id,
-    class_id,
-    academic_year,
-    status,
-    created_at,
-    students ( id, full_name, status, birth_date, photo_url ),
-    classes ( id, name, grade, shift )
-  `,
+        `,
         )
+        .eq("school_id", schoolId)
         .order("created_at", { ascending: false });
 
       if (enrollError) throw enrollError;
