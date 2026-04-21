@@ -144,7 +144,13 @@ const StudentsCreate = () => {
         .limit(1)
         .maybeSingle();
 
-      return { student, links: linksWithGuardians, enrollment };
+      // Documentos do aluno (checklist)
+      const { data: studentDocs } = await supabase
+        .from("student_documents")
+        .select("document_type, status")
+        .eq("student_id", studentIdParam);
+
+      return { student, links: linksWithGuardians, enrollment, studentDocs: studentDocs || [] };
     },
     enabled: isEdit && !!studentIdParam,
   });
@@ -217,6 +223,13 @@ const StudentsCreate = () => {
       });
     }
     if (outro) setForm((prev) => ({ ...prev, guardian_id: outro.id }));
+
+    // Hidrata checklist de documentos
+    const docsMap: Record<string, boolean> = {};
+    ((studentData as any).studentDocs || []).forEach((d: any) => {
+      if (d.document_type) docsMap[d.document_type] = !!d.status;
+    });
+    setDocs(docsMap);
   }, [studentData]);
 
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
@@ -451,6 +464,19 @@ const StudentsCreate = () => {
       }));
       const { error: linkErr } = await supabase.from("student_guardians").insert(links);
       if (linkErr) throw linkErr;
+
+      // Persiste checklist de documentos (substitui o conjunto atual)
+      await supabase.from("student_documents").delete().eq("student_id", studentId);
+      const docsToInsert = docChecklist.map((d) => ({
+        student_id: studentId,
+        school_id: schoolId,
+        document_type: d.key,
+        status: !!docs[d.key],
+      }));
+      if (docsToInsert.length > 0) {
+        const { error: docErr } = await supabase.from("student_documents").insert(docsToInsert);
+        if (docErr) throw docErr;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["students", schoolId] });
