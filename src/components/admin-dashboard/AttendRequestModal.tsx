@@ -219,6 +219,11 @@ const AttendRequestModal = ({ open, onOpenChange, request }: AttendRequestModalP
         </div>
 
         <DialogFooter className="gap-2 sm:gap-2">
+          {alreadyClosed && (
+            <p className="text-sm text-muted-foreground italic w-full text-center">
+              Esta solicitação já foi concluída.
+            </p>
+          )}
           {canStart && (
             <>
               {routeType !== "manual" ? (
