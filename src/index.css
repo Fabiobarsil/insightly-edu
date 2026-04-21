@@ -1,4 +1,4 @@
-@import url('https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css');
+@import url("https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css");
 
 @font-face {
   font-family: "Amoresa";
@@ -77,4 +77,11 @@
   .certus-shadow {
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
   }
+}
+/* ===== PDF CERTIFICADO ===== */
+.pdf-page {
+  width: 1123px;
+  height: 794px;
+  page-break-after: always;
+  display: block;
 }
