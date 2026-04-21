@@ -85,12 +85,11 @@ export default function CertificadoTemplate({ data }: Props) {
   const rows: SubjectRow[] = [...subjects];
   while (rows.length < minRows) rows.push({ name: "", workload: "" });
 
-  const totalWorkload =
-    data?.total_workload ??
-    subjects.reduce((acc, s) => {
-      const n = Number(s.workload);
-      return acc + (isNaN(n) ? 0 : n);
-    }, 0) || "";
+  const computedTotal = subjects.reduce((acc, s) => {
+    const n = Number(s.workload);
+    return acc + (isNaN(n) ? 0 : n);
+  }, 0);
+  const totalWorkload = data?.total_workload ?? (computedTotal || "");
 
   const issue = formatIssueParts(data?.issue_date);
 
