@@ -775,4 +775,101 @@ const UF_OPTIONS = [
   "TO",
 ].map((uf) => ({ value: uf, label: uf }));
 
+// --- Preview do Certificado: busca dados reais do aluno e do certificado salvo ---
+function CertificadoPreview({
+  studentId,
+  schoolId,
+  cert,
+  school,
+  signatures,
+  onBack,
+  onExport,
+}: {
+  studentId: string;
+  schoolId: string | null;
+  cert: any;
+  school: any;
+  signatures: any;
+  onBack: () => void;
+  onExport: () => void;
+}) {
+  // Aluno completo (CPF, RG, nascimento, nome)
+  const { data: student } = useQuery({
+    queryKey: ["cert-preview-student", studentId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("students")
+        .select("id, full_name, cpf, rg, birth_date, academic_year")
+        .eq("id", studentId)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!studentId,
+  });
+
+  // Responsáveis (mãe / pai) via student_guardians + guardians
+  const { data: guardians = [] } = useQuery({
+    queryKey: ["cert-preview-guardians", studentId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("student_guardians")
+        .select("guardian_id, guardians(full_name, relationship_type, gender)")
+        .eq("student_id", studentId);
+      return (data || []).map((r: any) => r.guardians).filter(Boolean);
+    },
+    enabled: !!studentId,
+  });
+
+  const motherName = useMemo(() => {
+    const byRel = guardians.find(
+      (g: any) => (g.relationship_type || "").toLowerCase().includes("mae") || (g.relationship_type || "").toLowerCase().includes("mãe"),
+    );
+    if (byRel) return byRel.full_name;
+    const byGender = guardians.find((g: any) => (g.gender || "").toLowerCase().startsWith("f"));
+    return byGender?.full_name || "";
+  }, [guardians]);
+
+  const fatherName = useMemo(() => {
+    const byRel = guardians.find(
+      (g: any) => (g.relationship_type || "").toLowerCase().includes("pai"),
+    );
+    if (byRel) return byRel.full_name;
+    const byGender = guardians.find((g: any) => (g.gender || "").toLowerCase().startsWith("m"));
+    return byGender?.full_name || "";
+  }, [guardians]);
+
+  const data = {
+    full_name: student?.full_name,
+    cpf: student?.cpf,
+    rg: student?.rg,
+    birth_date: student?.birth_date,
+    mother_name: motherName,
+    father_name: fatherName,
+    school_name: cert?.institution_name || school?.name,
+    education_type: school?.education_type,
+    modality: cert?.course_name,
+    year: cert?.completion_year || student?.academic_year,
+    director: cert?.director_name || signatures?.diretor?.nome || school?.director_name || "",
+    secretary: cert?.secretary_name || signatures?.secretario?.nome || "",
+  };
+
+  return (
+    <div className="flex-1 overflow-auto px-6 pb-6">
+      <div className="flex items-center justify-between mt-4 mb-4">
+        <Button variant="ghost" size="sm" onClick={onBack}>
+          ← Voltar
+        </Button>
+        <Button onClick={onExport} size="sm">
+          <FileDown className="h-4 w-4 mr-2" /> Exportar PDF
+        </Button>
+      </div>
+      <div className="flex justify-center overflow-auto">
+        <div id="certificado-modal-preview">
+          <CertificadoTemplate data={data} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default CertificadoModal;
