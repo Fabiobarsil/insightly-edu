@@ -14,6 +14,39 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import TeacherRegistrationTab from "@/components/settings/TeacherRegistrationTab";
 import TemplatesTab from "@/components/settings/TemplatesTab";
 import SignaturesTab from "@/components/settings/SignaturesTab";
+import { fetchAddressByCEP } from "@/utils/cep";
+
+const UF_LIST = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
+
+// Serializa partes em uma única string (compatível com a coluna address existente)
+function composeAddress(parts: { street: string; number: string; district: string; city: string; state: string; zip: string }) {
+  const { street, number, district, city, state, zip } = parts;
+  const left = [street, number].filter(Boolean).join(", ");
+  const middle = [left, district].filter(Boolean).join(" - ");
+  const cityUf = [city, state].filter(Boolean).join(" - ");
+  const right = [middle, cityUf].filter(Boolean).join(", ");
+  return [right, zip].filter(Boolean).join(", ");
+}
+
+// Parse reverso da string única para os campos individuais
+function parseAddress(addr: string) {
+  const empty = { street: "", number: "", district: "", city: "", state: "", zip: "" };
+  if (!addr) return empty;
+  const cepMatch = addr.match(/(\d{5}-?\d{3})\s*$/);
+  const zip = cepMatch?.[1] || "";
+  const withoutZip = (cepMatch ? addr.slice(0, addr.lastIndexOf(cepMatch[1])).replace(/,\s*$/, "") : addr).trim();
+  const cityUfMatch = withoutZip.match(/,\s*([^,]+?)\s*-\s*([A-Z]{2})\s*$/);
+  const city = cityUfMatch?.[1]?.trim() || "";
+  const state = cityUfMatch?.[2]?.trim() || "";
+  const beforeCity = (cityUfMatch ? withoutZip.slice(0, withoutZip.lastIndexOf(cityUfMatch[0])) : withoutZip).trim();
+  const districtMatch = beforeCity.match(/\s-\s([^,-]+)$/);
+  const district = districtMatch?.[1]?.trim() || "";
+  const beforeDistrict = (districtMatch ? beforeCity.slice(0, beforeCity.lastIndexOf(districtMatch[0])) : beforeCity).trim();
+  const parts = beforeDistrict.split(",").map((p) => p.trim()).filter(Boolean);
+  const street = parts[0] || "";
+  const number = parts[1] || "";
+  return { street, number, district, city, state, zip };
+}
 
 const tabs = [
   { id: "escola", label: "Dados da Escola", icon: "ri-building-line" },
@@ -74,17 +107,23 @@ const Settings = () => {
   });
 
   const [form, setForm] = useState({
-    name: "", address: "", complement: "", cnpj: "", mec_authorization_code: "",
+    name: "", complement: "", cnpj: "", mec_authorization_code: "",
     director_name: "", director_role: "", logo_url: "",
+    // Endereço estruturado
+    zip: "", street: "", number: "", district: "", city: "", state: "",
     offers_ensino_fundamental: false, offers_ensino_medio: true, offers_eja: false, offers_curso_tecnico: false,
   });
+  const [cepLoading, setCepLoading] = useState(false);
 
   useEffect(() => {
     if (school) {
+      const parsed = parseAddress(school.address || "");
       setForm({
-        name: school.name || "", address: school.address || "", complement: (school as any).complement || "", cnpj: school.cnpj || "",
+        name: school.name || "", complement: (school as any).complement || "", cnpj: school.cnpj || "",
         mec_authorization_code: school.mec_authorization_code || "", director_name: school.director_name || "",
         director_role: school.director_role || "", logo_url: school.logo_url || "",
+        zip: parsed.zip, street: parsed.street, number: parsed.number,
+        district: parsed.district, city: parsed.city, state: parsed.state,
         offers_ensino_fundamental: (school as any).offers_ensino_fundamental ?? false,
         offers_ensino_medio: (school as any).offers_ensino_medio ?? true,
         offers_eja: (school as any).offers_eja ?? false,
@@ -96,10 +135,40 @@ const Settings = () => {
   const toggleOffer = (key: "offers_ensino_fundamental" | "offers_ensino_medio" | "offers_eja" | "offers_curso_tecnico") =>
     setForm((prev) => ({ ...prev, [key]: !prev[key] }));
 
+  const handleCepBlur = async () => {
+    const clean = form.zip.replace(/\D/g, "");
+    if (clean.length !== 8) return;
+    setCepLoading(true);
+    const result = await fetchAddressByCEP(clean);
+    setCepLoading(false);
+    if (!result) { toast.error("CEP não encontrado"); return; }
+    setForm((prev) => ({
+      ...prev,
+      street: result.address || prev.street,
+      district: result.district || prev.district,
+      city: result.city || prev.city,
+      state: result.state || prev.state,
+    }));
+  };
+
   const updateMutation = useMutation({
     mutationFn: async (data: typeof form) => {
       if (!schoolId) throw new Error("Escola não encontrada");
-      const { error } = await supabase.from("schools").update(data).eq("id", schoolId);
+      const address = composeAddress({
+        street: data.street, number: data.number, district: data.district,
+        city: data.city, state: data.state, zip: data.zip,
+      });
+      const payload = {
+        name: data.name, complement: data.complement, cnpj: data.cnpj,
+        mec_authorization_code: data.mec_authorization_code,
+        director_name: data.director_name, director_role: data.director_role,
+        logo_url: data.logo_url, address,
+        offers_ensino_fundamental: data.offers_ensino_fundamental,
+        offers_ensino_medio: data.offers_ensino_medio,
+        offers_eja: data.offers_eja,
+        offers_curso_tecnico: data.offers_curso_tecnico,
+      };
+      const { error } = await supabase.from("schools").update(payload).eq("id", schoolId);
       if (error) throw error;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["school-admin"] }); toast.success("Dados salvos!"); },
@@ -226,9 +295,44 @@ const Settings = () => {
                 <label className="block text-xs font-bold text-muted-foreground mb-1.5">CNPJ</label>
                 <input value={form.cnpj} onChange={handleChange("cnpj")} placeholder="00.000.000/0000-00" className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
               </div>
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-muted-foreground mb-1.5">Endereço Completo</label>
-                <input value={form.address} onChange={handleChange("address")} placeholder="Rua, número, bairro, cidade - UF, CEP" className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+              <div>
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5">CEP</label>
+                <div className="relative">
+                  <input
+                    value={form.zip}
+                    onChange={handleChange("zip")}
+                    onBlur={handleCepBlur}
+                    placeholder="00000-000"
+                    maxLength={9}
+                    className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+                  />
+                  {cepLoading && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">buscando...</span>}
+                </div>
+              </div>
+              <div className="md:col-span-1">
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5">Logradouro</label>
+                <input value={form.street} onChange={handleChange("street")} placeholder="Rua, Avenida..." className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5">Número</label>
+                <input value={form.number} onChange={handleChange("number")} placeholder="123" className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5">Bairro</label>
+                <input value={form.district} onChange={handleChange("district")} placeholder="Centro" className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5">Cidade</label>
+                <input value={form.city} onChange={handleChange("city")} placeholder="Cidade" className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5">Estado (UF)</label>
+                <select value={form.state} onChange={handleChange("state")} className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors">
+                  <option value="">Selecione</option>
+                  {UF_LIST.map((uf) => (
+                    <option key={uf} value={uf}>{uf}</option>
+                  ))}
+                </select>
               </div>
               <div className="md:col-span-2">
                 <label className="block text-xs font-bold text-muted-foreground mb-1.5">Complemento</label>
