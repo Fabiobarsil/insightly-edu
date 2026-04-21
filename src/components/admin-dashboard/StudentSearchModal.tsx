@@ -43,8 +43,8 @@ const StudentSearchModal = ({ open, onOpenChange }: StudentSearchModalProps) => 
           academic_year,
           status,
           created_at,
-          students ( id, full_name, photo_url, status ),
-          classes ( id, name, grade, shift )
+          students:fk_enrollment_student ( id, full_name, photo_url, status ),
+          classes:fk_enrollment_class ( id, name, grade, shift )
         `)
         .eq("school_id", schoolId)
         .order("created_at", { ascending: false })
