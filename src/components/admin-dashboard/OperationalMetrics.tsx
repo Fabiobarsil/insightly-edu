@@ -27,7 +27,7 @@ const OperationalMetrics = () => {
           .eq("status", "pendente"),
         supabase
           .from("student_enrollments")
-          .select("id, student_id, class_id, academic_year, status, students(full_name)")
+          .select("id, student_id, class_id, academic_year, status, students:fk_enrollment_student(full_name)")
           .eq("school_id", schoolId)
           .or("class_id.is.null,status.eq.pendente"),
         supabase

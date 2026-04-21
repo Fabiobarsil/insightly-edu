@@ -37,8 +37,8 @@ const StudentsList = () => {
           academic_year,
           status,
           created_at,
-          students ( id, full_name, status, birth_date, photo_url ),
-          classes ( id, name, grade, shift )
+          students:fk_enrollment_student ( id, full_name, status, birth_date, photo_url ),
+          classes:fk_enrollment_class ( id, name, grade, shift )
         `,
         )
         .eq("school_id", schoolId)
