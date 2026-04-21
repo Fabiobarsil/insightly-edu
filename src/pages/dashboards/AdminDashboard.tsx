@@ -39,11 +39,9 @@ const AdminDashboard = () => {
               onExternalModalChange={setModalOpen}
             />
 
-            {/* BLOCO 4 — Alertas Inteligentes */}
-            <SecretarySmartAlerts />
-
-            {/* Agenda */}
-            <div id="agenda-section">
+            {/* BLOCO 4 — Alertas + Agenda lado a lado */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6" id="agenda-section">
+              <SecretarySmartAlerts />
               <AdminAgenda />
             </div>
           </div>
