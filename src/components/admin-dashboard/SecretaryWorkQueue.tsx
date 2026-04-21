@@ -113,8 +113,9 @@ const SecretaryWorkQueue = ({ onNewRequest, externalModalOpen, onExternalModalCh
     };
   }, [schoolId, queryClient]);
 
-  const activeRequests = requests.filter((r) => r.status !== "concluido");
-  const resolvedRequests = requests.filter((r) => r.status === "concluido");
+  const isResolvedStatus = (s: string) => s === "concluido" || s === "resolvido";
+  const activeRequests = requests.filter((r) => !isResolvedStatus(r.status));
+  const resolvedRequests = requests.filter((r) => isResolvedStatus(r.status));
   const today = new Date().toISOString().split("T")[0];
   const overdueRequests = activeRequests.filter((r) => r.deadline && r.deadline < today);
   const sorted = [...activeRequests].sort(
