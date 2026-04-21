@@ -506,8 +506,8 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
                     label="Estado"
                     value={form.state}
                     onChange={(v) => updateField("state", v)}
-                    options={UF_OPTIONS}
-                    placeholder="Selecione o estado"
+                    options={stateOptions}
+                    placeholder={institutionalLocation.state ? "Selecione o estado" : "Cadastre o endereço da escola"}
                   />
                   <FormInput label="Data de Emissão" value={form.issue_date} onChange={(v) => updateField("issue_date", v)} type="date" />
                   <FormInput label="Diretor(a)" value={form.director_name} onChange={(v) => updateField("director_name", v)} />
