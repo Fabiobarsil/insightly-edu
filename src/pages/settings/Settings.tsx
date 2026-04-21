@@ -107,17 +107,23 @@ const Settings = () => {
   });
 
   const [form, setForm] = useState({
-    name: "", address: "", complement: "", cnpj: "", mec_authorization_code: "",
+    name: "", complement: "", cnpj: "", mec_authorization_code: "",
     director_name: "", director_role: "", logo_url: "",
+    // Endereço estruturado
+    zip: "", street: "", number: "", district: "", city: "", state: "",
     offers_ensino_fundamental: false, offers_ensino_medio: true, offers_eja: false, offers_curso_tecnico: false,
   });
+  const [cepLoading, setCepLoading] = useState(false);
 
   useEffect(() => {
     if (school) {
+      const parsed = parseAddress(school.address || "");
       setForm({
-        name: school.name || "", address: school.address || "", complement: (school as any).complement || "", cnpj: school.cnpj || "",
+        name: school.name || "", complement: (school as any).complement || "", cnpj: school.cnpj || "",
         mec_authorization_code: school.mec_authorization_code || "", director_name: school.director_name || "",
         director_role: school.director_role || "", logo_url: school.logo_url || "",
+        zip: parsed.zip, street: parsed.street, number: parsed.number,
+        district: parsed.district, city: parsed.city, state: parsed.state,
         offers_ensino_fundamental: (school as any).offers_ensino_fundamental ?? false,
         offers_ensino_medio: (school as any).offers_ensino_medio ?? true,
         offers_eja: (school as any).offers_eja ?? false,
@@ -129,10 +135,40 @@ const Settings = () => {
   const toggleOffer = (key: "offers_ensino_fundamental" | "offers_ensino_medio" | "offers_eja" | "offers_curso_tecnico") =>
     setForm((prev) => ({ ...prev, [key]: !prev[key] }));
 
+  const handleCepBlur = async () => {
+    const clean = form.zip.replace(/\D/g, "");
+    if (clean.length !== 8) return;
+    setCepLoading(true);
+    const result = await fetchAddressByCEP(clean);
+    setCepLoading(false);
+    if (!result) { toast.error("CEP não encontrado"); return; }
+    setForm((prev) => ({
+      ...prev,
+      street: result.address || prev.street,
+      district: result.district || prev.district,
+      city: result.city || prev.city,
+      state: result.state || prev.state,
+    }));
+  };
+
   const updateMutation = useMutation({
     mutationFn: async (data: typeof form) => {
       if (!schoolId) throw new Error("Escola não encontrada");
-      const { error } = await supabase.from("schools").update(data).eq("id", schoolId);
+      const address = composeAddress({
+        street: data.street, number: data.number, district: data.district,
+        city: data.city, state: data.state, zip: data.zip,
+      });
+      const payload = {
+        name: data.name, complement: data.complement, cnpj: data.cnpj,
+        mec_authorization_code: data.mec_authorization_code,
+        director_name: data.director_name, director_role: data.director_role,
+        logo_url: data.logo_url, address,
+        offers_ensino_fundamental: data.offers_ensino_fundamental,
+        offers_ensino_medio: data.offers_ensino_medio,
+        offers_eja: data.offers_eja,
+        offers_curso_tecnico: data.offers_curso_tecnico,
+      };
+      const { error } = await supabase.from("schools").update(payload).eq("id", schoolId);
       if (error) throw error;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["school-admin"] }); toast.success("Dados salvos!"); },
