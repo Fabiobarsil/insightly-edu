@@ -35,6 +35,7 @@ import TeachersEdit from "./pages/teachers/TeachersEdit.tsx";
 
 import ClassesList from "./pages/classes/ClassesList.tsx";
 import ClassesCreate from "./pages/classes/ClassesCreate.tsx";
+import ClassesEdit from "./pages/classes/ClassesEdit.tsx";
 
 import SubjectsList from "./pages/subjects/SubjectsList.tsx";
 
