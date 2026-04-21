@@ -112,10 +112,28 @@ const StudentsCreate = () => {
         .maybeSingle();
       if (error) throw error;
 
+      // Busca vínculos student_guardians (sem join — FK pode não estar exposta no PostgREST)
       const { data: links } = await supabase
         .from("student_guardians")
-        .select("guardian_id, guardians:guardian_id(*)")
+        .select("guardian_id, is_primary, is_financial_responsible, is_pedagogical_responsible")
         .eq("student_id", studentIdParam);
+
+      // Busca os responsáveis em uma segunda query usando os IDs
+      let guardiansData: any[] = [];
+      const guardianIds = (links || []).map((l: any) => l.guardian_id).filter(Boolean);
+      if (guardianIds.length > 0) {
+        const { data: gs } = await supabase
+          .from("guardians")
+          .select("*")
+          .in("id", guardianIds);
+        guardiansData = gs || [];
+      }
+
+      // Combina vínculos com dados completos
+      const linksWithGuardians = (links || []).map((l: any) => ({
+        ...l,
+        guardians: guardiansData.find((g) => g.id === l.guardian_id) || null,
+      }));
 
       const { data: enrollment } = await supabase
         .from("student_enrollments")
@@ -126,7 +144,7 @@ const StudentsCreate = () => {
         .limit(1)
         .maybeSingle();
 
-      return { student, links: links || [], enrollment };
+      return { student, links: linksWithGuardians, enrollment };
     },
     enabled: isEdit && !!studentIdParam,
   });

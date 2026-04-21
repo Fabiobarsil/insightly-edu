@@ -843,7 +843,10 @@ export type Database = {
           academic_year: number
           class_id: string | null
           created_at: string | null
+          education_type: string | null
+          enrollment_number: string | null
           grade_id: string | null
+          grade_year: number | null
           id: string
           school_id: string
           status: string | null
@@ -853,7 +856,10 @@ export type Database = {
           academic_year: number
           class_id?: string | null
           created_at?: string | null
+          education_type?: string | null
+          enrollment_number?: string | null
           grade_id?: string | null
+          grade_year?: number | null
           id?: string
           school_id: string
           status?: string | null
@@ -863,7 +869,10 @@ export type Database = {
           academic_year?: number
           class_id?: string | null
           created_at?: string | null
+          education_type?: string | null
+          enrollment_number?: string | null
           grade_id?: string | null
+          grade_year?: number | null
           id?: string
           school_id?: string
           status?: string | null
@@ -1699,6 +1708,36 @@ export type Database = {
         }
         Relationships: []
       }
+      student_documents: {
+        Row: {
+          created_at: string | null
+          document_type: string
+          id: string
+          school_id: string
+          status: boolean | null
+          student_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          document_type: string
+          id?: string
+          school_id: string
+          status?: boolean | null
+          student_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          document_type?: string
+          id?: string
+          school_id?: string
+          status?: boolean | null
+          student_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       student_enrollments: {
         Row: {
           academic_year: number
@@ -2403,6 +2442,24 @@ export type Database = {
         Returns: string
       }
       ensure_user_school: { Args: never; Returns: undefined }
+      generate_enrollment_number:
+        | {
+            Args: {
+              p_academic_year: number
+              p_education_type: string
+              p_grade_year: number
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_academic_year: number
+              p_education_type: string
+              p_grade_year: number
+              p_school_id: string
+            }
+            Returns: string
+          }
       get_effective_role: { Args: never; Returns: string }
       get_student_historico: { Args: { student_uuid: string }; Returns: Json }
       is_member_of_school: { Args: { _school_id: string }; Returns: boolean }
