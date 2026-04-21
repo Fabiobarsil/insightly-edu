@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,17 @@ const OperationalMetrics = () => {
   const { schoolId } = useSchoolId();
   const navigate = useNavigate();
   const [drill, setDrill] = useState<DrillType>(null);
+
+  // Permite que outros componentes abram o drill via evento global
+  // Ex: SecretarySmartAlerts → "Ver alunos" abre o modal "Alunos com Pendências"
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as DrillType;
+      if (detail) setDrill(detail);
+    };
+    window.addEventListener("operational-metrics:open-drill", handler as EventListener);
+    return () => window.removeEventListener("operational-metrics:open-drill", handler as EventListener);
+  }, []);
 
   const { data: metrics } = useQuery({
     queryKey: ["operational-metrics", schoolId],
