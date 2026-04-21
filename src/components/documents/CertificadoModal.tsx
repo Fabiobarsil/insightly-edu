@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
 import { FileDown, Eye, Plus, Pencil, Award, Search } from "lucide-react";
-import { DocumentLayout } from "@/lib/documentLayout";
+import CertificadoTemplate from "@/components/documents/CertificadoTemplate";
 import { toast } from "sonner";
 import StatusBadge from "@/components/shared/StatusBadge";
 import html2pdf from "html2pdf.js";
@@ -325,7 +325,6 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
           format: "a4",
           orientation: "landscape",
         },
-        pagebreak: { mode: ["avoid-all", "css", "legacy"] },
       })
       .from(el)
       .save();
@@ -680,15 +679,18 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
               </Button>
             </div>
             <div className="flex justify-center overflow-auto">
-              <DocumentLayout
-                id="certificado-modal-preview"
-                type="certificado"
-                title="Certificado de Conclusão"
-                content=""
-                student={selectedStudent}
-                school={school}
-                orientation="landscape"
-              />
+              <div id="certificado-modal-preview">
+                <CertificadoTemplate
+                  data={{
+                    full_name: selectedStudent?.full_name,
+                    school_name: form.institution_name || school?.name,
+                    education_type: (school as any)?.education_type,
+                    year: form.completion_year,
+                    director: form.director_name || school?.director_name || "",
+                    secretary: form.secretary_name || "",
+                  }}
+                />
+              </div>
             </div>
           </div>
         )}
