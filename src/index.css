@@ -85,6 +85,7 @@
   display: block;
   page-break-after: always;
   break-after: page;
+  page-break-inside: avoid;
 }
 
 #certificado-pdf {
