@@ -86,11 +86,7 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
     queryKey: ["cert-classes", schoolId],
     queryFn: async () => {
       if (!schoolId) return [];
-      const { data } = await supabase
-        .from("classes")
-        .select("id, name")
-        .eq("school_id", schoolId)
-        .order("name");
+      const { data } = await supabase.from("classes").select("id, name").eq("school_id", schoolId).order("name");
       return data || [];
     },
     enabled: !!schoolId && open,
@@ -100,10 +96,7 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
     queryKey: ["cert-list", schoolId],
     queryFn: async () => {
       if (!schoolId) return [];
-      const { data } = await supabase
-        .from("student_certificates")
-        .select("*")
-        .eq("school_id", schoolId);
+      const { data } = await supabase.from("student_certificates").select("*").eq("school_id", schoolId);
       return data || [];
     },
     enabled: !!schoolId && open,
@@ -148,7 +141,9 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
   // --- Derived ---
   const certByStudent = useMemo(() => {
     const map: Record<string, any> = {};
-    certificates.forEach((c: any) => { map[c.student_id] = c; });
+    certificates.forEach((c: any) => {
+      map[c.student_id] = c;
+    });
     return map;
   }, [certificates]);
 
@@ -173,9 +168,11 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
   const courseOptions = useMemo(() => {
     if (!school) return [] as { value: string; label: string }[];
     const opts: { value: string; label: string }[] = [];
-    if ((school as any).offers_ensino_fundamental) opts.push({ value: "Ensino Fundamental", label: "Ensino Fundamental" });
+    if ((school as any).offers_ensino_fundamental)
+      opts.push({ value: "Ensino Fundamental", label: "Ensino Fundamental" });
     if ((school as any).offers_ensino_medio) opts.push({ value: "Ensino Médio", label: "Ensino Médio" });
-    if ((school as any).offers_eja) opts.push({ value: "Educação de Jovens e Adultos (EJA)", label: "Educação de Jovens e Adultos (EJA)" });
+    if ((school as any).offers_eja)
+      opts.push({ value: "Educação de Jovens e Adultos (EJA)", label: "Educação de Jovens e Adultos (EJA)" });
     if ((school as any).offers_curso_tecnico) opts.push({ value: "Curso Técnico", label: "Curso Técnico" });
     return opts;
   }, [school]);
@@ -191,14 +188,15 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
       return { city: m[1].trim(), state: m[2].trim().toUpperCase() };
     }
     // Fallback: último segmento como cidade
-    const parts = addr.split(",").map((p) => p.trim()).filter(Boolean);
+    const parts = addr
+      .split(",")
+      .map((p) => p.trim())
+      .filter(Boolean);
     return { city: parts[parts.length - 1] || "", state: "" };
   }, [school]);
 
   const cityOptions = useMemo(() => {
-    return institutionalLocation.city
-      ? [{ value: institutionalLocation.city, label: institutionalLocation.city }]
-      : [];
+    return institutionalLocation.city ? [{ value: institutionalLocation.city, label: institutionalLocation.city }] : [];
   }, [institutionalLocation]);
 
   const stateOptions = useMemo(() => {
@@ -232,15 +230,10 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
       };
 
       if (editingCertId) {
-        const { error } = await supabase
-          .from("student_certificates")
-          .update(payload)
-          .eq("id", editingCertId);
+        const { error } = await supabase.from("student_certificates").update(payload).eq("id", editingCertId);
         if (error) throw error;
       } else {
-        const { error } = await supabase
-          .from("student_certificates")
-          .insert(payload);
+        const { error } = await supabase.from("student_certificates").insert(payload);
         if (error) throw error;
       }
     },
@@ -309,14 +302,33 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
 
   const handleGerarPDF = () => {
     const el = document.getElementById("certificado-modal-preview");
-    if (!el) return;
+    if (!el) {
+      console.error("Preview do certificado não encontrado");
+      return;
+    }
+
     const student = (students as any[]).find((s) => s.id === selectedStudentId);
-    html2pdf().from(el).set({
-      margin: 0,
-      filename: `certificado-${student?.full_name?.replace(/\s+/g, "-").toLowerCase() || "aluno"}.pdf`,
-      html2canvas: { scale: 2 },
-      jsPDF: { orientation: "landscape" },
-    }).save();
+    const nomeArquivo = student?.full_name?.trim().replace(/\s+/g, "-").toLowerCase() || "aluno";
+
+    html2pdf()
+      .set({
+        margin: [8, 8, 8, 8],
+        filename: `certificado-${nomeArquivo}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+        },
+        jsPDF: {
+          unit: "mm",
+          format: "a4",
+          orientation: "landscape",
+        },
+        pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+      })
+      .from(el)
+      .save();
   };
 
   const updateField = (key: keyof CertFormData, value: string) => {
@@ -327,7 +339,16 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
 
   // --- Render ---
   return (
-    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) { setView("list"); resetForm(); } }}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        onOpenChange(v);
+        if (!v) {
+          setView("list");
+          resetForm();
+        }
+      }}
+    >
       <DialogContent className="max-w-[1200px] w-[95vw] rounded-xl p-0 shadow-lg max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader className="px-6 pt-6 pb-0">
           <DialogTitle className="text-lg font-bold text-primary flex items-center gap-2">
@@ -362,7 +383,9 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
                 >
                   <option value="">Todas</option>
                   {(classes as any[]).map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -375,7 +398,9 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
                 >
                   <option value="">Todos</option>
                   {uniqueYears.map((y) => (
-                    <option key={y} value={y}>{y}</option>
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -387,12 +412,24 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border/40 bg-accent/30">
-                      <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Aluno</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Turma</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Curso</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Ano</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
-                      <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Ações</th>
+                      <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                        Aluno
+                      </th>
+                      <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                        Turma
+                      </th>
+                      <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                        Curso
+                      </th>
+                      <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                        Ano
+                      </th>
+                      <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                        Ações
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -410,12 +447,11 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
                             <td className="px-4 py-3 font-medium text-foreground">{s.full_name}</td>
                             <td className="px-4 py-3 text-muted-foreground">{s.classes?.name || "—"}</td>
                             <td className="px-4 py-3 text-muted-foreground">{cert?.course_name || "—"}</td>
-                            <td className="px-4 py-3 text-muted-foreground">{cert?.completion_year || s.academic_year || "—"}</td>
+                            <td className="px-4 py-3 text-muted-foreground">
+                              {cert?.completion_year || s.academic_year || "—"}
+                            </td>
                             <td className="px-4 py-3">
-                              <StatusBadge
-                                status={cert ? "active" : "inactive"}
-                                label={cert ? "Gerado" : "Pendente"}
-                              />
+                              <StatusBadge status={cert ? "active" : "inactive"} label={cert ? "Gerado" : "Pendente"} />
                             </td>
                             <td className="px-4 py-3 text-right">
                               <div className="flex items-center justify-end gap-1">
@@ -466,7 +502,14 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
         {view === "form" && (
           <div className="flex-1 overflow-auto px-6 pb-6">
             <div className="flex items-center gap-3 mt-4 mb-4">
-              <Button variant="ghost" size="sm" onClick={() => { setView("list"); resetForm(); }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setView("list");
+                  resetForm();
+                }}
+              >
                 ← Voltar
               </Button>
               <span className="text-sm font-bold text-primary">
@@ -477,7 +520,9 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
             <div className="space-y-6">
               {/* Dados do Certificado */}
               <fieldset className="border border-border/60 rounded-xl p-4">
-                <legend className="text-xs font-bold text-secondary px-2 uppercase tracking-wider">Dados do Certificado</legend>
+                <legend className="text-xs font-bold text-secondary px-2 uppercase tracking-wider">
+                  Dados do Certificado
+                </legend>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
                   <FormSelect
                     label="Nome do Curso *"
@@ -486,14 +531,27 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
                     options={courseOptions}
                     placeholder={courseOptions.length ? "Selecione o curso" : "Nenhum curso ofertado pela escola"}
                   />
-                  <FormInput label="Carga Horária (h)" value={form.workload_hours} onChange={(v) => updateField("workload_hours", v)} type="number" placeholder="800" />
-                  <FormInput label="Ano de Conclusão *" value={form.completion_year} onChange={(v) => updateField("completion_year", v)} type="number" />
+                  <FormInput
+                    label="Carga Horária (h)"
+                    value={form.workload_hours}
+                    onChange={(v) => updateField("workload_hours", v)}
+                    type="number"
+                    placeholder="800"
+                  />
+                  <FormInput
+                    label="Ano de Conclusão *"
+                    value={form.completion_year}
+                    onChange={(v) => updateField("completion_year", v)}
+                    type="number"
+                  />
                 </div>
               </fieldset>
 
               {/* Dados Administrativos */}
               <fieldset className="border border-border/60 rounded-xl p-4">
-                <legend className="text-xs font-bold text-secondary px-2 uppercase tracking-wider">Dados Administrativos</legend>
+                <legend className="text-xs font-bold text-secondary px-2 uppercase tracking-wider">
+                  Dados Administrativos
+                </legend>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
                   <FormSelect
                     label="Cidade"
@@ -509,25 +567,62 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
                     options={stateOptions}
                     placeholder={institutionalLocation.state ? "Selecione o estado" : "Cadastre o endereço da escola"}
                   />
-                  <FormInput label="Data de Emissão" value={form.issue_date} onChange={(v) => updateField("issue_date", v)} type="date" />
-                  <FormInput label="Diretor(a)" value={form.director_name} onChange={(v) => updateField("director_name", v)} />
-                  <FormInput label="Secretário(a)" value={form.secretary_name} onChange={(v) => updateField("secretary_name", v)} />
-                  <FormInput label="Instituição" value={form.institution_name} onChange={(v) => updateField("institution_name", v)} />
+                  <FormInput
+                    label="Data de Emissão"
+                    value={form.issue_date}
+                    onChange={(v) => updateField("issue_date", v)}
+                    type="date"
+                  />
+                  <FormInput
+                    label="Diretor(a)"
+                    value={form.director_name}
+                    onChange={(v) => updateField("director_name", v)}
+                  />
+                  <FormInput
+                    label="Secretário(a)"
+                    value={form.secretary_name}
+                    onChange={(v) => updateField("secretary_name", v)}
+                  />
+                  <FormInput
+                    label="Instituição"
+                    value={form.institution_name}
+                    onChange={(v) => updateField("institution_name", v)}
+                  />
                 </div>
               </fieldset>
 
               {/* Dados de Registro (Verso) */}
               <fieldset className="border border-border/60 rounded-xl p-4">
-                <legend className="text-xs font-bold text-secondary px-2 uppercase tracking-wider">Registro (Verso)</legend>
+                <legend className="text-xs font-bold text-secondary px-2 uppercase tracking-wider">
+                  Registro (Verso)
+                </legend>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-                  <FormInput label="Estabelecimento" value={form.establishment} onChange={(v) => updateField("establishment", v)} />
-                  <FormInput label="Nº de Registro" value={form.registry_number} onChange={(v) => updateField("registry_number", v)} />
-                  <FormInput label="Livro" value={form.registry_book} onChange={(v) => updateField("registry_book", v)} />
-                  <FormInput label="Folha" value={form.registry_page} onChange={(v) => updateField("registry_page", v)} />
+                  <FormInput
+                    label="Estabelecimento"
+                    value={form.establishment}
+                    onChange={(v) => updateField("establishment", v)}
+                  />
+                  <FormInput
+                    label="Nº de Registro"
+                    value={form.registry_number}
+                    onChange={(v) => updateField("registry_number", v)}
+                  />
+                  <FormInput
+                    label="Livro"
+                    value={form.registry_book}
+                    onChange={(v) => updateField("registry_book", v)}
+                  />
+                  <FormInput
+                    label="Folha"
+                    value={form.registry_page}
+                    onChange={(v) => updateField("registry_page", v)}
+                  />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <div>
-                    <label className="block text-xs font-bold text-muted-foreground mb-1.5">Habilidades Adicionais</label>
+                    <label className="block text-xs font-bold text-muted-foreground mb-1.5">
+                      Habilidades Adicionais
+                    </label>
                     <textarea
                       value={form.additional_skills}
                       onChange={(e) => updateField("additional_skills", e.target.value)}
@@ -548,7 +643,13 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
               </fieldset>
 
               <div className="flex justify-end gap-3">
-                <Button variant="outline" onClick={() => { setView("list"); resetForm(); }}>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setView("list");
+                    resetForm();
+                  }}
+                >
                   Cancelar
                 </Button>
                 <Button
@@ -556,7 +657,11 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
                   disabled={!form.course_name || !form.completion_year || saveMutation.isPending}
                 >
                   <Award className="h-4 w-4 mr-2" />
-                  {saveMutation.isPending ? "Salvando..." : editingCertId ? "Atualizar Certificado" : "Gerar Certificado"}
+                  {saveMutation.isPending
+                    ? "Salvando..."
+                    : editingCertId
+                      ? "Atualizar Certificado"
+                      : "Gerar Certificado"}
                 </Button>
               </div>
             </div>
@@ -593,7 +698,13 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
 };
 
 // --- Small helper component ---
-function FormInput({ label, value, onChange, type = "text", placeholder }: {
+function FormInput({
+  label,
+  value,
+  onChange,
+  type = "text",
+  placeholder,
+}: {
   label: string;
   value: string;
   onChange: (v: string) => void;
@@ -614,7 +725,13 @@ function FormInput({ label, value, onChange, type = "text", placeholder }: {
   );
 }
 
-function FormSelect({ label, value, onChange, options, placeholder }: {
+function FormSelect({
+  label,
+  value,
+  onChange,
+  options,
+  placeholder,
+}: {
   label: string;
   value: string;
   onChange: (v: string) => void;
@@ -631,18 +748,44 @@ function FormSelect({ label, value, onChange, options, placeholder }: {
       >
         <option value="">{placeholder || "Selecione"}</option>
         {options.map((o) => (
-          <option key={o.value} value={o.value}>{o.label}</option>
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
         ))}
-        {value && !options.some((o) => o.value === value) && (
-          <option value={value}>{value}</option>
-        )}
+        {value && !options.some((o) => o.value === value) && <option value={value}>{value}</option>}
       </select>
     </div>
   );
 }
 
 const UF_OPTIONS = [
-  "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO",
+  "AC",
+  "AL",
+  "AP",
+  "AM",
+  "BA",
+  "CE",
+  "DF",
+  "ES",
+  "GO",
+  "MA",
+  "MT",
+  "MS",
+  "MG",
+  "PA",
+  "PB",
+  "PR",
+  "PE",
+  "PI",
+  "RJ",
+  "RN",
+  "RS",
+  "RO",
+  "RR",
+  "SC",
+  "SP",
+  "SE",
+  "TO",
 ].map((uf) => ({ value: uf, label: uf }));
 
 export default CertificadoModal;
