@@ -701,7 +701,8 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
                     width: "1123px",
                     height: "794px",
                     background: "#fff",
-                    padding: "40px",
+                    padding: "20px",
+boxSizing: "border-box",
                   }}
                 >
                   <h2 style={{ textAlign: "center" }}>VERSO DO CERTIFICADO</h2>
