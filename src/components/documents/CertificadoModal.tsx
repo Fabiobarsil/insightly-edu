@@ -441,7 +441,13 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
               <fieldset className="border border-border/60 rounded-xl p-4">
                 <legend className="text-xs font-bold text-secondary px-2 uppercase tracking-wider">Dados do Certificado</legend>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-                  <FormInput label="Nome do Curso *" value={form.course_name} onChange={(v) => updateField("course_name", v)} placeholder="Ex: Ensino Fundamental" />
+                  <FormSelect
+                    label="Nome do Curso *"
+                    value={form.course_name}
+                    onChange={(v) => updateField("course_name", v)}
+                    options={courseOptions}
+                    placeholder={courseOptions.length ? "Selecione o curso" : "Nenhum curso ofertado pela escola"}
+                  />
                   <FormInput label="Carga Horária (h)" value={form.workload_hours} onChange={(v) => updateField("workload_hours", v)} type="number" placeholder="800" />
                   <FormInput label="Ano de Conclusão *" value={form.completion_year} onChange={(v) => updateField("completion_year", v)} type="number" />
                 </div>
@@ -451,8 +457,20 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
               <fieldset className="border border-border/60 rounded-xl p-4">
                 <legend className="text-xs font-bold text-secondary px-2 uppercase tracking-wider">Dados Administrativos</legend>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-                  <FormInput label="Cidade" value={form.city} onChange={(v) => updateField("city", v)} />
-                  <FormInput label="Estado" value={form.state} onChange={(v) => updateField("state", v)} />
+                  <FormSelect
+                    label="Cidade"
+                    value={form.city}
+                    onChange={(v) => updateField("city", v)}
+                    options={cityOptions}
+                    placeholder={cityOptions.length ? "Selecione a cidade" : "Cadastre o endereço da escola"}
+                  />
+                  <FormSelect
+                    label="Estado"
+                    value={form.state}
+                    onChange={(v) => updateField("state", v)}
+                    options={UF_OPTIONS}
+                    placeholder="Selecione o estado"
+                  />
                   <FormInput label="Data de Emissão" value={form.issue_date} onChange={(v) => updateField("issue_date", v)} type="date" />
                   <FormInput label="Diretor(a)" value={form.director_name} onChange={(v) => updateField("director_name", v)} />
                   <FormInput label="Secretário(a)" value={form.secretary_name} onChange={(v) => updateField("secretary_name", v)} />
