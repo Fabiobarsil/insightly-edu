@@ -679,7 +679,8 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
                 <FileDown className="h-4 w-4 mr-2" /> Exportar PDF
               </Button>
             </div>
-            <div className="flex justify-center overflow-auto">
+            <div className="flex justify-center overflow-auto bg-gray-200">
+                <div style={{ transform: "scale(0.7)", transformOrigin: "top center" }}>
               <div id="certificado-pdf">
                 {/* PÁGINA 1 */}
                 <div className="pdf-page">
