@@ -35,16 +35,45 @@ const StudentSearchModal = ({ open, onOpenChange }: StudentSearchModalProps) => 
     queryFn: async () => {
       if (!schoolId) return [];
       const { data, error } = await supabase
-        .from("students")
-        .select("id, full_name, photo_url, status, class_id, created_at, classes(name, grade, shift)")
+        .from("student_enrollments")
+        .select(`
+          id,
+          student_id,
+          class_id,
+          academic_year,
+          status,
+          created_at,
+          students ( id, full_name, photo_url, status ),
+          classes ( id, name, grade, shift )
+        `)
         .eq("school_id", schoolId)
         .order("created_at", { ascending: false })
         .limit(1000);
+
       if (error) throw error;
-      return (data || []).map((s: any) => {
-        const cls = Array.isArray(s.classes) ? s.classes[0] : s.classes;
-        return { ...s, _class_name: cls?.name || "", _grade: cls?.grade || "", _shift: cls?.shift || "" };
-      });
+
+      const seen = new Set<string>();
+      return (data || [])
+        .map((enrollment: any) => {
+          const student = Array.isArray(enrollment.students) ? enrollment.students[0] : enrollment.students;
+          const classData = Array.isArray(enrollment.classes) ? enrollment.classes[0] : enrollment.classes;
+          if (!student?.id || seen.has(student.id)) return null;
+
+          seen.add(student.id);
+
+          return {
+            id: student.id,
+            full_name: student.full_name,
+            photo_url: student.photo_url,
+            status: student.status,
+            class_id: enrollment.class_id,
+            created_at: enrollment.created_at,
+            _class_name: classData?.name || "",
+            _grade: classData?.grade || "",
+            _shift: classData?.shift || "",
+          };
+        })
+        .filter(Boolean) as any[];
     },
     enabled: !!schoolId && open,
   });
