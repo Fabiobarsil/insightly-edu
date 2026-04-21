@@ -141,7 +141,10 @@ const SecretarySmartAlerts = () => {
           title: `${noGuardian.length} aluno(s) sem responsável cadastrado`,
           description: "Cadastro incompleto — necessário para emissão de documentos",
           actionLabel: "Ver alunos",
-          action: () => navigate("/admin/alunos"),
+          action: () =>
+            window.dispatchEvent(
+              new CustomEvent("operational-metrics:open-drill", { detail: "students" })
+            ),
         });
       }
 
@@ -150,11 +153,23 @@ const SecretarySmartAlerts = () => {
     enabled: !!schoolId,
   });
 
+  // Cor do badge do header reflete o maior nível de urgência
+  const topLevel: "critical" | "warning" | "info" | null = alerts.some((a) => a.level === "critical")
+    ? "critical"
+    : alerts.some((a) => a.level === "warning")
+    ? "warning"
+    : alerts.length > 0
+    ? "info"
+    : null;
+  const headerBadgeClass = topLevel
+    ? LEVEL_STYLES[topLevel].badge
+    : "bg-muted text-muted-foreground";
+
   return (
     <div className="bg-card border border-border/60 rounded-xl overflow-hidden">
       <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
         <h3 className="text-sm font-bold text-foreground">⚠️ Alertas da Secretaria</h3>
-        <span className="text-[11px] font-semibold text-muted-foreground bg-muted px-2.5 py-0.5 rounded-full">
+        <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${headerBadgeClass}`}>
           {alerts.length} alerta(s)
         </span>
       </div>
