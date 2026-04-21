@@ -839,6 +839,29 @@ function CertificadoPreview({
     return byGender?.full_name || "";
   }, [guardians]);
 
+  // Disciplinas vinculadas à escola (com possível carga horária via assessments)
+  const { data: subjectsRaw = [] } = useQuery({
+    queryKey: ["cert-preview-subjects", schoolId],
+    queryFn: async () => {
+      if (!schoolId) return [];
+      const { data } = await supabase
+        .from("subjects")
+        .select("id, name")
+        .eq("school_id", schoolId)
+        .order("name");
+      return data || [];
+    },
+    enabled: !!schoolId,
+  });
+
+  const subjects = useMemo(
+    () =>
+      (subjectsRaw as any[])
+        .filter((s) => s?.name)
+        .map((s) => ({ name: s.name as string, workload: "" })),
+    [subjectsRaw],
+  );
+
   const data = {
     full_name: student?.full_name,
     cpf: student?.cpf,
@@ -852,6 +875,18 @@ function CertificadoPreview({
     year: cert?.completion_year || student?.academic_year,
     director: cert?.director_name || signatures?.diretor?.nome || school?.director_name || "",
     secretary: cert?.secretary_name || signatures?.secretario?.nome || "",
+    // Verso
+    course_name: cert?.course_name,
+    establishment: cert?.establishment || cert?.institution_name || school?.name,
+    total_workload: cert?.workload_hours,
+    additional_skills: cert?.additional_skills,
+    notes: cert?.notes,
+    city: cert?.city,
+    registry_number: cert?.registry_number,
+    registry_book: cert?.registry_book,
+    registry_page: cert?.registry_page,
+    issue_date: cert?.issue_date,
+    subjects,
   };
 
   return (
