@@ -86,8 +86,15 @@
   page-break-after: always;
   break-after: page;
   page-break-inside: avoid;
+  overflow: hidden;
+  background: #fff;
+}
+.pdf-page:last-child {
+  page-break-after: auto;
+  break-after: auto;
 }
 
 #certificado-pdf {
   display: block;
+  width: 1123px;
 }
