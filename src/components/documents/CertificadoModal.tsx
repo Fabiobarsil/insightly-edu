@@ -311,24 +311,31 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
     const nomeArquivo = student?.full_name?.trim().replace(/\s+/g, "-").toLowerCase() || "aluno";
 
     html2pdf()
-      .set({
-        margin: [8, 8, 8, 8],
-        filename: `certificado-${nomeArquivo}.pdf`,
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: "#ffffff",
-        },
-        jsPDF: {
-          unit: "px",
-          format: [1123, 794],
-          orientation: "landscape",
-        },
-        pagebreak: { mode: ["css"] },
-      })
-      .from(el)
-      .save();
+  .set({
+    margin: 0, // ⚠️ remove margem (evita páginas extras)
+
+    filename: `certificado-${nomeArquivo}.pdf`,
+
+    image: { type: "jpeg", quality: 1 },
+
+    html2canvas: {
+      scale: 1, // ⚠️ ESSENCIAL (estava 2 = bug das 4 páginas)
+      useCORS: true,
+      backgroundColor: "#ffffff",
+      scrollX: 0,
+      scrollY: 0,
+    },
+
+    jsPDF: {
+      unit: "px", // ⚠️ muda de mm para px
+      format: [1123, 794], // ⚠️ tamanho exato do seu layout
+      orientation: "landscape",
+    },
+
+    pagebreak: { mode: ["css"] }, // ⚠️ remove "avoid-all"
+  })
+  .from(el)
+  .save();
   };
 
   const updateField = (key: keyof CertFormData, value: string) => {
