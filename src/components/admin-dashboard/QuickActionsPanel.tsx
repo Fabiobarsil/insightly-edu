@@ -45,7 +45,7 @@ const QuickActionsPanel = ({ onNewRequest }: QuickActionsPanelProps) => {
 
   return (
     <>
-      <aside className="lg:sticky lg:top-4 self-start">
+      <aside>
         <div className="bg-gradient-to-br from-primary/5 via-card to-card border border-primary/20 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold text-foreground">⚡ Ações Rápidas</h3>
