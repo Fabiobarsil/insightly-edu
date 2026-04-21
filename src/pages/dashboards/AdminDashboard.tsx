@@ -23,31 +23,27 @@ const AdminDashboard = () => {
           </p>
         </div>
 
-        {/* Layout em 2 colunas: conteúdo principal + ações sticky */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-          {/* Coluna principal */}
+        {/* Layout em 2 colunas: conteúdo principal + painel lateral */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+          {/* Coluna principal — operação */}
           <div className="flex flex-col gap-6 min-w-0">
             {/* BLOCO 1 — Cards Operacionais */}
             <OperationalMetrics />
 
-            {/* Visão Rápida (amostragem) */}
-            <QuickOverview />
-
-            {/* BLOCO 2 — Fila de Trabalho */}
+            {/* BLOCO 2 — Fila de Trabalho (Prioridades de Hoje) */}
             <SecretaryWorkQueue
               externalModalOpen={modalOpen}
               onExternalModalChange={setModalOpen}
             />
 
-            {/* BLOCO 4 — Alertas */}
-            <div id="agenda-section">
-              <SecretarySmartAlerts />
-            </div>
+            {/* BLOCO 3 — Saúde da Secretaria (gráficos analíticos) */}
+            <QuickOverview />
           </div>
 
-          {/* BLOCO 3 — Painel lateral: Ações + Agenda + Dica */}
-          <div className="lg:sticky lg:top-4 self-start flex flex-col gap-4">
+          {/* Coluna lateral — ações + alertas + agenda + dica */}
+          <aside className="flex flex-col gap-4 lg:sticky lg:top-4 self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto pr-1" id="agenda-section">
             <QuickActionsPanel onNewRequest={() => setModalOpen(true)} />
+            <SecretarySmartAlerts />
             <AdminAgenda />
             <div className="bg-muted/30 border border-border/40 rounded-xl p-3">
               <p className="text-[11px] font-semibold text-muted-foreground mb-1">Dica do dia</p>
@@ -55,7 +51,7 @@ const AdminDashboard = () => {
                 💧 Pausas curtas aumentam o foco. Se possível, beba água e respire por 1 minuto.
               </p>
             </div>
-          </div>
+          </aside>
         </div>
       </div>
     </RoleLayout>
