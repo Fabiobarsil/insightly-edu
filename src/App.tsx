@@ -53,6 +53,7 @@ import Communication from "./pages/communication/Communication.tsx";
 import Settings from "./pages/settings/Settings.tsx";
 import CertificadoPage from "./pages/certificates/CertificadoPage.tsx";
 import CertificadoPreview from "./pages/admin/CertificadoPreview.tsx";
+import Indicadores from "./pages/admin/Indicadores.tsx";
 
 const queryClient = new QueryClient();
 
@@ -145,6 +146,7 @@ const App = () => (
             <Route path="/admin/coordenacao" element={<RoleRoute allowedRoles={["admin"]}><CoordinationDashboard /></RoleRoute>} />
             <Route path="/admin/configuracoes" element={<RoleRoute allowedRoles={["admin"]}><Settings /></RoleRoute>} />
             <Route path="/admin/certificado-preview" element={<RoleRoute allowedRoles={["admin"]}><CertificadoPreview /></RoleRoute>} />
+            <Route path="/admin/indicadores" element={<RoleRoute allowedRoles={["admin"]}><Indicadores /></RoleRoute>} />
 
             {/* Secretaria routes */}
             <Route path="/secretaria/dashboard" element={<Navigate to="/admin/dashboard" replace />} />

@@ -1,17 +1,12 @@
 import { useState, useCallback } from "react";
 import RoleLayout from "@/components/layout/RoleLayout";
-import DashboardHeader from "@/components/admin-dashboard/DashboardHeader";
-import TopMetricCards from "@/components/admin-dashboard/TopMetricCards";
-import QuickAccessCards from "@/components/admin-dashboard/QuickAccessCards";
-import DashboardCharts from "@/components/admin-dashboard/DashboardCharts";
-import AdminRecentActivity from "@/components/admin-dashboard/AdminRecentActivity";
-import AdminHealthScore from "@/components/admin-dashboard/AdminHealthScore";
-import AdminAgenda from "@/components/admin-dashboard/AdminAgenda";
+import OperationalMetrics from "@/components/admin-dashboard/OperationalMetrics";
 import SecretaryWorkQueue from "@/components/admin-dashboard/SecretaryWorkQueue";
+import SecretarySmartAlerts from "@/components/admin-dashboard/SecretarySmartAlerts";
+import QuickActionsPanel from "@/components/admin-dashboard/QuickActionsPanel";
+import AdminAgenda from "@/components/admin-dashboard/AdminAgenda";
 
 const AdminDashboard = () => {
-  const currentYear = new Date().getFullYear();
-  const [selectedYear, setSelectedYear] = useState(currentYear);
   const [refreshKey, setRefreshKey] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -20,32 +15,37 @@ const AdminDashboard = () => {
   return (
     <RoleLayout title="Secretaria Digital">
       <div className="flex flex-col gap-6" key={refreshKey}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-foreground tracking-tight">Secretaria Digital</h2>
-            <p className="text-sm text-muted-foreground mt-1">Centro de controle administrativo da escola</p>
-          </div>
-          <DashboardHeader
-            selectedYear={selectedYear}
-            onYearChange={setSelectedYear}
-            onDataRefresh={handleRefresh}
-          />
+        <div className="flex flex-col gap-1">
+          <h2 className="text-2xl font-bold text-foreground tracking-tight">Secretaria Digital</h2>
+          <p className="text-sm text-muted-foreground">
+            Painel operacional — o que precisa ser resolvido agora
+          </p>
         </div>
 
-        <TopMetricCards />
-        <QuickAccessCards onNewRequest={() => setModalOpen(true)} />
+        {/* Layout em 2 colunas: conteúdo principal + ações sticky */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
+          {/* Coluna principal */}
+          <div className="flex flex-col gap-6 min-w-0">
+            {/* BLOCO 1 — Cards Operacionais */}
+            <OperationalMetrics />
 
-        <SecretaryWorkQueue
-          externalModalOpen={modalOpen}
-          onExternalModalChange={setModalOpen}
-        />
+            {/* BLOCO 2 — Fila de Trabalho */}
+            <SecretaryWorkQueue
+              externalModalOpen={modalOpen}
+              onExternalModalChange={setModalOpen}
+            />
 
-        <DashboardCharts />
+            {/* BLOCO 4 — Alertas Inteligentes */}
+            <SecretarySmartAlerts />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <AdminRecentActivity />
-          <AdminHealthScore avgFrequency={86} avgGrade={7.1} pendingCount={18} />
-          <div id="agenda-section"><AdminAgenda /></div>
+            {/* Agenda */}
+            <div id="agenda-section">
+              <AdminAgenda />
+            </div>
+          </div>
+
+          {/* BLOCO 3 — Painel de Ações Sticky */}
+          <QuickActionsPanel onNewRequest={() => setModalOpen(true)} />
         </div>
       </div>
     </RoleLayout>
