@@ -132,6 +132,7 @@ const App = () => (
             <Route path="/admin/turmas/novo" element={<RoleRoute allowedRoles={["admin"]}><ClassesCreate /></RoleRoute>} />
             <Route path="/admin/turmas/:id/editar" element={<RoleRoute allowedRoles={["admin"]}><ClassesEdit /></RoleRoute>} />
             <Route path="/secretaria/turmas/:id/editar" element={<RoleRoute allowedRoles={["secretaria", "admin"]}><ClassesEdit /></RoleRoute>} />
+            <Route path="/admin/professores" element={<RoleRoute allowedRoles={["admin"]}><TeachersList /></RoleRoute>} />
             <Route path="/admin/professores/novo" element={<RoleRoute allowedRoles={["admin"]}><TeachersCreate /></RoleRoute>} />
             <Route path="/admin/professores/:id" element={<RoleRoute allowedRoles={["admin"]}><TeachersDetail /></RoleRoute>} />
             <Route path="/admin/professores/:id/editar" element={<RoleRoute allowedRoles={["admin"]}><TeachersEdit /></RoleRoute>} />
