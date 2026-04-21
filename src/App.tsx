@@ -35,6 +35,7 @@ import TeachersEdit from "./pages/teachers/TeachersEdit.tsx";
 
 import ClassesList from "./pages/classes/ClassesList.tsx";
 import ClassesCreate from "./pages/classes/ClassesCreate.tsx";
+import ClassesEdit from "./pages/classes/ClassesEdit.tsx";
 
 import SubjectsList from "./pages/subjects/SubjectsList.tsx";
 
@@ -129,6 +130,8 @@ const App = () => (
             <Route path="/admin/responsaveis/:id/editar" element={<RoleRoute allowedRoles={["admin"]}><GuardiansEdit /></RoleRoute>} />
             <Route path="/admin/turmas" element={<RoleRoute allowedRoles={["admin"]}><ClassesList /></RoleRoute>} />
             <Route path="/admin/turmas/novo" element={<RoleRoute allowedRoles={["admin"]}><ClassesCreate /></RoleRoute>} />
+            <Route path="/admin/turmas/:id/editar" element={<RoleRoute allowedRoles={["admin"]}><ClassesEdit /></RoleRoute>} />
+            <Route path="/secretaria/turmas/:id/editar" element={<RoleRoute allowedRoles={["secretaria", "admin"]}><ClassesEdit /></RoleRoute>} />
             <Route path="/admin/professores" element={<RoleRoute allowedRoles={["admin"]}><TeachersList /></RoleRoute>} />
             <Route path="/admin/professores/novo" element={<RoleRoute allowedRoles={["admin"]}><TeachersCreate /></RoleRoute>} />
             <Route path="/admin/professores/:id" element={<RoleRoute allowedRoles={["admin"]}><TeachersDetail /></RoleRoute>} />
