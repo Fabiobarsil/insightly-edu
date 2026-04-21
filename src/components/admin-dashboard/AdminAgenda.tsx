@@ -109,15 +109,15 @@ const AdminAgenda = () => {
         </div>
       )}
 
-      <div className="flex flex-col gap-2 flex-1 overflow-y-auto max-h-[220px] pr-1">
+      <div className="flex flex-col gap-2 flex-1">
         {items.length === 0 && (
           <p className="text-xs text-muted-foreground text-center py-8">Nenhum evento na agenda</p>
         )}
-        {items.map((item) => (
+        {items.slice(0, 4).map((item) => (
           <div
             key={item.id}
             className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2.5 border-l-[3px] transition-all hover:shadow-sm group",
+              "flex items-center gap-3 rounded-lg px-3 py-2 border-l-[3px] transition-all hover:shadow-sm group",
               TYPE_STYLES[item.type]
             )}
           >
@@ -132,6 +132,15 @@ const AdminAgenda = () => {
             </div>
           </div>
         ))}
+        {items.length > 4 && (
+          <button
+            type="button"
+            onClick={() => toast("Agenda completa em breve")}
+            className="text-[11px] font-semibold text-primary hover:text-primary/80 transition-colors text-left mt-1"
+          >
+            Ver agenda completa ({items.length})
+          </button>
+        )}
       </div>
     </div>
   );

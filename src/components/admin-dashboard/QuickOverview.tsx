@@ -186,20 +186,20 @@ const QuickOverview = () => {
   };
 
   return (
-    <Card className="p-5">
-      <div className="mb-4">
-        <h3 className="text-base font-semibold text-foreground">Visão Rápida da Secretaria</h3>
-        <p className="text-xs text-muted-foreground">Tendências, comparações e padrões operacionais</p>
+    <Card className="p-4 bg-muted/20 border-border/40 shadow-none">
+      <div className="mb-3">
+        <h3 className="text-sm font-semibold text-muted-foreground">Visão Rápida da Secretaria</h3>
+        <p className="text-[11px] text-muted-foreground/80">Tendências e padrões operacionais (visão secundária)</p>
       </div>
 
       {/* Linha 1 — Tendência (Linha) + Comparação (Barras) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-        <div className="rounded-lg border border-border bg-background p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <TrendingUp className="h-4 w-4 text-primary" />
-            <h4 className="text-sm font-semibold text-foreground">Tendência (14 dias)</h4>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+        <div className="rounded-lg border border-border/60 bg-background p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <TrendingUp className="h-3.5 w-3.5 text-primary" />
+            <h4 className="text-xs font-semibold text-foreground">Tendência (14 dias)</h4>
           </div>
-          <div className="h-[200px]">
+          <div className="h-[140px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={trend} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -214,12 +214,12 @@ const QuickOverview = () => {
           </div>
         </div>
 
-        <div className="rounded-lg border border-border bg-background p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <BarChart3 className="h-4 w-4 text-primary" />
-            <h4 className="text-sm font-semibold text-foreground">Comparação por turma</h4>
+        <div className="rounded-lg border border-border/60 bg-background p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <BarChart3 className="h-3.5 w-3.5 text-primary" />
+            <h4 className="text-xs font-semibold text-foreground">Comparação por turma</h4>
           </div>
-          <div className="h-[200px]">
+          <div className="h-[140px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={byClass} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -234,13 +234,13 @@ const QuickOverview = () => {
       </div>
 
       {/* Linha 2 — Stacked + Heatmap */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="rounded-lg border border-border bg-background p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Layers className="h-4 w-4 text-primary" />
-            <h4 className="text-sm font-semibold text-foreground">Status por turma (empilhado)</h4>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="rounded-lg border border-border/60 bg-background p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Layers className="h-3.5 w-3.5 text-primary" />
+            <h4 className="text-xs font-semibold text-foreground">Status por turma (empilhado)</h4>
           </div>
-          <div className="h-[200px]">
+          <div className="h-[140px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={byClass} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -255,10 +255,10 @@ const QuickOverview = () => {
           </div>
         </div>
 
-        <div className="rounded-lg border border-border bg-background p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Flame className="h-4 w-4 text-primary" />
-            <h4 className="text-sm font-semibold text-foreground">Padrão semanal (turma × dia)</h4>
+        <div className="rounded-lg border border-border/60 bg-background p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Flame className="h-3.5 w-3.5 text-primary" />
+            <h4 className="text-xs font-semibold text-foreground">Padrão semanal (turma × dia)</h4>
           </div>
           {classes.length === 0 ? (
             <p className="text-xs text-muted-foreground py-12 text-center">Sem dados suficientes.</p>

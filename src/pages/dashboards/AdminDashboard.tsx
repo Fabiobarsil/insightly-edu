@@ -24,31 +24,30 @@ const AdminDashboard = () => {
         </div>
 
         {/* Layout em 2 colunas: conteúdo principal + painel lateral */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
           {/* Coluna principal — operação */}
           <div className="flex flex-col gap-6 min-w-0">
             {/* BLOCO 1 — Cards Operacionais */}
             <OperationalMetrics />
 
-            {/* BLOCO 2 — Fila de Trabalho (Prioridades de Hoje) */}
+            {/* BLOCO 2 — Fila de Trabalho (foco principal) */}
             <SecretaryWorkQueue
               externalModalOpen={modalOpen}
               onExternalModalChange={setModalOpen}
             />
 
-            {/* BLOCO 3 — Saúde da Secretaria (gráficos analíticos) */}
+            {/* BLOCO 3 — Visão Rápida (secundário, gráficos compactos) */}
             <QuickOverview />
           </div>
 
-          {/* Coluna lateral — ações + alertas + agenda + dica */}
-          <aside className="flex flex-col gap-4 lg:sticky lg:top-4 self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto pr-1" id="agenda-section">
+          {/* Coluna lateral — cresce junto com a página, sem scroll interno */}
+          <aside className="flex flex-col gap-4" id="agenda-section">
             <QuickActionsPanel onNewRequest={() => setModalOpen(true)} />
             <SecretarySmartAlerts />
             <AdminAgenda />
-            <div className="bg-muted/30 border border-border/40 rounded-xl p-3">
-              <p className="text-[11px] font-semibold text-muted-foreground mb-1">Dica do dia</p>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                💧 Pausas curtas aumentam o foco. Se possível, beba água e respire por 1 minuto.
+            <div className="bg-muted/20 border border-border/30 rounded-lg px-3 py-2">
+              <p className="text-[11px] text-muted-foreground leading-relaxed truncate">
+                💧 Pausas curtas aumentam o foco — beba água e respire por 1 minuto.
               </p>
             </div>
           </aside>
