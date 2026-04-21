@@ -19,9 +19,17 @@ const PRIORITY_MAP: Record<string, { label: string; class: string }> = {
 
 const STATUS_MAP: Record<string, { label: string; class: string }> = {
   aberto: { label: "Aberto", class: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
+  pendente: { label: "Aberto", class: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
   "em andamento": { label: "Em andamento", class: "bg-primary/10 text-primary" },
+  em_andamento: { label: "Em andamento", class: "bg-primary/10 text-primary" },
   concluido: { label: "Concluído", class: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" },
+  resolvido: { label: "Resolvido", class: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" },
 };
+
+// Normaliza status vindo do banco (suporta "aberto"/"pendente", "em andamento"/"em_andamento", "concluido"/"resolvido")
+const isOpen = (s: string) => s === "aberto" || s === "pendente";
+const isInProgress = (s: string) => s === "em andamento" || s === "em_andamento";
+const isClosed = (s: string) => s === "concluido" || s === "resolvido";
 
 // Map request types to routing behavior
 const DOC_TYPES = ["Boletim", "Histórico Escolar", "Declaração", "Certificado de Conclusão"];
@@ -113,8 +121,9 @@ const AttendRequestModal = ({ open, onOpenChange, request }: AttendRequestModalP
 
   const pri = PRIORITY_MAP[request.priority] || PRIORITY_MAP.media;
   const st = STATUS_MAP[request.status] || STATUS_MAP.aberto;
-  const canStart = request.status === "aberto";
-  const canResolve = request.status === "aberto" || request.status === "em andamento";
+  const canStart = isOpen(request.status);
+  const canResolve = isOpen(request.status) || isInProgress(request.status);
+  const alreadyClosed = isClosed(request.status);
   const routeType = getRouteType(request.request_type);
   const routeInfo = getRouteLabel(routeType);
 
@@ -210,6 +219,11 @@ const AttendRequestModal = ({ open, onOpenChange, request }: AttendRequestModalP
         </div>
 
         <DialogFooter className="gap-2 sm:gap-2">
+          {alreadyClosed && (
+            <p className="text-sm text-muted-foreground italic w-full text-center">
+              Esta solicitação já foi concluída.
+            </p>
+          )}
           {canStart && (
             <>
               {routeType !== "manual" ? (
