@@ -169,6 +169,29 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
     return Array.from(years).sort().reverse();
   }, [students]);
 
+  // Cursos ofertados pela escola (Configurações > Informações Institucionais)
+  const courseOptions = useMemo(() => {
+    if (!school) return [] as { value: string; label: string }[];
+    const opts: { value: string; label: string }[] = [];
+    if ((school as any).offers_ensino_fundamental) opts.push({ value: "Ensino Fundamental", label: "Ensino Fundamental" });
+    if ((school as any).offers_ensino_medio) opts.push({ value: "Ensino Médio", label: "Ensino Médio" });
+    if ((school as any).offers_eja) opts.push({ value: "Educação de Jovens e Adultos (EJA)", label: "Educação de Jovens e Adultos (EJA)" });
+    if ((school as any).offers_curso_tecnico) opts.push({ value: "Curso Técnico", label: "Curso Técnico" });
+    return opts;
+  }, [school]);
+
+  // Cidade extraída do endereço institucional (esperado: "..., Cidade - UF")
+  const cityOptions = useMemo(() => {
+    const addr = (school as any)?.address as string | undefined;
+    if (!addr) return [] as { value: string; label: string }[];
+    const match = addr.match(/,\s*([^,\-]+?)\s*[-–]\s*[A-Z]{2}\s*$/i);
+    const city = match?.[1]?.trim();
+    if (city) return [{ value: city, label: city }];
+    const parts = addr.split(",").map((p) => p.trim()).filter(Boolean);
+    const last = parts[parts.length - 1];
+    return last ? [{ value: last, label: last }] : [];
+  }, [school]);
+
   // --- Mutations ---
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -441,7 +464,13 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
               <fieldset className="border border-border/60 rounded-xl p-4">
                 <legend className="text-xs font-bold text-secondary px-2 uppercase tracking-wider">Dados do Certificado</legend>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-                  <FormInput label="Nome do Curso *" value={form.course_name} onChange={(v) => updateField("course_name", v)} placeholder="Ex: Ensino Fundamental" />
+                  <FormSelect
+                    label="Nome do Curso *"
+                    value={form.course_name}
+                    onChange={(v) => updateField("course_name", v)}
+                    options={courseOptions}
+                    placeholder={courseOptions.length ? "Selecione o curso" : "Nenhum curso ofertado pela escola"}
+                  />
                   <FormInput label="Carga Horária (h)" value={form.workload_hours} onChange={(v) => updateField("workload_hours", v)} type="number" placeholder="800" />
                   <FormInput label="Ano de Conclusão *" value={form.completion_year} onChange={(v) => updateField("completion_year", v)} type="number" />
                 </div>
@@ -451,8 +480,20 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
               <fieldset className="border border-border/60 rounded-xl p-4">
                 <legend className="text-xs font-bold text-secondary px-2 uppercase tracking-wider">Dados Administrativos</legend>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-                  <FormInput label="Cidade" value={form.city} onChange={(v) => updateField("city", v)} />
-                  <FormInput label="Estado" value={form.state} onChange={(v) => updateField("state", v)} />
+                  <FormSelect
+                    label="Cidade"
+                    value={form.city}
+                    onChange={(v) => updateField("city", v)}
+                    options={cityOptions}
+                    placeholder={cityOptions.length ? "Selecione a cidade" : "Cadastre o endereço da escola"}
+                  />
+                  <FormSelect
+                    label="Estado"
+                    value={form.state}
+                    onChange={(v) => updateField("state", v)}
+                    options={UF_OPTIONS}
+                    placeholder="Selecione o estado"
+                  />
                   <FormInput label="Data de Emissão" value={form.issue_date} onChange={(v) => updateField("issue_date", v)} type="date" />
                   <FormInput label="Diretor(a)" value={form.director_name} onChange={(v) => updateField("director_name", v)} />
                   <FormInput label="Secretário(a)" value={form.secretary_name} onChange={(v) => updateField("secretary_name", v)} />
@@ -557,5 +598,36 @@ function FormInput({ label, value, onChange, type = "text", placeholder }: {
     </div>
   );
 }
+
+function FormSelect({ label, value, onChange, options, placeholder }: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+  placeholder?: string;
+}) {
+  return (
+    <div>
+      <label className="block text-xs font-bold text-muted-foreground mb-1.5">{label}</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+      >
+        <option value="">{placeholder || "Selecione"}</option>
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+        {value && !options.some((o) => o.value === value) && (
+          <option value={value}>{value}</option>
+        )}
+      </select>
+    </div>
+  );
+}
+
+const UF_OPTIONS = [
+  "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO",
+].map((uf) => ({ value: uf, label: uf }));
 
 export default CertificadoModal;
