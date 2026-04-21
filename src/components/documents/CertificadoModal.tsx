@@ -294,8 +294,8 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
         secretary_name: secretaryFromSig || "",
         institution_name: school?.name || "",
         establishment: school?.name || "",
-        city: (school as any)?.city || "",
-        state: (school as any)?.state || "",
+        city: institutionalLocation.city || (school as any)?.city || "",
+        state: institutionalLocation.state || (school as any)?.state || "",
         completion_year: new Date().getFullYear().toString(),
       });
     }
