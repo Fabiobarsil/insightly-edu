@@ -119,6 +119,32 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
     enabled: !!schoolId && open,
   });
 
+  // Assinaturas institucionais (Configurações > Assinaturas)
+  const { data: signatures } = useQuery({
+    queryKey: ["cert-signatures", schoolId],
+    queryFn: async () => {
+      if (!schoolId) return null;
+      const { data } = await supabase
+        .from("message_templates")
+        .select("content")
+        .eq("school_id", schoolId)
+        .eq("category", "assinaturas")
+        .eq("title", "__assinaturas__")
+        .maybeSingle();
+      if (!data?.content) return null;
+      try {
+        return JSON.parse(data.content) as {
+          diretor?: { nome?: string; registro?: string };
+          coordenador?: { nome?: string; registro?: string };
+          secretario?: { nome?: string; registro?: string };
+        };
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!schoolId && open,
+  });
+
   // --- Derived ---
   const certByStudent = useMemo(() => {
     const map: Record<string, any> = {};
@@ -221,10 +247,17 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
       });
     } else {
       setEditingCertId(null);
+      // Preenchimento automático: prioriza assinaturas cadastradas; cai para dados da escola
+      const directorFromSig = signatures?.diretor?.nome;
+      const secretaryFromSig = signatures?.secretario?.nome;
       setForm({
         ...emptyForm,
-        director_name: school?.director_name || "",
+        director_name: directorFromSig || school?.director_name || "",
+        secretary_name: secretaryFromSig || "",
         institution_name: school?.name || "",
+        establishment: school?.name || "",
+        city: (school as any)?.city || "",
+        state: (school as any)?.state || "",
         completion_year: new Date().getFullYear().toString(),
       });
     }
