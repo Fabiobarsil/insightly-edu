@@ -27,9 +27,7 @@ const StudentsList = () => {
     queryFn: async () => {
       if (!schoolId) return [];
 
-      const { data: enrollments, error: enrollError } = await supabase
-        .from("student_enrollments")
-        .select(`
+      const { data: enrollments, error: enrollError } = await supabase.from("student_enrollments").select(`
           id,
           student_id,
           class_id,
@@ -38,8 +36,21 @@ const StudentsList = () => {
           created_at,
           students ( id, full_name, status, birth_date, photo_url ),
           classes ( id, name, grade, shift )
-        `)
-        .eq("school_id", schoolId)
+        `);
+      const { data: enrollments, error: enrollError } = await supabase
+        .from("student_enrollments")
+        .select(
+          `
+    id,
+    student_id,
+    class_id,
+    academic_year,
+    status,
+    created_at,
+    students ( id, full_name, status, birth_date, photo_url ),
+    classes ( id, name, grade, shift )
+  `,
+        )
         .order("created_at", { ascending: false });
 
       if (enrollError) throw enrollError;
@@ -73,19 +84,25 @@ const StudentsList = () => {
 
   const classOptions = useMemo(() => {
     const map = new Map<string, string>();
-    students.forEach((s: any) => { if (s.class_id && s.class_name !== "—") map.set(s.class_id, s.class_name); });
+    students.forEach((s: any) => {
+      if (s.class_id && s.class_name !== "—") map.set(s.class_id, s.class_name);
+    });
     return Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1]));
   }, [students]);
 
   const gradeOptions = useMemo(() => {
     const set = new Set<string>();
-    students.forEach((s: any) => { if (s.grade && s.grade !== "—") set.add(s.grade); });
+    students.forEach((s: any) => {
+      if (s.grade && s.grade !== "—") set.add(s.grade);
+    });
     return Array.from(set).sort();
   }, [students]);
 
   const shiftOptions = useMemo(() => {
     const set = new Set<string>();
-    students.forEach((s: any) => { if (s.shift && s.shift !== "—") set.add(s.shift); });
+    students.forEach((s: any) => {
+      if (s.shift && s.shift !== "—") set.add(s.shift);
+    });
     return Array.from(set).sort();
   }, [students]);
 
@@ -104,7 +121,12 @@ const StudentsList = () => {
   const ativos = students.filter((s: any) => s.status === "ativo").length;
   const loading = loadingSchool || isLoading;
 
-  const clearFilters = () => { setSearch(""); setClassFilter(""); setGradeFilter(""); setShiftFilter(""); };
+  const clearFilters = () => {
+    setSearch("");
+    setClassFilter("");
+    setGradeFilter("");
+    setShiftFilter("");
+  };
   const hasFilter = search || classFilter || gradeFilter || shiftFilter;
 
   return (
@@ -117,7 +139,12 @@ const StudentsList = () => {
         {[
           { icon: "ri-group-line", label: "Total de Alunos", value: String(total), color: "text-primary" },
           { icon: "ri-check-double-line", label: "Ativos", value: String(ativos), color: "text-secondary" },
-          { icon: "ri-user-unfollow-line", label: "Inativos", value: String(total - ativos), color: "text-destructive" },
+          {
+            icon: "ri-user-unfollow-line",
+            label: "Inativos",
+            value: String(total - ativos),
+            color: "text-destructive",
+          },
         ].map((s, i) => (
           <div key={i} className="bg-card border border-border/60 rounded-xl p-4 certus-shadow flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center">
@@ -154,7 +181,11 @@ const StudentsList = () => {
               className="md:col-span-3 border border-border rounded-[12px] px-3 py-2 bg-background text-sm outline-none"
             >
               <option value="">Todas as turmas</option>
-              {classOptions.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+              {classOptions.map(([id, name]) => (
+                <option key={id} value={id}>
+                  {name}
+                </option>
+              ))}
             </select>
             <select
               value={gradeFilter}
@@ -162,7 +193,11 @@ const StudentsList = () => {
               className="md:col-span-2 border border-border rounded-[12px] px-3 py-2 bg-background text-sm outline-none"
             >
               <option value="">Todas as séries</option>
-              {gradeOptions.map((g) => <option key={g} value={g}>{g}</option>)}
+              {gradeOptions.map((g) => (
+                <option key={g} value={g}>
+                  {g}
+                </option>
+              ))}
             </select>
             <select
               value={shiftFilter}
@@ -170,7 +205,11 @@ const StudentsList = () => {
               className="md:col-span-2 border border-border rounded-[12px] px-3 py-2 bg-background text-sm outline-none"
             >
               <option value="">Todos os turnos</option>
-              {shiftOptions.map((t) => <option key={t} value={t}>{t}</option>)}
+              {shiftOptions.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
             </select>
             {hasFilter && (
               <button
@@ -187,19 +226,35 @@ const StudentsList = () => {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/40">
-                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Nome</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Turma</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Série</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Turno</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-right text-xs font-bold text-muted-foreground uppercase tracking-wider">Ações</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                    Nome
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                    Turma
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                    Série
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                    Turno
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                    Ações
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
-                  <tr><td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
-                    {hasFilter ? "Nenhum aluno encontrado com os filtros aplicados." : "Nenhum aluno cadastrado ainda."}
-                  </td></tr>
+                  <tr>
+                    <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
+                      {hasFilter
+                        ? "Nenhum aluno encontrado com os filtros aplicados."
+                        : "Nenhum aluno cadastrado ainda."}
+                    </td>
+                  </tr>
                 ) : (
                   filtered.map((row: any) => {
                     const mapped = statusMap[row.status] || statusMap.ativo;
@@ -208,7 +263,11 @@ const StudentsList = () => {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             {row.photo_url ? (
-                              <img src={row.photo_url} alt={row.full_name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                              <img
+                                src={row.photo_url}
+                                alt={row.full_name}
+                                className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                              />
                             ) : (
                               <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
                                 <i className="ri-user-line text-muted-foreground" />
@@ -220,7 +279,9 @@ const StudentsList = () => {
                         <td className="px-4 py-3 text-foreground">{row.class_name}</td>
                         <td className="px-4 py-3 text-foreground">{row.grade}</td>
                         <td className="px-4 py-3 text-foreground">{row.shift}</td>
-                        <td className="px-4 py-3"><StatusBadge {...mapped} /></td>
+                        <td className="px-4 py-3">
+                          <StatusBadge {...mapped} />
+                        </td>
                         <td className="px-4 py-3 text-right">
                           <Link
                             to={`/admin/alunos/${row.id}`}
