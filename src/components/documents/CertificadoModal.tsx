@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
 import { FileDown, Eye, Plus, Pencil, Award, Search } from "lucide-react";
-import { DocumentLayout } from "@/lib/documentLayout";
 import { toast } from "sonner";
 import StatusBadge from "@/components/shared/StatusBadge";
 import html2pdf from "html2pdf.js";
+import CertificadoTemplate from "./CertificadoTemplate";
 
 interface CertificadoModalProps {
   open: boolean;
