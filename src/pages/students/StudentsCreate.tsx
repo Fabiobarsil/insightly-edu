@@ -224,10 +224,12 @@ const StudentsCreate = () => {
     }
     if (outro) setForm((prev) => ({ ...prev, guardian_id: outro.id }));
 
-    // Hidrata checklist de documentos
+    // Hidrata checklist de documentos.
+    // Importante: se houver duplicatas no banco, qualquer registro `true` prevalece (nunca rebaixar para false).
     const docsMap: Record<string, boolean> = {};
     ((studentData as any).studentDocs || []).forEach((d: any) => {
-      if (d.document_type) docsMap[d.document_type] = !!d.status;
+      if (!d.document_type) return;
+      docsMap[d.document_type] = docsMap[d.document_type] || !!d.status;
     });
     setDocs(docsMap);
   }, [studentData]);
