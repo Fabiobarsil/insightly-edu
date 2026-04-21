@@ -576,4 +576,35 @@ function FormInput({ label, value, onChange, type = "text", placeholder }: {
   );
 }
 
+function FormSelect({ label, value, onChange, options, placeholder }: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+  placeholder?: string;
+}) {
+  return (
+    <div>
+      <label className="block text-xs font-bold text-muted-foreground mb-1.5">{label}</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+      >
+        <option value="">{placeholder || "Selecione"}</option>
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+        {value && !options.some((o) => o.value === value) && (
+          <option value={value}>{value}</option>
+        )}
+      </select>
+    </div>
+  );
+}
+
+const UF_OPTIONS = [
+  "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO",
+].map((uf) => ({ value: uf, label: uf }));
+
 export default CertificadoModal;
