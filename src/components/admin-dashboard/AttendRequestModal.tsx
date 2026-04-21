@@ -121,8 +121,9 @@ const AttendRequestModal = ({ open, onOpenChange, request }: AttendRequestModalP
 
   const pri = PRIORITY_MAP[request.priority] || PRIORITY_MAP.media;
   const st = STATUS_MAP[request.status] || STATUS_MAP.aberto;
-  const canStart = request.status === "aberto";
-  const canResolve = request.status === "aberto" || request.status === "em andamento";
+  const canStart = isOpen(request.status);
+  const canResolve = isOpen(request.status) || isInProgress(request.status);
+  const alreadyClosed = isClosed(request.status);
   const routeType = getRouteType(request.request_type);
   const routeInfo = getRouteLabel(routeType);
 
