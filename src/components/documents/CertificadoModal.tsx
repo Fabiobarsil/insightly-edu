@@ -325,7 +325,8 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
           format: "a4",
           orientation: "landscape",
         },
-      })
+        pagebreak: { mode: ["css", "legacy"], before: ".html2pdf__page-break" },
+      } as any)
       .from(el)
       .save();
   };
