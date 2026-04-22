@@ -79,22 +79,27 @@
   }
 }
 /* ===== PDF CERTIFICADO ===== */
-.pdf-page {
-  width: 1123px;
-  height: 794px;
-  display: block;
-  page-break-after: always;
-  break-after: page;
-  page-break-inside: avoid;
-  overflow: hidden;
-  background: #fff;
-}
-.pdf-page:last-child {
-  page-break-after: auto;
-  break-after: auto;
+#certificado-pdf {
+  width: 1123px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: block !important;
+  background: #ffffff;
 }
 
-#certificado-pdf {
-  display: block;
-  width: 1123px;
+.pdf-page {
+  width: 1123px !important;
+  height: 794px !important;
+  position: relative !important;
+  overflow: hidden !important; /* Corta qualquer conteúdo que tente vazar para a pág 2 */
+  display: block !important;
+  page-break-after: always !important;
+  page-break-inside: avoid !important;
+  break-after: page !important;
+  box-sizing: border-box !important;
+}
+
+.pdf-page:last-child {
+  page-break-after: avoid !important;
+  break-after: auto !important;
 }
