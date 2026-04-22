@@ -325,7 +325,7 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
       putOnlyUsedFonts: true,
       floatPrecision: 16
     },
-    pagebreak: { mode: 'css', before: '.pdf-page' }
+    pagebreak: { mode: ['css', 'legacy'], before: '.pdf-page' }
   };
 
   html2pdf().from(el).set(opt as any).save();
@@ -709,8 +709,12 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
                     id="certificado-pdf"
                     style={{ width: "1123px", margin: 0, padding: 0, background: "#ffffff" }}
                   >
-                    <CertificadoTemplate data={certData} isVerso={false} />
-                    <CertificadoTemplate data={certData} isVerso={true} />
+                    <div className="pdf-page">
+                      <CertificadoTemplate data={certData} isVerso={false} />
+                    </div>
+                    <div className="pdf-page">
+                      <CertificadoTemplate data={certData} isVerso={true} />
+                    </div>
                   </div>
                 </div>
               </div>
