@@ -43,16 +43,17 @@ export default function CertificadoTemplate({ data }: Props) {
 
   return (
     <div
-      id="certificado"
       style={{
         position: "relative",
         width: `${W}px`,
         height: `${H}px`,
-        margin: "0 auto",
+        margin: "0", // Garanta que está 0
+        padding: "0", // Garanta que está 0
         background: "#fff",
         fontFamily: "'Times New Roman', serif",
         color: "#0f2a44",
         overflow: "hidden",
+        display: "block", // Adicione isso
       }}
     >
       {/* FUNDO */}
