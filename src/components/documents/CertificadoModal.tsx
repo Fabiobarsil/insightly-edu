@@ -301,38 +301,37 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
     setView("preview");
   };
 
-  const handleGerarPDF = () => {
-    const el = document.getElementById("certificado-pdf");
-    if (!el) {
-      console.error("Preview do certificado não encontrado");
-      return;
-    }
+ const handleGerarPDF = () => {
+  const el = document.getElementById("certificado-pdf");
+  if (!el) return;
 
-    const student = (students as any[]).find((s) => s.id === selectedStudentId);
-    const nomeArquivo = student?.full_name?.trim().replace(/\s+/g, "-").toLowerCase() || "aluno";
+  const student = (students as any[]).find((s) => s.id === selectedStudentId);
+  const nomeArquivo = student?.full_name?.trim().replace(/\s+/g, "-").toLowerCase() || "aluno";
 
-    const opt = {
+  html2pdf()
+    .set({
       margin: 0,
       filename: `certificado-${nomeArquivo}.pdf`,
-      image: { type: "jpeg", quality: 1 },
+      image: { type: "jpeg", quality: 1.0 },
       html2canvas: {
         scale: 2,
         useCORS: true,
-        letterRendering: true,
         logging: false,
+        width: 1123,      // Força a largura exata
+        height: 1588,     // Força a altura exata (794 * 2 páginas)
+        windowWidth: 1123,
       },
       jsPDF: {
         unit: "px",
-        format: [1123, 794], // Tamanho exato A4 paisagem em pixels (96dpi)
+        format: [1123, 794],
         orientation: "landscape",
-        hotfixes: ["px_scaling"],
       },
-      // O segredo está aqui: forçar a quebra apenas onde definirmos a classe .pdf-page
-      pagebreak: { mode: "css", before: ".pdf-page" },
-    };
-
-    html2pdf().set(opt).from(el).save();
-  };
+      // Isso aqui remove espaços vazios que o navegador cria entre as divs
+      pagebreak: { mode: ['css', 'legacy'], before: '.pdf-page' }
+    })
+    .from(el)
+    .save();
+};
 
   const updateField = (key: keyof CertFormData, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
