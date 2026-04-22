@@ -305,29 +305,27 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
   const el = document.getElementById("certificado-pdf");
   if (!el) return;
 
-  const student = (students as any[]).find((s) => s.id === selectedStudentId);
-  const nomeArquivo = student?.full_name?.trim().replace(/\s+/g, "-").toLowerCase() || "aluno";
-
   const opt = {
     margin: 0,
-    filename: `certificado-${nomeArquivo}.pdf`,
+    filename: `certificado.pdf`,
     image: { type: "jpeg", quality: 1.0 },
     html2canvas: {
       scale: 2,
       useCORS: true,
       width: 1123,
-      height: 1588, // Força a captura de apenas duas páginas
+      height: 1588, // Altura exata de duas páginas (794 * 2)
+      windowWidth: 1123,
       scrollY: 0,
-      windowWidth: 1123
+      scrollX: 0,
     },
     jsPDF: {
       unit: "px",
       format: [1123, 794],
       orientation: "landscape",
-      compress: true
+      putOnlyUsedFonts: true,
+      floatPrecision: 16
     },
-    // O 'legacy' impede que o html2pdf tente criar páginas extras por conta própria
-    pagebreak: { mode: ['css', 'legacy'], before: '.pdf-page' }
+    pagebreak: { mode: 'css', before: '.pdf-page' }
   };
 
   html2pdf().from(el).set(opt).save();
