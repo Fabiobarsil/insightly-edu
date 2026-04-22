@@ -325,7 +325,7 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
       putOnlyUsedFonts: true,
       floatPrecision: 16
     },
-    pagebreak: { mode: 'css', before: '.pdf-page' }
+    pagebreak: { mode: ['css', 'legacy'], before: '.pdf-page' }
   };
 
   html2pdf().from(el).set(opt as any).save();
