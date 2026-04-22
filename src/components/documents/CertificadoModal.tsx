@@ -308,29 +308,29 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
   const student = (students as any[]).find((s) => s.id === selectedStudentId);
   const nomeArquivo = student?.full_name?.trim().replace(/\s+/g, "-").toLowerCase() || "aluno";
 
-  html2pdf()
-    .set({
-      margin: 0,
-      filename: `certificado-${nomeArquivo}.pdf`,
-      image: { type: "jpeg", quality: 1.0 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        width: 1123,      // Força a largura exata
-        height: 1588,     // Força a altura exata (794 * 2 páginas)
-        windowWidth: 1123,
-      },
-      jsPDF: {
-        unit: "px",
-        format: [1123, 794],
-        orientation: "landscape",
-      },
-      // Isso aqui remove espaços vazios que o navegador cria entre as divs
-      pagebreak: { mode: ['css', 'legacy'], before: '.pdf-page' }
-    })
-    .from(el)
-    .save();
+  const opt = {
+    margin: 0,
+    filename: `certificado-${nomeArquivo}.pdf`,
+    image: { type: "jpeg", quality: 1.0 },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      width: 1123,
+      height: 1588, // Força a captura de apenas duas páginas
+      scrollY: 0,
+      windowWidth: 1123
+    },
+    jsPDF: {
+      unit: "px",
+      format: [1123, 794],
+      orientation: "landscape",
+      compress: true
+    },
+    // O 'legacy' impede que o html2pdf tente criar páginas extras por conta própria
+    pagebreak: { mode: ['css', 'legacy'], before: '.pdf-page' }
+  };
+
+  html2pdf().from(el).set(opt).save();
 };
 
   const updateField = (key: keyof CertFormData, value: string) => {
