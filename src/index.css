@@ -87,26 +87,20 @@
   display: block !important;
 }
 
-/* Cada filho direto do certificado-pdf é uma página A4 paisagem */
-#certificado-pdf > * {
+.pdf-page {
   width: 1123px !important;
   height: 794px !important;
+  margin: 0 !important;
+  padding: 0 !important;
   display: block !important;
   position: relative !important;
   overflow: hidden !important;
   background: #fff;
-  margin: 0 !important;
-  padding: 0 !important;
   box-sizing: border-box !important;
 }
 
-/* Quebra de página apenas entre frente e verso */
-#certificado-pdf > *:first-child {
-  page-break-after: always !important;
-  break-after: page !important;
-}
-
-#certificado-pdf > *:last-child {
-  page-break-after: avoid !important;
-  break-after: avoid !important;
+/* Quebra apenas entre frente e verso */
+.pdf-page + .pdf-page {
+  page-break-before: always !important;
+  break-before: page !important;
 }
