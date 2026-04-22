@@ -698,29 +698,14 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
                 </div>
                 <div className="flex justify-center overflow-auto bg-muted/40">
                   <div style={{ transform: "scale(0.7)", transformOrigin: "top center" }}>
-                   <div id="certificado-pdf" style={{ width: "1123px", overflow: "hidden" }}>
-                    {/* PÁGINA 1 - FRENTE */}
-                    <div className="pdf-page" style={{ width: "1123px", height: "794px", position: "relative", overflow: "hidden" }}>
-                      <CertificadoTemplate data={certData} />
-                    </div>
-
-                    {/* PÁGINA 2 - VERSO */}
-                    <div className="pdf-page" style={{
-                      width: "1123px",
-                      height: "794px",
-                      background: "#fff",
-                      padding: "50px 70px",
-                      boxSizing: "border-box",
-                      fontFamily: "'Times New Roman', serif",
-                      color: "#0f2a44",
-                      display: "flex",
-                      flexDirection: "column",
-                      position: "relative",
-                      overflow: "hidden"
-                    }}>
-                      <h2 style={{ textAlign: "center", fontSize: "22px", margin: "0 0 20px", letterSpacing: "1px" }}>
-                        REGISTRO DO CERTIFICADO
-                      </h2>
+                   <div id="certificado-pdf" style={{ width: "1123px", background: "#ffffff" }}>
+  <div className="pdf-page" style={{ width: "1123px", height: "794px", overflow: "hidden" }}><CertificadoTemplate data={certData} /></div>
+  <div className="pdf-page" style={{ width: "1123px", height: "794px", overflow: "hidden", background: "#fff", padding: "50px 70px", boxSizing: "border-box", fontFamily: "'Times New Roman', serif" }}>
+    {/* CONTEÚDO DO VERSO AQUI */}
+    <h2 style={{ textAlign: "center", fontSize: "22px", margin: "0 0 20px" }}>REGISTRO DO CERTIFICADO</h2>
+    {/* ... restante do verso ... */}
+  </div>
+</div>
 
                       {/* Tabela de disciplinas */}
                       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", marginBottom: "20px" }}>
