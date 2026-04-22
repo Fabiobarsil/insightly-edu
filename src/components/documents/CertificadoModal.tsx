@@ -328,7 +328,7 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
     pagebreak: { mode: 'css', before: '.pdf-page' }
   };
 
-  html2pdf().from(el).set(opt).save();
+  html2pdf().from(el).set(opt as any).save();
 };
 
   const updateField = (key: keyof CertFormData, value: string) => {
