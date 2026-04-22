@@ -95,9 +95,23 @@
   display: block !important;
   position: relative !important;
   overflow: hidden !important;
+  background: #fff;
   margin: 0 !important;
   padding: 0 !important;
+  box-sizing: border-box !important;
+  /* Remove quebras automáticas que o navegador tenta inserir */
+  page-break-before: avoid !important;
+  break-before: avoid !important;
+}
+
+/* Força a quebra APENAS depois da primeira página */
+.pdf-page:first-child {
   page-break-after: always !important;
   break-after: page !important;
-  box-sizing: border-box !important;
+}
+
+/* Garante que a última página não tente criar uma terceira em branco */
+.pdf-page:last-child {
+  page-break-after: avoid !important;
+  break-after: avoid !important;
 }
