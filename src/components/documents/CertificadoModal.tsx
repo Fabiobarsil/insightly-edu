@@ -699,155 +699,87 @@ const CertificadoModal = ({ open, onOpenChange }: CertificadoModalProps) => {
                 </div>
                 <div className="flex justify-center overflow-auto bg-muted/40">
                   <div style={{ transform: "scale(0.7)", transformOrigin: "top center" }}>
-                    <div id="certificado-pdf">
-                      {/* PÁGINA 1 - FRENTE */}
-                      <div className="pdf-page">
-                        <CertificadoTemplate data={certData} />
+                   <div id="certificado-pdf" style={{ width: "1123px", overflow: "hidden" }}>
+                    {/* PÁGINA 1 - FRENTE */}
+                    <div className="pdf-page" style={{ width: "1123px", height: "794px", position: "relative", overflow: "hidden" }}>
+                      <CertificadoTemplate data={certData} />
+                    </div>
+
+                    {/* PÁGINA 2 - VERSO */}
+                    <div className="pdf-page" style={{
+                      width: "1123px",
+                      height: "794px",
+                      background: "#fff",
+                      padding: "50px 70px",
+                      boxSizing: "border-box",
+                      fontFamily: "'Times New Roman', serif",
+                      color: "#0f2a44",
+                      display: "flex",
+                      flexDirection: "column",
+                      position: "relative",
+                      overflow: "hidden"
+                    }}>
+                      <h2 style={{ textAlign: "center", fontSize: "22px", margin: "0 0 20px", letterSpacing: "1px" }}>
+                        REGISTRO DO CERTIFICADO
+                      </h2>
+
+                      {/* Tabela de disciplinas */}
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", marginBottom: "20px" }}>
+                        <thead>
+                          <tr style={{ background: "#f1f5f9" }}>
+                            <th style={{ border: "1px solid #0f2a44", padding: "6px", textAlign: "left" }}>Disciplinas / Componentes Curriculares</th>
+                            <th style={{ border: "1px solid #0f2a44", padding: "6px", width: "140px" }}>Carga Horária</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {Array.from({ length: 8 }).map((_, i) => (
+                            <tr key={i}>
+                              <td style={{ border: "1px solid #0f2a44", padding: "6px", height: "26px" }}>&nbsp;</td>
+                              <td style={{ border: "1px solid #0f2a44", padding: "6px", textAlign: "center" }}>&nbsp;</td>
+                            </tr>
+                          ))}
+                          <tr>
+                            <td style={{ border: "1px solid #0f2a44", padding: "6px", textAlign: "right", fontWeight: "bold" }}>Total de Horas</td>
+                            <td style={{ border: "1px solid #0f2a44", padding: "6px", textAlign: "center", fontWeight: "bold" }}>
+                              {cert.workload_hours ? `${cert.workload_hours}h` : "—"}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+
+                      <div style={{ fontSize: "13px", lineHeight: 1.8, marginBottom: "20px" }}>
+                        <div><strong>Estabelecimento:</strong> {cert.establishment || school?.name || "—"}</div>
+                        <div><strong>Habilidades Adicionais:</strong> {cert.additional_skills || "—"}</div>
+                        <div><strong>Observações:</strong> {cert.notes || "—"}</div>
                       </div>
 
-                      {/* PÁGINA 2 - VERSO */}
-                      <div className="pdf-page">
-                        <div
-                          style={{
-                            width: "1123px",
-                            height: "794px",
-                            background: "#fff",
-                            padding: "50px 70px",
-                            boxSizing: "border-box",
-                            fontFamily: "'Times New Roman', serif",
-                            color: "#0f2a44",
-                            display: "flex",
-                            flexDirection: "column",
-                          }}
-                        >
-                          <h2
-                            style={{ textAlign: "center", fontSize: "22px", margin: "0 0 20px", letterSpacing: "1px" }}
-                          >
-                            REGISTRO DO CERTIFICADO
-                          </h2>
-
-                          {/* Tabela de disciplinas / carga horária */}
-                          <table
-                            style={{
-                              width: "100%",
-                              borderCollapse: "collapse",
-                              fontSize: "13px",
-                              marginBottom: "20px",
-                            }}
-                          >
-                            <thead>
-                              <tr style={{ background: "#f1f5f9" }}>
-                                <th style={{ border: "1px solid #0f2a44", padding: "6px", textAlign: "left" }}>
-                                  Disciplinas / Componentes Curriculares
-                                </th>
-                                <th style={{ border: "1px solid #0f2a44", padding: "6px", width: "140px" }}>
-                                  Carga Horária
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {Array.from({ length: 8 }).map((_, i) => (
-                                <tr key={i}>
-                                  <td style={{ border: "1px solid #0f2a44", padding: "6px", height: "26px" }}>
-                                    &nbsp;
-                                  </td>
-                                  <td style={{ border: "1px solid #0f2a44", padding: "6px", textAlign: "center" }}>
-                                    &nbsp;
-                                  </td>
-                                </tr>
-                              ))}
-                              <tr>
-                                <td
-                                  style={{
-                                    border: "1px solid #0f2a44",
-                                    padding: "6px",
-                                    textAlign: "right",
-                                    fontWeight: "bold",
-                                  }}
-                                >
-                                  Total de Horas
-                                </td>
-                                <td
-                                  style={{
-                                    border: "1px solid #0f2a44",
-                                    padding: "6px",
-                                    textAlign: "center",
-                                    fontWeight: "bold",
-                                  }}
-                                >
-                                  {cert.workload_hours ? `${cert.workload_hours}h` : "—"}
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
-
-                          {/* Detalhamento */}
-                          <div style={{ fontSize: "13px", lineHeight: 1.8, marginBottom: "20px" }}>
-                            <div>
-                              <strong>Estabelecimento:</strong> {cert.establishment || school?.name || "—"}
-                            </div>
-                            <div>
-                              <strong>Habilidades Adicionais:</strong> {cert.additional_skills || "—"}
-                            </div>
-                            <div>
-                              <strong>Observações:</strong> {cert.notes || "—"}
-                            </div>
-                          </div>
-
-                          {/* Bloco de Registro */}
-                          <div
-                            style={{
-                              border: "2px solid #0f2a44",
-                              padding: "14px 18px",
-                              fontSize: "13px",
-                              lineHeight: 1.8,
-                              marginBottom: "auto",
-                            }}
-                          >
-                            <div style={{ fontWeight: "bold", marginBottom: "8px", letterSpacing: "1px" }}>
-                              REGISTRO
-                            </div>
-                            <div style={{ display: "flex", gap: "30px", flexWrap: "wrap" }}>
-                              <div>
-                                <strong>Nº de Registro:</strong> {cert.registry_number || "—"}
-                              </div>
-                              <div>
-                                <strong>Livro:</strong> {cert.registry_book || "—"}
-                              </div>
-                              <div>
-                                <strong>Folha:</strong> {cert.registry_page || "—"}
-                              </div>
-                              <div>
-                                <strong>Data de Emissão:</strong>{" "}
-                                {cert.issue_date ? new Date(cert.issue_date).toLocaleDateString("pt-BR") : "—"}
-                              </div>
-                            </div>
-                            <div style={{ marginTop: "8px" }}>
-                              <strong>Local:</strong> {cert.city || "—"} / {cert.state || "—"}
-                            </div>
-                          </div>
-
-                          {/* Assinaturas verso */}
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-around",
-                              marginTop: "60px",
-                            }}
-                          >
-                            <div style={{ width: "300px", textAlign: "center" }}>
-                              <div style={{ borderTop: "1px solid #0f2a44", marginBottom: "6px" }} />
-                              <div style={{ fontSize: "13px", fontWeight: "bold" }}>{secretaryName || "—"}</div>
-                              <div style={{ fontSize: "11px" }}>Secretário(a) Escolar</div>
-                            </div>
-                            <div style={{ width: "300px", textAlign: "center" }}>
-                              <div style={{ borderTop: "1px solid #0f2a44", marginBottom: "6px" }} />
-                              <div style={{ fontSize: "13px", fontWeight: "bold" }}>{directorName || "—"}</div>
-                              <div style={{ fontSize: "11px" }}>Diretor(a)</div>
-                            </div>
+                      <div style={{ border: "2px solid #0f2a44", padding: "14px 18px", fontSize: "13px", lineHeight: 1.8, marginBottom: "auto" }}>
+                        <div style={{ fontWeight: "bold", marginBottom: "8px", letterSpacing: "1px" }}>REGISTRO</div>
+                        <div style={{ display: "flex", gap: "30px", flexWrap: "wrap" }}>
+                          <div><strong>Nº de Registro:</strong> {cert.registry_number || "—"}</div>
+                          <div><strong>Livro:</strong> {cert.registry_book || "—"}</div>
+                          <div><strong>Folha:</strong> {cert.registry_page || "—"}</div>
+                          <div>
+                            <strong>Data de Emissão:</strong> {cert.issue_date ? new Date(cert.issue_date).toLocaleDateString("pt-BR") : "—"}
                           </div>
                         </div>
+                        <div style={{ marginTop: "8px" }}><strong>Local:</strong> {cert.city || "—"} / {cert.state || "—"}</div>
                       </div>
+
+                      <div style={{ display: "flex", justifyContent: "space-around", marginTop: "60px" }}>
+                        <div style={{ width: "300px", textAlign: "center" }}>
+                          <div style={{ borderTop: "1px solid #0f2a44", marginBottom: "6px" }} />
+                          <div style={{ fontSize: "13px", fontWeight: "bold" }}>{secretaryName || "—"}</div>
+                          <div style={{ fontSize: "11px" }}>Secretário(a) Escolar</div>
+                        </div>
+                        <div style={{ width: "300px", textAlign: "center" }}>
+                          <div style={{ borderTop: "1px solid #0f2a44", marginBottom: "6px" }} />
+                          <div style={{ fontSize: "13px", fontWeight: "bold" }}>{directorName || "—"}</div>
+                          <div style={{ fontSize: "11px" }}>Diretor(a)</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                     </div>
                   </div>
                 </div>
