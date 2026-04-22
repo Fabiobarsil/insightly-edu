@@ -79,17 +79,16 @@
   }
 }
 /* ===== PDF CERTIFICADO ===== */
-/* Força o container a ter o tamanho exato de 2 páginas A4 Paisagem */
 #certificado-pdf {
   width: 1123px !important;
-  height: 1588px !important; /* 794px * 2 */
   margin: 0 !important;
   padding: 0 !important;
+  background: #fff;
   display: block !important;
-  overflow: hidden !important;
 }
 
-.pdf-page {
+/* Cada filho direto do certificado-pdf é uma página A4 paisagem */
+#certificado-pdf > * {
   width: 1123px !important;
   height: 794px !important;
   display: block !important;
@@ -99,19 +98,15 @@
   margin: 0 !important;
   padding: 0 !important;
   box-sizing: border-box !important;
-  /* Remove quebras automáticas que o navegador tenta inserir */
-  page-break-before: avoid !important;
-  break-before: avoid !important;
 }
 
-/* Força a quebra APENAS depois da primeira página */
-.pdf-page:first-child {
+/* Quebra de página apenas entre frente e verso */
+#certificado-pdf > *:first-child {
   page-break-after: always !important;
   break-after: page !important;
 }
 
-/* Garante que a última página não tente criar uma terceira em branco */
-.pdf-page:last-child {
+#certificado-pdf > *:last-child {
   page-break-after: avoid !important;
   break-after: avoid !important;
 }
