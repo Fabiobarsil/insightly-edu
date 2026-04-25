@@ -1,6 +1,8 @@
 import RoleLayout from "@/components/layout/RoleLayout";
+import OperationalMetrics from "@/components/admin-dashboard/OperationalMetrics";
 import SecretaryKanban from "@/components/admin-dashboard/SecretaryKanban";
 import SecretarySmartAlerts from "@/components/admin-dashboard/SecretarySmartAlerts";
+import UrgentDemands from "@/components/admin-dashboard/UrgentDemands";
 import QuickActionsPanel from "@/components/admin-dashboard/QuickActionsPanel";
 import AdminAgenda from "@/components/admin-dashboard/AdminAgenda";
 
@@ -15,12 +17,21 @@ const AdminDashboard = () => {
           </p>
         </div>
 
-        {/* Layout em 2 colunas: Kanban + painel lateral */}
+        {/* Layout em 2 colunas: conteúdo operacional + painel lateral */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
-          {/* Coluna principal — Kanban operacional */}
+          {/* Coluna principal */}
           <div className="flex flex-col gap-6 min-w-0">
+            {/* Indicadores simples — apenas contadores, sem gráficos */}
+            <OperationalMetrics />
+
+            {/* Kanban operacional (foco principal) */}
             <SecretaryKanban />
-            <SecretarySmartAlerts />
+
+            {/* Demandas urgentes + Alertas lado a lado abaixo do Kanban */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              <UrgentDemands />
+              <SecretarySmartAlerts />
+            </div>
           </div>
 
           {/* Coluna lateral — ações rápidas + agenda */}
