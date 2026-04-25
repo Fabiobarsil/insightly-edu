@@ -2316,6 +2316,18 @@ export type Database = {
       }
     }
     Views: {
+      secretaria_demands: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          priority: string | null
+          school_id: string | null
+          status: string | null
+          student_name: string | null
+          type: string | null
+        }
+        Relationships: []
+      }
       v_boletim: {
         Row: {
           disciplina: string | null
