@@ -2,13 +2,14 @@ import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-import { AlertTriangle, Clock, Building2, GraduationCap, Timer, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, Clock, Building2, GraduationCap, Timer, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useSecretariaKanban, type KanbanRequest } from "@/hooks/useSecretariaKanban";
+import AttendanceModal from "@/components/secretaria/AttendanceModal";
 
 type Origin = "Diretoria" | "Coordenação" | "Prazos" | "Secretaria";
 
@@ -39,9 +40,12 @@ const inferOrigin = (r: KanbanRequest): Origin => {
 
 const SecretaryAlertsBar = () => {
   
+  
   const queryClient = useQueryClient();
   const { requests } = useSecretariaKanban();
-  const [activeIds, setActiveIds] = useState<Set<string>>(new Set());
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<KanbanRequest | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   // Prioridades reais derivadas do Kanban (mesma fonte: secretaria_requests)
   const prioridades = useMemo<AlertRow[]>(() => {
@@ -65,28 +69,27 @@ const SecretaryAlertsBar = () => {
         .update({ status: "em_andamento" })
         .eq("id", requestId);
       if (error) throw error;
+      return requestId;
     },
-    onSuccess: () => {
+    onSuccess: (requestId) => {
       queryClient.invalidateQueries({ queryKey: ["secretaria-kanban"] });
       queryClient.invalidateQueries({ queryKey: ["secretary-counters"] });
-      toast.success("Demanda movida para 'Em andamento'");
+      const fresh = requests.find((r) => r.id === requestId) ?? null;
+      if (fresh) {
+        setSelectedRequest({ ...fresh, status: "em_andamento" });
+        setModalOpen(true);
+      }
     },
-    onError: () => toast.error("Não foi possível iniciar o atendimento"),
+    onError: (err) => {
+      console.error("[SecretaryAlertsBar] iniciar atendimento falhou:", err);
+      toast.error("Não foi possível iniciar o atendimento");
+    },
+    onSettled: () => setActiveId(null),
   });
 
   const handleStart = (alert: AlertRow) => {
-    setActiveIds((prev) => new Set(prev).add(alert.id));
-    startMutation.mutate(alert.resourceId, {
-      onSettled: () => {
-        setTimeout(() => {
-          setActiveIds((prev) => {
-            const n = new Set(prev);
-            n.delete(alert.id);
-            return n;
-          });
-        }, 800);
-      },
-    });
+    setActiveId(alert.id);
+    startMutation.mutate(alert.resourceId);
   };
 
   const total = prioridades.length;
@@ -124,7 +127,7 @@ const SecretaryAlertsBar = () => {
               addSuffix: true,
               locale: ptBR,
             });
-            const isActive = activeIds.has(a.id);
+            const isActive = activeId === a.id;
             const critical = a.priority === "alta" || a.priority === "urgente";
             return (
               <li
@@ -162,21 +165,19 @@ const SecretaryAlertsBar = () => {
                   disabled={isActive}
                   className={cn(
                     "h-7 px-2.5 text-xs gap-1.5 transition-all border",
-                    isActive
-                      ? "bg-emerald-500 hover:bg-emerald-500 text-white border-emerald-600"
-                      : critical
+                    critical
                       ? "border-rose-500/60 text-rose-700 hover:bg-rose-500 hover:text-white dark:text-rose-300"
                       : "border-border hover:bg-accent"
                   )}
                 >
                   {isActive ? (
                     <>
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                      Em andamento
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      Iniciando...
                     </>
                   ) : (
                     <>
-                      <Timer className={cn("h-3.5 w-3.5", isActive && "animate-spin")} />
+                      <Timer className="h-3.5 w-3.5" />
                       Iniciar Atendimento
                     </>
                   )}
@@ -186,6 +187,12 @@ const SecretaryAlertsBar = () => {
           })}
         </ul>
       )}
+
+      <AttendanceModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        request={selectedRequest}
+      />
     </section>
   );
 };
