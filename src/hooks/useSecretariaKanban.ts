@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolContext } from "./useSchoolContext";
+import { updateRequestStatus } from "@/lib/secretariaActions";
 
 export type KanbanStatus = "aberto" | "em_andamento" | "concluido";
 
