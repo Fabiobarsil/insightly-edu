@@ -81,6 +81,7 @@ const SecretaryAlertsBar = () => {
     onSuccess: (requestId) => {
       queryClient.invalidateQueries({ queryKey: ["secretaria-kanban"] });
       queryClient.invalidateQueries({ queryKey: ["secretary-counters"] });
+      queryClient.invalidateQueries({ queryKey: ["secretary-actions-history"] });
       const fresh = requests.find((r) => r.id === requestId) ?? null;
       if (fresh) {
         setSelectedRequest({ ...fresh, status: "em_andamento" });

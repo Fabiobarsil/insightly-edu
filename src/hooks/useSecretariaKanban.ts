@@ -127,6 +127,9 @@ export function useSecretariaKanban() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: ["secretary-counters"] });
+      queryClient.invalidateQueries({ queryKey: ["secretary-alerts-bar"] });
+      queryClient.invalidateQueries({ queryKey: ["secretary-actions-history"] });
     },
   });
 
