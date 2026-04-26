@@ -56,6 +56,9 @@ const AdminDashboard = () => {
           </aside>
         </div>
 
+        {/* Histórico de ações da Secretaria */}
+        <SecretaryActionsHistory />
+
         {/* Panorama de performance (rodapé) */}
         <PerformancePanel />
       </div>
