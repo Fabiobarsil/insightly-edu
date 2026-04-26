@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolContext } from "./useSchoolContext";
+import { updateRequestStatus } from "@/lib/secretariaActions";
 
 export type KanbanStatus = "aberto" | "em_andamento" | "concluido";
 
@@ -98,12 +99,19 @@ export function useSecretariaKanban() {
   const mutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: KanbanStatus }) => {
       if (!schoolId) throw new Error("schoolId ausente");
-      const { error } = await supabase
-        .from("secretaria_requests")
-        .update({ status })
-        .eq("id", id)
-        .eq("school_id", schoolId);
-      if (error) throw error;
+      const current = (queryClient.getQueryData<KanbanRequest[]>(queryKey) || requests).find(
+        (r) => r.id === id
+      );
+      if (!current) throw new Error("Demanda não encontrada");
+      await updateRequestStatus(
+        {
+          id: current.id,
+          school_id: current.school_id,
+          student_id: current.student_id,
+          status: current.status,
+        },
+        status
+      );
     },
     onMutate: async ({ id, status }) => {
       await queryClient.cancelQueries({ queryKey });

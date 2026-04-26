@@ -1504,6 +1504,78 @@ export type Database = {
         }
         Relationships: []
       }
+      secretaria_actions: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          from_status: string | null
+          id: string
+          performed_by: string | null
+          request_id: string | null
+          school_id: string
+          student_id: string | null
+          to_status: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          from_status?: string | null
+          id?: string
+          performed_by?: string | null
+          request_id?: string | null
+          school_id: string
+          student_id?: string | null
+          to_status?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          from_status?: string | null
+          id?: string
+          performed_by?: string | null
+          request_id?: string | null
+          school_id?: string
+          student_id?: string | null
+          to_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "secretaria_actions_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "secretaria_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "secretaria_actions_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "secretaria_actions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "secretaria_actions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_student_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "secretaria_actions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_students_active"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       secretaria_requests: {
         Row: {
           created_at: string | null

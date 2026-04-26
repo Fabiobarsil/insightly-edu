@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { updateRequestStatus } from "@/lib/secretariaActions";
 import { cn } from "@/lib/utils";
 import type { KanbanRequest } from "@/hooks/useSecretariaKanban";
 
@@ -57,11 +58,15 @@ const AttendanceModal = ({ open, onOpenChange, request }: Props) => {
   const updateMutation = useMutation({
     mutationFn: async (newStatus: "concluido" | "aberto") => {
       if (!request) throw new Error("Solicitação ausente");
-      const { error } = await supabase
-        .from("secretaria_requests")
-        .update({ status: newStatus })
-        .eq("id", request.id);
-      if (error) throw error;
+      await updateRequestStatus(
+        {
+          id: request.id,
+          school_id: request.school_id,
+          student_id: request.student_id,
+          status: request.status,
+        },
+        newStatus
+      );
       return newStatus;
     },
     onSuccess: (newStatus) => {

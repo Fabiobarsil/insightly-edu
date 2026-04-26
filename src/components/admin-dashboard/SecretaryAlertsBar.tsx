@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { updateRequestStatus } from "@/lib/secretariaActions";
 
 import { AlertTriangle, Clock, Building2, GraduationCap, Timer, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -64,11 +65,17 @@ const SecretaryAlertsBar = () => {
 
   const startMutation = useMutation({
     mutationFn: async (requestId: string) => {
-      const { error } = await supabase
-        .from("secretaria_requests")
-        .update({ status: "em_andamento" })
-        .eq("id", requestId);
-      if (error) throw error;
+      const current = requests.find((r) => r.id === requestId);
+      if (!current) throw new Error("Demanda não encontrada");
+      await updateRequestStatus(
+        {
+          id: current.id,
+          school_id: current.school_id,
+          student_id: current.student_id,
+          status: current.status,
+        },
+        "em_andamento"
+      );
       return requestId;
     },
     onSuccess: (requestId) => {
