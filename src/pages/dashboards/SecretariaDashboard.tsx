@@ -260,11 +260,24 @@ const SecretariaDashboard = () => {
                           <Badge variant="secondary" className={st.class}>{st.label}</Badge>
                         </td>
                         <td className="px-4 py-3 text-right">
-                          {next ? (
-                            <button
-                              onClick={() => advanceStatus.mutate({ id: r.id, newStatus: next })}
-                              className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
-                            >
+  {next ? (
+    <button
+      onClick={() => {
+        if (!r.student_id) {
+          console.error("student_id não encontrado", r);
+          return;
+        }
+
+        navigate(`/secretaria/matricula/${r.student_id}`);
+      }}
+      className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
+    >
+      Atender
+    </button>
+  ) : (
+    <span className="text-xs text-muted-foreground">✓</span>
+  )}
+</td>
                               {next === "concluido" ? (
                                 <><CheckCircle2 className="h-3.5 w-3.5" /> Resolver</>
                               ) : (
