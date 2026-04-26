@@ -58,11 +58,15 @@ const AttendanceModal = ({ open, onOpenChange, request }: Props) => {
   const updateMutation = useMutation({
     mutationFn: async (newStatus: "concluido" | "aberto") => {
       if (!request) throw new Error("Solicitação ausente");
-      const { error } = await supabase
-        .from("secretaria_requests")
-        .update({ status: newStatus })
-        .eq("id", request.id);
-      if (error) throw error;
+      await updateRequestStatus(
+        {
+          id: request.id,
+          school_id: request.school_id,
+          student_id: request.student_id,
+          status: request.status,
+        },
+        newStatus
+      );
       return newStatus;
     },
     onSuccess: (newStatus) => {
