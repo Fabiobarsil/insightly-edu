@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+
 import { AlertTriangle, Clock, Building2, GraduationCap, Timer, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
@@ -38,7 +38,7 @@ const inferOrigin = (r: KanbanRequest): Origin => {
 };
 
 const SecretaryAlertsBar = () => {
-  const navigate = useNavigate();
+  
   const queryClient = useQueryClient();
   const { requests } = useSecretariaKanban();
   const [activeIds, setActiveIds] = useState<Set<string>>(new Set());
