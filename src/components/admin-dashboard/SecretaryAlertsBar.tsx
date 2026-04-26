@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { updateRequestStatus } from "@/lib/secretariaActions";
 
 import { AlertTriangle, Clock, Building2, GraduationCap, Timer, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
