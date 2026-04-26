@@ -40,7 +40,13 @@ const PRIORITY_STYLES: Record<string, string> = {
 
 const AttendanceModal = ({ open, onOpenChange, request }: Props) => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [note, setNote] = useState("");
+
+  const goTo = (path: string) => {
+    onOpenChange(false);
+    navigate(path);
+  };
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ["secretaria-kanban"] });
