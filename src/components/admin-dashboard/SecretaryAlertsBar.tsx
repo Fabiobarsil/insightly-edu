@@ -2,13 +2,14 @@ import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-import { AlertTriangle, Clock, Building2, GraduationCap, Timer, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, Clock, Building2, GraduationCap, Timer, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useSecretariaKanban, type KanbanRequest } from "@/hooks/useSecretariaKanban";
+import AttendanceModal from "@/components/secretaria/AttendanceModal";
 
 type Origin = "Diretoria" | "Coordenação" | "Prazos" | "Secretaria";
 
