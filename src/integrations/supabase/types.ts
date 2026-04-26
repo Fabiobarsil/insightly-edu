@@ -1566,6 +1566,42 @@ export type Database = {
           },
         ]
       }
+      secretary_agenda: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          event_date: string
+          event_time: string
+          id: string
+          school_id: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          event_date?: string
+          event_time: string
+          id?: string
+          school_id: string
+          title: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          event_date?: string
+          event_time?: string
+          id?: string
+          school_id?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       secretary_requests: {
         Row: {
           class_id: string | null
