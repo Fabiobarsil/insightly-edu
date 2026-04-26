@@ -9,6 +9,7 @@ import SecretaryKanban from "@/components/admin-dashboard/SecretaryKanban";
 import AdminAgenda from "@/components/admin-dashboard/AdminAgenda";
 import MomentoCertus from "@/components/admin-dashboard/MomentoCertus";
 import PerformancePanel from "@/components/admin-dashboard/PerformancePanel";
+import SecretaryActionsHistory from "@/components/admin-dashboard/SecretaryActionsHistory";
 import RequestFormModal from "@/components/secretaria/RequestFormModal";
 
 const AdminDashboard = () => {
