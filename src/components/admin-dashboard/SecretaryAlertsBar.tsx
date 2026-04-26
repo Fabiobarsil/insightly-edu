@@ -127,7 +127,7 @@ const SecretaryAlertsBar = () => {
               addSuffix: true,
               locale: ptBR,
             });
-            const isActive = activeIds.has(a.id);
+            const isActive = activeId === a.id;
             const critical = a.priority === "alta" || a.priority === "urgente";
             return (
               <li
@@ -165,21 +165,19 @@ const SecretaryAlertsBar = () => {
                   disabled={isActive}
                   className={cn(
                     "h-7 px-2.5 text-xs gap-1.5 transition-all border",
-                    isActive
-                      ? "bg-emerald-500 hover:bg-emerald-500 text-white border-emerald-600"
-                      : critical
+                    critical
                       ? "border-rose-500/60 text-rose-700 hover:bg-rose-500 hover:text-white dark:text-rose-300"
                       : "border-border hover:bg-accent"
                   )}
                 >
                   {isActive ? (
                     <>
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                      Em andamento
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      Iniciando...
                     </>
                   ) : (
                     <>
-                      <Timer className={cn("h-3.5 w-3.5", isActive && "animate-spin")} />
+                      <Timer className="h-3.5 w-3.5" />
                       Iniciar Atendimento
                     </>
                   )}
@@ -189,6 +187,12 @@ const SecretaryAlertsBar = () => {
           })}
         </ul>
       )}
+
+      <AttendanceModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        request={selectedRequest}
+      />
     </section>
   );
 };
