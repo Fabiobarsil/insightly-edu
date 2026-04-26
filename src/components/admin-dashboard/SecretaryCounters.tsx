@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
 import { Users, FileWarning, ListTodo, AlertOctagon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSecretariaKanban } from "@/hooks/useSecretariaKanban";
 
 export type CounterFilter = "all" | "students" | "documents" | "queue" | "alerts";
 
@@ -12,68 +13,54 @@ interface Props {
 }
 
 /**
- * Cards de indicadores com cores semânticas, clicáveis (filtram a fila)
- * e barra de progresso dinâmica na base.
+ * Cards de KPIs derivados da MESMA fonte do Kanban (secretaria_requests).
+ * "Alunos Ativos" continua vindo direto da tabela students.
+ * Atualiza em tempo real conforme cards do Kanban mudam de status.
  */
 const SecretaryCounters = ({ active, onChange }: Props) => {
   const { schoolId } = useSchoolId();
+  const { requests } = useSecretariaKanban();
 
-  const { data } = useQuery({
-    queryKey: ["secretary-counters", schoolId],
+  const { data: studentsCount = 0 } = useQuery({
+    queryKey: ["secretary-counters-students", schoolId],
     queryFn: async () => {
-      if (!schoolId) return null;
-
-      const [studentsRes, docsRes, requestsRes, alertsRes, doneRes] = await Promise.all([
-        supabase
-          .from("students")
-          .select("id", { count: "exact", head: true })
-          .eq("school_id", schoolId)
-          .eq("status", "ativo"),
-        supabase
-          .from("student_documents")
-          .select("id", { count: "exact", head: true })
-          .eq("school_id", schoolId)
-          .eq("status", false),
-        supabase
-          .from("secretary_requests")
-          .select("id", { count: "exact", head: true })
-          .eq("school_id", schoolId)
-          .neq("status", "concluido"),
-        supabase
-          .from("secretary_requests")
-          .select("id", { count: "exact", head: true })
-          .eq("school_id", schoolId)
-          .eq("priority", "urgente")
-          .neq("status", "concluido"),
-        supabase
-          .from("secretary_requests")
-          .select("id", { count: "exact", head: true })
-          .eq("school_id", schoolId)
-          .eq("status", "concluido"),
-      ]);
-
-      const open = requestsRes.count ?? 0;
-      const done = doneRes.count ?? 0;
-      const total = open + done;
-      const completionPct = total > 0 ? Math.round((done / total) * 100) : 100;
-
-      return {
-        students: studentsRes.count ?? 0,
-        documents: docsRes.count ?? 0,
-        requests: open,
-        alerts: alertsRes.count ?? 0,
-        completionPct,
-      };
+      if (!schoolId) return 0;
+      const { count } = await supabase
+        .from("students")
+        .select("id", { count: "exact", head: true })
+        .eq("school_id", schoolId)
+        .eq("status", "ativo");
+      return count ?? 0;
     },
     enabled: !!schoolId,
   });
+
+  const filaOperacional = requests.filter(
+    (r) => r.status === "aberto" || r.status === "em_andamento"
+  ).length;
+  const documentosPendentes = requests.filter(
+    (r) => (r.type ?? "").toLowerCase().includes("document") && r.status !== "concluido"
+  ).length;
+  const alertasCriticos = requests.filter(
+    (r) => (r.priority === "alta" || r.priority === "urgente") && r.status !== "concluido"
+  ).length;
+  const concluidas = requests.filter((r) => r.status === "concluido").length;
+  const totalReqs = filaOperacional + concluidas;
+  const completionPct = totalReqs > 0 ? Math.round((concluidas / totalReqs) * 100) : 100;
+
+  const data = {
+    students: studentsCount,
+    documents: documentosPendentes,
+    requests: filaOperacional,
+    alerts: alertasCriticos,
+    completionPct,
+  };
 
   type Card = {
     key: CounterFilter;
     value: number;
     label: string;
     icon: any;
-    /** Tailwind classes for soft bg, border-l, value text, icon container */
     tone: {
       bg: string;
       border: string;
@@ -83,7 +70,6 @@ const SecretaryCounters = ({ active, onChange }: Props) => {
       progressGood: string;
       progressBad: string;
     };
-    /** 0-100 progress and whether it's "good" or "bad" */
     progress: number;
     progressGood: boolean;
   };
@@ -91,7 +77,7 @@ const SecretaryCounters = ({ active, onChange }: Props) => {
   const cards: Card[] = [
     {
       key: "students",
-      value: data?.students ?? 0,
+      value: data.students,
       label: "Alunos Ativos",
       icon: Users,
       tone: {
@@ -108,7 +94,7 @@ const SecretaryCounters = ({ active, onChange }: Props) => {
     },
     {
       key: "documents",
-      value: data?.documents ?? 0,
+      value: data.documents,
       label: "Documentos Pendentes",
       icon: FileWarning,
       tone: {
@@ -120,12 +106,12 @@ const SecretaryCounters = ({ active, onChange }: Props) => {
         progressGood: "bg-emerald-500",
         progressBad: "bg-amber-500",
       },
-      progress: Math.max(0, 100 - Math.min(100, (data?.documents ?? 0) * 10)),
-      progressGood: (data?.documents ?? 0) <= 5,
+      progress: Math.max(0, 100 - Math.min(100, data.documents * 10)),
+      progressGood: data.documents <= 5,
     },
     {
       key: "queue",
-      value: data?.requests ?? 0,
+      value: data.requests,
       label: "Fila Operacional",
       icon: ListTodo,
       tone: {
@@ -137,12 +123,12 @@ const SecretaryCounters = ({ active, onChange }: Props) => {
         progressGood: "bg-emerald-500",
         progressBad: "bg-violet-500",
       },
-      progress: data?.completionPct ?? 0,
-      progressGood: (data?.completionPct ?? 0) >= 70,
+      progress: data.completionPct,
+      progressGood: data.completionPct >= 70,
     },
     {
       key: "alerts",
-      value: data?.alerts ?? 0,
+      value: data.alerts,
       label: "Alertas Críticos",
       icon: AlertOctagon,
       tone: {
@@ -154,9 +140,8 @@ const SecretaryCounters = ({ active, onChange }: Props) => {
         progressGood: "bg-emerald-500",
         progressBad: "bg-rose-600",
       },
-      // qualquer alerta crítico já é ruim
-      progress: Math.min(100, (data?.alerts ?? 0) * 25),
-      progressGood: (data?.alerts ?? 0) === 0,
+      progress: Math.min(100, data.alerts * 25),
+      progressGood: data.alerts === 0,
     },
   ];
 
@@ -195,7 +180,6 @@ const SecretaryCounters = ({ active, onChange }: Props) => {
                 <Icon className="w-4 h-4" />
               </span>
             </div>
-            {/* Barra de progresso vibrante */}
             <div className="h-2 w-full bg-foreground/10">
               <div
                 className={cn(
