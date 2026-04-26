@@ -53,6 +53,7 @@ const AttendanceModal = ({ open, onOpenChange, request }: Props) => {
     queryClient.invalidateQueries({ queryKey: ["secretaria-kanban"] });
     queryClient.invalidateQueries({ queryKey: ["secretary-counters"] });
     queryClient.invalidateQueries({ queryKey: ["secretary-alerts-bar"] });
+    queryClient.invalidateQueries({ queryKey: ["secretary-actions-history"] });
   };
 
   const updateMutation = useMutation({
