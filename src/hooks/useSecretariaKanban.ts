@@ -48,25 +48,40 @@ export function useSecretariaKanban() {
 
       const { data, error } = await supabase
         .from("secretaria_requests")
-        .select(
-          "id, school_id, student_id, title, type, status, priority, created_at, students(full_name)"
-        )
+        .select("id, school_id, student_id, title, type, status, priority, created_at")
         .eq("school_id", schoolId)
         .order("created_at", { ascending: true });
 
       if (error) throw error;
 
-      const rows = (data || []).map((r: any) => ({
+      const rawRows = (data || []) as any[];
+
+      // Busca nomes de alunos em uma única query (evita dependência de FK declarada)
+      const studentIds = Array.from(
+        new Set(rawRows.map((r) => r.student_id).filter(Boolean))
+      ) as string[];
+      let nameMap: Record<string, string> = {};
+      if (studentIds.length > 0) {
+        const { data: students } = await supabase
+          .from("students")
+          .select("id, full_name")
+          .in("id", studentIds);
+        (students || []).forEach((s: any) => {
+          nameMap[s.id] = s.full_name;
+        });
+      }
+
+      const rows: KanbanRequest[] = rawRows.map((r) => ({
         id: r.id,
         school_id: r.school_id,
         student_id: r.student_id,
-        student_name: r.students?.full_name ?? null,
+        student_name: r.student_id ? nameMap[r.student_id] ?? null : null,
         title: r.title,
         type: r.type,
         status: (r.status ?? "aberto") as KanbanStatus,
         priority: r.priority ?? "media",
         created_at: r.created_at,
-      })) as KanbanRequest[];
+      }));
 
       // priority desc, created_at asc
       rows.sort((a, b) => {
