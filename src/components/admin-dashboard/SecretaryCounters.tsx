@@ -1,13 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
+import { Users, FileWarning, ListTodo, AlertOctagon } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+export type CounterFilter = "all" | "students" | "documents" | "queue" | "alerts";
+
+interface Props {
+  active: CounterFilter;
+  onChange: (f: CounterFilter) => void;
+}
 
 /**
- * Contadores compactos da Secretaria Digital.
- * Estilo mockup: 4 cards centralizados com número grande + rótulo.
- * Sem gráficos, sem tendências — apenas execução.
+ * Cards de indicadores com cores semânticas, clicáveis (filtram a fila)
+ * e barra de progresso dinâmica na base.
  */
-const SecretaryCounters = () => {
+const SecretaryCounters = ({ active, onChange }: Props) => {
   const { schoolId } = useSchoolId();
 
   const { data } = useQuery({
@@ -15,7 +23,7 @@ const SecretaryCounters = () => {
     queryFn: async () => {
       if (!schoolId) return null;
 
-      const [studentsRes, docsRes, requestsRes, alertsRes] = await Promise.all([
+      const [studentsRes, docsRes, requestsRes, alertsRes, doneRes] = await Promise.all([
         supabase
           .from("students")
           .select("id", { count: "exact", head: true })
@@ -37,38 +45,155 @@ const SecretaryCounters = () => {
           .eq("school_id", schoolId)
           .eq("priority", "urgente")
           .neq("status", "concluido"),
+        supabase
+          .from("secretary_requests")
+          .select("id", { count: "exact", head: true })
+          .eq("school_id", schoolId)
+          .eq("status", "concluido"),
       ]);
+
+      const open = requestsRes.count ?? 0;
+      const done = doneRes.count ?? 0;
+      const total = open + done;
+      const completionPct = total > 0 ? Math.round((done / total) * 100) : 100;
 
       return {
         students: studentsRes.count ?? 0,
         documents: docsRes.count ?? 0,
-        requests: requestsRes.count ?? 0,
+        requests: open,
         alerts: alertsRes.count ?? 0,
+        completionPct,
       };
     },
     enabled: !!schoolId,
   });
 
-  const cards = [
-    { value: data?.students ?? 0, label: "Alunos Ativos", accent: "text-foreground" },
-    { value: data?.documents ?? 0, label: "Documentos Pendentes", accent: "text-amber-600" },
-    { value: data?.requests ?? 0, label: "Solicitações", accent: "text-primary" },
-    { value: data?.alerts ?? 0, label: "Alertas Críticos", accent: "text-destructive" },
+  type Card = {
+    key: CounterFilter;
+    value: number;
+    label: string;
+    icon: any;
+    /** Tailwind classes for soft bg, border-l, value text, icon container */
+    tone: { bg: string; border: string; value: string; iconWrap: string; ring: string };
+    /** 0-100 progress and whether it's "good" or "bad" */
+    progress: number;
+    progressGood: boolean;
+  };
+
+  const cards: Card[] = [
+    {
+      key: "students",
+      value: data?.students ?? 0,
+      label: "Alunos Ativos",
+      icon: Users,
+      tone: {
+        bg: "bg-blue-50 dark:bg-blue-500/10",
+        border: "border-l-blue-500",
+        value: "text-blue-700 dark:text-blue-300",
+        iconWrap: "bg-blue-500/15 text-blue-600 dark:text-blue-300",
+        ring: "ring-blue-500/40",
+      },
+      progress: 100,
+      progressGood: true,
+    },
+    {
+      key: "documents",
+      value: data?.documents ?? 0,
+      label: "Documentos Pendentes",
+      icon: FileWarning,
+      tone: {
+        bg: "bg-amber-50 dark:bg-amber-500/10",
+        border: "border-l-amber-500",
+        value: "text-amber-700 dark:text-amber-300",
+        iconWrap: "bg-amber-500/15 text-amber-600 dark:text-amber-300",
+        ring: "ring-amber-500/40",
+      },
+      // mais pendentes = pior; 0 pendentes = 100% verde
+      progress: Math.max(0, 100 - Math.min(100, (data?.documents ?? 0) * 10)),
+      progressGood: (data?.documents ?? 0) <= 5,
+    },
+    {
+      key: "queue",
+      value: data?.requests ?? 0,
+      label: "Fila Operacional",
+      icon: ListTodo,
+      tone: {
+        bg: "bg-violet-50 dark:bg-violet-500/10",
+        border: "border-l-violet-500",
+        value: "text-violet-700 dark:text-violet-300",
+        iconWrap: "bg-violet-500/15 text-violet-600 dark:text-violet-300",
+        ring: "ring-violet-500/40",
+      },
+      // % de conclusão geral
+      progress: data?.completionPct ?? 0,
+      progressGood: (data?.completionPct ?? 0) >= 70,
+    },
+    {
+      key: "alerts",
+      value: data?.alerts ?? 0,
+      label: "Alertas Críticos",
+      icon: AlertOctagon,
+      tone: {
+        bg: "bg-rose-50 dark:bg-rose-500/10",
+        border: "border-l-rose-500",
+        value: "text-rose-700 dark:text-rose-300",
+        iconWrap: "bg-rose-500/15 text-rose-600 dark:text-rose-300",
+        ring: "ring-rose-500/40",
+      },
+      // qualquer alerta crítico já é ruim
+      progress: Math.min(100, (data?.alerts ?? 0) * 25),
+      progressGood: (data?.alerts ?? 0) === 0,
+    },
   ];
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      {cards.map((c) => (
-        <div
-          key={c.label}
-          className="bg-card border border-border/60 rounded-xl px-5 py-4 text-center shadow-sm"
-        >
-          <p className={`text-3xl font-bold tracking-tight ${c.accent} tabular-nums`}>
-            {c.value}
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">{c.label}</p>
-        </div>
-      ))}
+      {cards.map((c) => {
+        const Icon = c.icon;
+        const isActive = active === c.key;
+        return (
+          <button
+            type="button"
+            key={c.key}
+            onClick={() => onChange(isActive ? "all" : c.key)}
+            className={cn(
+              "group relative text-left rounded-xl border border-border/60 border-l-4 shadow-sm overflow-hidden transition-all",
+              "hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2",
+              c.tone.bg,
+              c.tone.border,
+              c.tone.ring,
+              isActive && "ring-2 -translate-y-0.5 shadow-md"
+            )}
+          >
+            <div className="flex items-start justify-between px-5 pt-4 pb-3">
+              <div className="min-w-0">
+                <p className={cn("text-3xl font-bold tracking-tight tabular-nums", c.tone.value)}>
+                  {c.value}
+                </p>
+                <p className="text-xs font-medium text-muted-foreground mt-1">{c.label}</p>
+              </div>
+              <span
+                className={cn(
+                  "w-9 h-9 rounded-lg flex items-center justify-center shrink-0",
+                  c.tone.iconWrap
+                )}
+              >
+                <Icon className="w-4 h-4" />
+              </span>
+            </div>
+            {/* Barra de progresso */}
+            <div className="h-1.5 w-full bg-foreground/5">
+              <div
+                className={cn(
+                  "h-full transition-all duration-500",
+                  c.progressGood ? "bg-emerald-500" : "bg-rose-500"
+                )}
+                style={{ width: `${c.progress}%` }}
+              />
+            </div>
+          </button>
+        );
+      })}
     </div>
   );
 };

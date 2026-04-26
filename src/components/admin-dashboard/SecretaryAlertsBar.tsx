@@ -1,21 +1,27 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, Clock, Building2, GraduationCap } from "lucide-react";
+import { AlertTriangle, Clock, Building2, GraduationCap, Timer, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 type Origin = "Diretoria" | "Coordenação" | "Prazos" | "Secretaria";
 
 interface AlertRow {
   id: string;
+  /** id do recurso original (request ou document) sem prefixo */
+  resourceId: string;
+  /** "request" => move para em_andamento; "doc" => navega */
+  kind: "request" | "doc";
   origin: Origin;
   description: string;
-  referenceDate: string; // ISO
+  referenceDate: string;
   isOverdue?: boolean;
-  onResolve: () => void;
 }
 
 const ORIGIN_STYLES: Record<Origin, { badge: string; icon: any }> = {
@@ -25,13 +31,11 @@ const ORIGIN_STYLES: Record<Origin, { badge: string; icon: any }> = {
   Secretaria: { badge: "bg-muted text-foreground", icon: AlertTriangle },
 };
 
-/**
- * Barra horizontal de Alertas Críticos da Secretaria.
- * Mostra no máximo 3 linhas finas; total exibido no título.
- */
 const SecretaryAlertsBar = () => {
   const { schoolId } = useSchoolId();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [activeIds, setActiveIds] = useState<Set<string>>(new Set());
 
   const { data: alerts = [] } = useQuery<AlertRow[]>({
     queryKey: ["secretary-alerts-bar", schoolId],
@@ -40,7 +44,6 @@ const SecretaryAlertsBar = () => {
       const list: AlertRow[] = [];
       const today = new Date().toISOString().slice(0, 10);
 
-      // 1. Documentos vencidos (Prazos)
       const { data: overdueDocs } = await supabase
         .from("documents")
         .select("id, name, due_date, created_at")
@@ -52,18 +55,18 @@ const SecretaryAlertsBar = () => {
       (overdueDocs ?? []).forEach((d) => {
         list.push({
           id: `doc-${d.id}`,
+          resourceId: d.id,
+          kind: "doc",
           origin: "Prazos",
           description: `Documento vencido: ${d.name ?? "sem nome"}`,
           referenceDate: d.due_date ?? d.created_at ?? new Date().toISOString(),
           isOverdue: true,
-          onResolve: () => navigate("/admin/documentos"),
         });
       });
 
-      // 2. Solicitações urgentes/altas paradas (Coordenação/Diretoria conforme origem)
       const { data: stalledReqs } = await supabase
         .from("secretary_requests")
-        .select("id, student_name, request_type, priority, origin, created_at, deadline")
+        .select("id, student_name, request_type, priority, origin, status, created_at, deadline")
         .eq("school_id", schoolId)
         .in("priority", ["urgente", "alta"])
         .neq("status", "concluido")
@@ -80,14 +83,12 @@ const SecretaryAlertsBar = () => {
         const overdue = r.deadline ? isBefore(new Date(r.deadline), new Date()) : false;
         list.push({
           id: `req-${r.id}`,
+          resourceId: r.id,
+          kind: "request",
           origin,
           description: `${r.request_type}${r.student_name ? ` — ${r.student_name}` : ""}`,
           referenceDate: ref,
           isOverdue: overdue,
-          onResolve: () =>
-            document
-              .getElementById("kanban-section")
-              ?.scrollIntoView({ behavior: "smooth" }),
         });
       });
 
@@ -96,11 +97,47 @@ const SecretaryAlertsBar = () => {
     enabled: !!schoolId,
   });
 
+  const startMutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      const { error } = await supabase
+        .from("secretary_requests")
+        .update({ status: "em_andamento", updated_at: new Date().toISOString() })
+        .eq("id", requestId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["secretary-kanban"] });
+      queryClient.invalidateQueries({ queryKey: ["secretary-counters"] });
+      queryClient.invalidateQueries({ queryKey: ["secretary-alerts-bar"] });
+      toast.success("Demanda movida para 'Em andamento'");
+    },
+    onError: () => toast.error("Não foi possível iniciar o atendimento"),
+  });
+
+  const handleStart = (alert: AlertRow) => {
+    if (alert.kind === "doc") {
+      navigate("/admin/documentos");
+      return;
+    }
+    setActiveIds((prev) => new Set(prev).add(alert.id));
+    startMutation.mutate(alert.resourceId, {
+      onSettled: () => {
+        setTimeout(() => {
+          setActiveIds((prev) => {
+            const n = new Set(prev);
+            n.delete(alert.id);
+            return n;
+          });
+        }, 800);
+      },
+    });
+  };
+
   const total = alerts.length;
   const visible = alerts.slice(0, 3);
 
   return (
-    <section className="bg-card border border-border/60 rounded-xl overflow-hidden">
+    <section className="bg-card border border-border/60 rounded-xl overflow-hidden shadow-sm">
       <header className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
         <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 text-destructive" />
@@ -131,6 +168,7 @@ const SecretaryAlertsBar = () => {
               addSuffix: true,
               locale: ptBR,
             });
+            const isActive = activeIds.has(a.id);
             return (
               <li
                 key={a.id}
@@ -154,11 +192,26 @@ const SecretaryAlertsBar = () => {
                 </span>
                 <Button
                   size="sm"
-                  variant="ghost"
-                  className="h-7 px-2 text-xs"
-                  onClick={a.onResolve}
+                  onClick={() => handleStart(a)}
+                  disabled={isActive}
+                  className={cn(
+                    "h-7 px-2.5 text-xs gap-1.5 transition-colors",
+                    isActive
+                      ? "bg-emerald-500 hover:bg-emerald-500 text-white"
+                      : "bg-primary hover:bg-primary/90 text-primary-foreground"
+                  )}
                 >
-                  Resolver
+                  {isActive ? (
+                    <>
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Em andamento
+                    </>
+                  ) : (
+                    <>
+                      <Timer className={cn("h-3.5 w-3.5", isActive && "animate-spin")} />
+                      Iniciar Atendimento
+                    </>
+                  )}
                 </Button>
               </li>
             );

@@ -1,14 +1,14 @@
 import { useState } from "react";
 import RoleLayout from "@/components/layout/RoleLayout";
 import SecretaryQuickActionsBar from "@/components/admin-dashboard/SecretaryQuickActionsBar";
-import SecretaryCounters from "@/components/admin-dashboard/SecretaryCounters";
+import SecretaryCounters, { type CounterFilter } from "@/components/admin-dashboard/SecretaryCounters";
 import SecretaryAlertsBar from "@/components/admin-dashboard/SecretaryAlertsBar";
 import SecretaryKanban from "@/components/admin-dashboard/SecretaryKanban";
-import UrgentDemands from "@/components/admin-dashboard/UrgentDemands";
 import AdminAgenda from "@/components/admin-dashboard/AdminAgenda";
 
 const AdminDashboard = () => {
   const [context, setContext] = useState<string>("all");
+  const [filter, setFilter] = useState<CounterFilter>("all");
 
   return (
     <RoleLayout title="Secretaria Digital">
@@ -23,26 +23,25 @@ const AdminDashboard = () => {
           </p>
         </div>
 
-        {/* Barra horizontal de Ações Rápidas + Seletor de Contexto */}
+        {/* Ações rápidas + contexto */}
         <SecretaryQuickActionsBar
           context={context}
           onContextChange={setContext}
         />
 
-        {/* Indicadores compactos */}
-        <SecretaryCounters />
+        {/* Indicadores clicáveis (filtram a fila) */}
+        <SecretaryCounters active={filter} onChange={setFilter} />
 
-        {/* Alertas críticos (linhas horizontais finas, máx. 3) */}
+        {/* Alertas críticos */}
         <SecretaryAlertsBar />
 
-        {/* Layout principal: Kanban + Agenda lateral */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
-          <div className="flex flex-col gap-6 min-w-0" id="kanban-section">
-            <SecretaryKanban />
-            <UrgentDemands />
+        {/* Fila operacional + Agenda lado a lado (~65% / 35%) */}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,65fr)_minmax(0,35fr)] gap-6 items-start">
+          <div className="min-w-0" id="kanban-section">
+            <SecretaryKanban filter={filter} />
           </div>
 
-          <aside className="flex flex-col gap-4" id="agenda-section">
+          <aside className="min-w-0" id="agenda-section">
             <AdminAgenda />
           </aside>
         </div>
