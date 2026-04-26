@@ -125,7 +125,7 @@ const SecretaryAlertsBar = () => {
               locale: ptBR,
             });
             const isActive = activeIds.has(a.id);
-            const critical = isCritical(a);
+            const critical = a.priority === "alta" || a.priority === "urgente";
             return (
               <li
                 key={a.id}
@@ -148,14 +148,12 @@ const SecretaryAlertsBar = () => {
                 <span
                   className={cn(
                     "text-[11px] whitespace-nowrap shrink-0",
-                    a.isOverdue
-                      ? "font-bold text-rose-600 dark:text-rose-400"
-                      : critical
+                    critical
                       ? "font-bold text-rose-600 dark:text-rose-400"
                       : "font-semibold text-muted-foreground"
                   )}
                 >
-                  {a.isOverdue ? "Atrasado" : time}
+                  {time}
                 </span>
                 <Button
                   size="sm"
