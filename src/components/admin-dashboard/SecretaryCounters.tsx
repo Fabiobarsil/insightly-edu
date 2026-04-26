@@ -30,10 +30,10 @@ const SecretaryCounters = ({ active, onChange }: Props) => {
           .eq("school_id", schoolId)
           .eq("status", "ativo"),
         supabase
-          .from("documents")
+          .from("student_documents")
           .select("id", { count: "exact", head: true })
           .eq("school_id", schoolId)
-          .eq("status", "pendente"),
+          .eq("status", false),
         supabase
           .from("secretary_requests")
           .select("id", { count: "exact", head: true })
