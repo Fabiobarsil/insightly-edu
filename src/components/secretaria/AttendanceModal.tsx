@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { updateRequestStatus } from "@/lib/secretariaActions";
 import { cn } from "@/lib/utils";
 import type { KanbanRequest } from "@/hooks/useSecretariaKanban";
 
