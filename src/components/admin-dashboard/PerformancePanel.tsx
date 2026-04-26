@@ -42,7 +42,7 @@ const PerformancePanel = () => {
           .eq("school_id", schoolId)
           .gte("created_at", since),
         supabase
-          .from("documents")
+          .from("student_documents")
           .select("id, status")
           .eq("school_id", schoolId),
         supabase
@@ -78,8 +78,8 @@ const PerformancePanel = () => {
       });
 
       const docs = docsRes.data ?? [];
-      const docOk = docs.filter((d) => d.status === "ok" || d.status === "entregue").length;
-      const docPending = docs.filter((d) => d.status === "pendente").length;
+      const docOk = docs.filter((d) => d.status === true).length;
+      const docPending = docs.filter((d) => d.status === false || d.status === null).length;
 
       // Timeline metrics
       const totalDone = (reqsRes.data ?? []).filter((r) => r.status === "concluido").length;
