@@ -1,27 +1,24 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useSchoolId } from "@/hooks/useSchoolId";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle, Clock, Building2, GraduationCap, Timer, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatDistanceToNow, isBefore } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useSecretariaKanban, type KanbanRequest } from "@/hooks/useSecretariaKanban";
 
 type Origin = "Diretoria" | "Coordenação" | "Prazos" | "Secretaria";
 
 interface AlertRow {
   id: string;
-  /** id do recurso original (request ou document) sem prefixo */
   resourceId: string;
-  /** "request" => move para em_andamento; "doc" => navega */
-  kind: "request" | "doc";
   origin: Origin;
   description: string;
   referenceDate: string;
-  isOverdue?: boolean;
+  priority: string;
 }
 
 const ORIGIN_STYLES: Record<Origin, { badge: string; icon: any }> = {
@@ -31,97 +28,53 @@ const ORIGIN_STYLES: Record<Origin, { badge: string; icon: any }> = {
   Secretaria: { badge: "bg-orange-500/15 text-orange-700 dark:text-orange-300", icon: AlertTriangle },
 };
 
-const isCritical = (a: { origin: Origin; isOverdue?: boolean }) =>
-  a.origin === "Diretoria" || a.origin === "Prazos" || a.isOverdue;
+const PRIORITY_WEIGHT: Record<string, number> = { urgente: 4, alta: 3, media: 2, baixa: 1 };
+
+const inferOrigin = (r: KanbanRequest): Origin => {
+  const t = (r.type ?? "").toLowerCase();
+  if (t.includes("diret")) return "Diretoria";
+  if (t.includes("coorden")) return "Coordenação";
+  return "Secretaria";
+};
 
 const SecretaryAlertsBar = () => {
-  const { schoolId } = useSchoolId();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { requests } = useSecretariaKanban();
   const [activeIds, setActiveIds] = useState<Set<string>>(new Set());
 
-  const { data: alerts = [] } = useQuery<AlertRow[]>({
-    queryKey: ["secretary-alerts-bar", schoolId],
-    queryFn: async () => {
-      if (!schoolId) return [];
-      const list: AlertRow[] = [];
-      const today = new Date().toISOString().slice(0, 10);
-
-      const { data: overdueDocs } = await supabase
-        .from("documents")
-        .select("id, name, due_date, created_at")
-        .eq("school_id", schoolId)
-        .eq("status", "pendente")
-        .lt("due_date", today)
-        .order("due_date", { ascending: true });
-
-      (overdueDocs ?? []).forEach((d) => {
-        list.push({
-          id: `doc-${d.id}`,
-          resourceId: d.id,
-          kind: "doc",
-          origin: "Prazos",
-          description: `Documento vencido: ${d.name ?? "sem nome"}`,
-          referenceDate: d.due_date ?? d.created_at ?? new Date().toISOString(),
-          isOverdue: true,
-        });
-      });
-
-      const { data: stalledReqs } = await supabase
-        .from("secretary_requests")
-        .select("id, student_name, request_type, priority, origin, status, created_at, deadline")
-        .eq("school_id", schoolId)
-        .in("priority", ["urgente", "alta"])
-        .neq("status", "concluido")
-        .order("created_at", { ascending: true });
-
-      (stalledReqs ?? []).forEach((r) => {
-        const origin: Origin =
-          r.origin === "diretoria"
-            ? "Diretoria"
-            : r.origin === "coordenacao"
-            ? "Coordenação"
-            : "Secretaria";
-        const ref = r.deadline ?? r.created_at ?? new Date().toISOString();
-        const overdue = r.deadline ? isBefore(new Date(r.deadline), new Date()) : false;
-        list.push({
-          id: `req-${r.id}`,
-          resourceId: r.id,
-          kind: "request",
-          origin,
-          description: `${r.request_type}${r.student_name ? ` — ${r.student_name}` : ""}`,
-          referenceDate: ref,
-          isOverdue: overdue,
-        });
-      });
-
-      return list;
-    },
-    enabled: !!schoolId,
-  });
+  // Prioridades reais derivadas do Kanban (mesma fonte: secretaria_requests)
+  const prioridades = useMemo<AlertRow[]>(() => {
+    return [...requests]
+      .filter((r) => r.status !== "concluido")
+      .sort((a, b) => (PRIORITY_WEIGHT[b.priority] ?? 0) - (PRIORITY_WEIGHT[a.priority] ?? 0))
+      .map((r) => ({
+        id: `req-${r.id}`,
+        resourceId: r.id,
+        origin: inferOrigin(r),
+        description: `${r.title}${r.student_name ? ` — ${r.student_name}` : ""}`,
+        referenceDate: r.created_at,
+        priority: r.priority,
+      }));
+  }, [requests]);
 
   const startMutation = useMutation({
     mutationFn: async (requestId: string) => {
       const { error } = await supabase
-        .from("secretary_requests")
-        .update({ status: "em_andamento", updated_at: new Date().toISOString() })
+        .from("secretaria_requests")
+        .update({ status: "em_andamento" })
         .eq("id", requestId);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["secretary-kanban"] });
+      queryClient.invalidateQueries({ queryKey: ["secretaria-kanban"] });
       queryClient.invalidateQueries({ queryKey: ["secretary-counters"] });
-      queryClient.invalidateQueries({ queryKey: ["secretary-alerts-bar"] });
       toast.success("Demanda movida para 'Em andamento'");
     },
     onError: () => toast.error("Não foi possível iniciar o atendimento"),
   });
 
   const handleStart = (alert: AlertRow) => {
-    if (alert.kind === "doc") {
-      navigate("/admin/documentos");
-      return;
-    }
     setActiveIds((prev) => new Set(prev).add(alert.id));
     startMutation.mutate(alert.resourceId, {
       onSettled: () => {
@@ -136,8 +89,8 @@ const SecretaryAlertsBar = () => {
     });
   };
 
-  const total = alerts.length;
-  const visible = alerts.slice(0, 3);
+  const total = prioridades.length;
+  const visible = prioridades.slice(0, 3);
 
   return (
     <section className="bg-card border border-border/60 rounded-xl overflow-hidden shadow-sm">
