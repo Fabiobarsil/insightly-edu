@@ -40,9 +40,12 @@ const inferOrigin = (r: KanbanRequest): Origin => {
 
 const SecretaryAlertsBar = () => {
   
+  
   const queryClient = useQueryClient();
   const { requests } = useSecretariaKanban();
-  const [activeIds, setActiveIds] = useState<Set<string>>(new Set());
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<KanbanRequest | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   // Prioridades reais derivadas do Kanban (mesma fonte: secretaria_requests)
   const prioridades = useMemo<AlertRow[]>(() => {
@@ -66,28 +69,27 @@ const SecretaryAlertsBar = () => {
         .update({ status: "em_andamento" })
         .eq("id", requestId);
       if (error) throw error;
+      return requestId;
     },
-    onSuccess: () => {
+    onSuccess: (requestId) => {
       queryClient.invalidateQueries({ queryKey: ["secretaria-kanban"] });
       queryClient.invalidateQueries({ queryKey: ["secretary-counters"] });
-      toast.success("Demanda movida para 'Em andamento'");
+      const fresh = requests.find((r) => r.id === requestId) ?? null;
+      if (fresh) {
+        setSelectedRequest({ ...fresh, status: "em_andamento" });
+        setModalOpen(true);
+      }
     },
-    onError: () => toast.error("Não foi possível iniciar o atendimento"),
+    onError: (err) => {
+      console.error("[SecretaryAlertsBar] iniciar atendimento falhou:", err);
+      toast.error("Não foi possível iniciar o atendimento");
+    },
+    onSettled: () => setActiveId(null),
   });
 
   const handleStart = (alert: AlertRow) => {
-    setActiveIds((prev) => new Set(prev).add(alert.id));
-    startMutation.mutate(alert.resourceId, {
-      onSettled: () => {
-        setTimeout(() => {
-          setActiveIds((prev) => {
-            const n = new Set(prev);
-            n.delete(alert.id);
-            return n;
-          });
-        }, 800);
-      },
-    });
+    setActiveId(alert.id);
+    startMutation.mutate(alert.resourceId);
   };
 
   const total = prioridades.length;
