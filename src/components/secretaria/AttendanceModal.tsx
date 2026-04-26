@@ -137,6 +137,34 @@ const AttendanceModal = ({ open, onOpenChange, request }: Props) => {
               </div>
             </div>
 
+            {/* Atalhos para o aluno */}
+            {request.student_id && (
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => goTo(`/admin/alunos/${request.student_id}`)}
+                  disabled={isLoading}
+                  className="gap-1.5 justify-center h-9"
+                >
+                  <IdCard className="h-4 w-4" />
+                  Cadastro do Aluno
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => goTo(`/admin/alunos/${request.student_id}/prontuario`)}
+                  disabled={isLoading}
+                  className="gap-1.5 justify-center h-9"
+                >
+                  <FileText className="h-4 w-4" />
+                  Prontuário
+                </Button>
+              </div>
+            )}
+
             {/* Observação */}
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="attendance-note" className="text-xs font-semibold">
