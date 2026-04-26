@@ -5,6 +5,7 @@ import SecretaryCounters, { type CounterFilter } from "@/components/admin-dashbo
 import SecretaryAlertsBar from "@/components/admin-dashboard/SecretaryAlertsBar";
 import SecretaryKanban from "@/components/admin-dashboard/SecretaryKanban";
 import AdminAgenda from "@/components/admin-dashboard/AdminAgenda";
+import MomentoCertus from "@/components/admin-dashboard/MomentoCertus";
 
 const AdminDashboard = () => {
   const [context, setContext] = useState<string>("all");
@@ -41,8 +42,9 @@ const AdminDashboard = () => {
             <SecretaryKanban filter={filter} />
           </div>
 
-          <aside className="min-w-0" id="agenda-section">
+          <aside className="min-w-0 flex flex-col gap-4" id="agenda-section">
             <AdminAgenda />
+            <MomentoCertus />
           </aside>
         </div>
       </div>
