@@ -28,7 +28,7 @@ const ORIGIN_STYLES: Record<Origin, { badge: string; icon: any }> = {
   Diretoria: { badge: "bg-rose-500/15 text-rose-700 dark:text-rose-300", icon: Building2 },
   Coordenação: { badge: "bg-amber-500/15 text-amber-700 dark:text-amber-400", icon: GraduationCap },
   Prazos: { badge: "bg-rose-500/15 text-rose-700 dark:text-rose-300", icon: Clock },
-  Secretaria: { badge: "bg-muted text-foreground", icon: AlertTriangle },
+  Secretaria: { badge: "bg-orange-500/15 text-orange-700 dark:text-orange-300", icon: AlertTriangle },
 };
 
 const isCritical = (a: { origin: Origin; isOverdue?: boolean }) =>
