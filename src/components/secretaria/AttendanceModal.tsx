@@ -1,8 +1,19 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CheckCircle2, RotateCcw, User, Tag, Flag, Calendar, Loader2 } from "lucide-react";
+import {
+  CheckCircle2,
+  RotateCcw,
+  User,
+  Tag,
+  Flag,
+  Calendar,
+  Loader2,
+  FileText,
+  IdCard,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -29,7 +40,13 @@ const PRIORITY_STYLES: Record<string, string> = {
 
 const AttendanceModal = ({ open, onOpenChange, request }: Props) => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [note, setNote] = useState("");
+
+  const goTo = (path: string) => {
+    onOpenChange(false);
+    navigate(path);
+  };
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ["secretaria-kanban"] });
@@ -119,6 +136,34 @@ const AttendanceModal = ({ open, onOpenChange, request }: Props) => {
                 </div>
               </div>
             </div>
+
+            {/* Atalhos para o aluno */}
+            {request.student_id && (
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => goTo(`/admin/alunos/${request.student_id}`)}
+                  disabled={isLoading}
+                  className="gap-1.5 justify-center h-9"
+                >
+                  <IdCard className="h-4 w-4" />
+                  Cadastro do Aluno
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => goTo(`/admin/alunos/${request.student_id}/prontuario`)}
+                  disabled={isLoading}
+                  className="gap-1.5 justify-center h-9"
+                >
+                  <FileText className="h-4 w-4" />
+                  Prontuário
+                </Button>
+              </div>
+            )}
 
             {/* Observação */}
             <div className="flex flex-col gap-1.5">
