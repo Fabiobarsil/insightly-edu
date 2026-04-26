@@ -53,9 +53,8 @@ const SecretaryQuickActionsBar = ({
         <div className="flex flex-wrap items-center gap-2">
           <Button
             size="sm"
-            variant="default"
             onClick={() => onNewRequest?.()}
-            className="gap-2"
+            className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-600/30 border-0"
           >
             <FilePlus2 className="h-4 w-4" />
             Nova Solicitação

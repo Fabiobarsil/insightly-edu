@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import RoleLayout from "@/components/layout/RoleLayout";
 import SecretaryQuickActionsBar from "@/components/admin-dashboard/SecretaryQuickActionsBar";
 import SecretaryCounters, { type CounterFilter } from "@/components/admin-dashboard/SecretaryCounters";
@@ -6,10 +8,14 @@ import SecretaryAlertsBar from "@/components/admin-dashboard/SecretaryAlertsBar"
 import SecretaryKanban from "@/components/admin-dashboard/SecretaryKanban";
 import AdminAgenda from "@/components/admin-dashboard/AdminAgenda";
 import MomentoCertus from "@/components/admin-dashboard/MomentoCertus";
+import PerformancePanel from "@/components/admin-dashboard/PerformancePanel";
+import RequestFormModal from "@/components/secretaria/RequestFormModal";
 
 const AdminDashboard = () => {
   const [context, setContext] = useState<string>("all");
   const [filter, setFilter] = useState<CounterFilter>("all");
+  const [requestModalOpen, setRequestModalOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   return (
     <RoleLayout title="Secretaria Digital">
@@ -28,6 +34,7 @@ const AdminDashboard = () => {
         <SecretaryQuickActionsBar
           context={context}
           onContextChange={setContext}
+          onNewRequest={() => setRequestModalOpen(true)}
         />
 
         {/* Indicadores clicáveis (filtram a fila) */}
@@ -47,7 +54,22 @@ const AdminDashboard = () => {
             <MomentoCertus />
           </aside>
         </div>
+
+        {/* Panorama de performance (rodapé) */}
+        <PerformancePanel />
       </div>
+
+      {/* Modal de cadastro rápido */}
+      <RequestFormModal
+        open={requestModalOpen}
+        onOpenChange={setRequestModalOpen}
+        onCreated={() => {
+          queryClient.invalidateQueries({ queryKey: ["secretary-kanban"] });
+          queryClient.invalidateQueries({ queryKey: ["secretary-counters"] });
+          queryClient.invalidateQueries({ queryKey: ["secretary-alerts-bar"] });
+          toast.success("Solicitação enviada para 'A Fazer'");
+        }}
+      />
     </RoleLayout>
   );
 };

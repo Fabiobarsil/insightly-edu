@@ -100,7 +100,7 @@ const RequestFormModal = ({ open, onOpenChange, onCreated, origin = "secretaria"
         description: description || null,
         deadline: endDate || null,
         priority: "media",
-        status: "aberto",
+        status: "pendente",
         is_recurring: requestType === "Certificado de Conclusão",
         origin,
       }).select("id").single();

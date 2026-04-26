@@ -25,11 +25,14 @@ interface AlertRow {
 }
 
 const ORIGIN_STYLES: Record<Origin, { badge: string; icon: any }> = {
-  Diretoria: { badge: "bg-primary/10 text-primary", icon: Building2 },
+  Diretoria: { badge: "bg-rose-500/15 text-rose-700 dark:text-rose-300", icon: Building2 },
   Coordenação: { badge: "bg-amber-500/15 text-amber-700 dark:text-amber-400", icon: GraduationCap },
-  Prazos: { badge: "bg-destructive/15 text-destructive", icon: Clock },
+  Prazos: { badge: "bg-rose-500/15 text-rose-700 dark:text-rose-300", icon: Clock },
   Secretaria: { badge: "bg-muted text-foreground", icon: AlertTriangle },
 };
+
+const isCritical = (a: { origin: Origin; isOverdue?: boolean }) =>
+  a.origin === "Diretoria" || a.origin === "Prazos" || a.isOverdue;
 
 const SecretaryAlertsBar = () => {
   const { schoolId } = useSchoolId();
@@ -140,8 +143,8 @@ const SecretaryAlertsBar = () => {
     <section className="bg-card border border-border/60 rounded-xl overflow-hidden shadow-sm">
       <header className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
         <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-          <AlertTriangle className="h-4 w-4 text-destructive" />
-          Alertas
+          <AlertTriangle className="h-4 w-4 text-rose-600" />
+          Prioridades do Dia
           <span className="text-xs font-semibold text-muted-foreground tabular-nums">
             ({total})
           </span>
@@ -169,10 +172,16 @@ const SecretaryAlertsBar = () => {
               locale: ptBR,
             });
             const isActive = activeIds.has(a.id);
+            const critical = isCritical(a);
             return (
               <li
                 key={a.id}
-                className="flex items-center gap-3 px-4 py-2.5 hover:bg-accent/30 transition-colors"
+                className={cn(
+                  "flex items-center gap-3 px-4 py-2.5 transition-colors border-l-4",
+                  critical
+                    ? "bg-rose-500/5 border-l-rose-600 hover:bg-rose-500/10"
+                    : "border-l-transparent hover:bg-accent/30"
+                )}
               >
                 <span
                   className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 shrink-0 ${cfg.badge}`}
@@ -184,21 +193,29 @@ const SecretaryAlertsBar = () => {
                   {a.description}
                 </p>
                 <span
-                  className={`text-[11px] font-semibold whitespace-nowrap shrink-0 ${
-                    a.isOverdue ? "text-destructive" : "text-muted-foreground"
-                  }`}
+                  className={cn(
+                    "text-[11px] whitespace-nowrap shrink-0",
+                    a.isOverdue
+                      ? "font-bold text-rose-600 dark:text-rose-400"
+                      : critical
+                      ? "font-bold text-rose-600 dark:text-rose-400"
+                      : "font-semibold text-muted-foreground"
+                  )}
                 >
                   {a.isOverdue ? "Atrasado" : time}
                 </span>
                 <Button
                   size="sm"
+                  variant="outline"
                   onClick={() => handleStart(a)}
                   disabled={isActive}
                   className={cn(
-                    "h-7 px-2.5 text-xs gap-1.5 transition-colors",
+                    "h-7 px-2.5 text-xs gap-1.5 transition-all border",
                     isActive
-                      ? "bg-emerald-500 hover:bg-emerald-500 text-white"
-                      : "bg-primary hover:bg-primary/90 text-primary-foreground"
+                      ? "bg-emerald-500 hover:bg-emerald-500 text-white border-emerald-600"
+                      : critical
+                      ? "border-rose-500/60 text-rose-700 hover:bg-rose-500 hover:text-white dark:text-rose-300"
+                      : "border-border hover:bg-accent"
                   )}
                 >
                   {isActive ? (
