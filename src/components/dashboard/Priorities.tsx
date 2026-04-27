@@ -52,7 +52,7 @@ const Priorities = () => {
           iconClass: "bg-amber-50 text-amber-600",
 
           // 👇 agora é individual
-          name: `Documento pendente — ${doc.student_name || "Aluno"}`,
+          name: "Documento pendente",
           desc: doc.document_type || "Documento obrigatório",
 
           status: "Pendente",
