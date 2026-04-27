@@ -45,6 +45,7 @@ const Priorities = () => {
 
       // 2. Pending documents (order 1)
       const pendingDocs = docsRes.data ?? [];
+      console.log("DOC:", pendingDocs);
       pendingDocs.forEach((doc) => {
         items.push({
           icon: "ri-file-warning-line",
