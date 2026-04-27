@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
 const PRIORITY_ORDER = ["urgente", "alta", "media", "baixa"];
 const PRIORITY_MAP: Record<string, { label: string; class: string }> = {
