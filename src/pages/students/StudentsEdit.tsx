@@ -188,6 +188,8 @@ const StudentsEdit = () => {
     enabled: !!form.id,
   });
   // 🔥 PASSO 1 TERMINA AQUI
+
+  console.log("DOCUMENTOS:", documentsQuery.data);
   return (
     <AppLayout title="Editar Matrícula" breadcrumbs={breadcrumbs}>
       <PageHeader title="Editar Matrícula" description="Atualize os dados do aluno e da matrícula vigente" />
