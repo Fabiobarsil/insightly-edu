@@ -3,17 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import {
-  CheckCircle2,
-  RotateCcw,
-  User,
-  Tag,
-  Flag,
-  Calendar,
-  Loader2,
-  FileText,
-  IdCard,
-} from "lucide-react";
+import { CheckCircle2, RotateCcw, User, Tag, Flag, Calendar, Loader2, FileText, IdCard } from "lucide-react";
 import { toast } from "sonner";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -66,7 +56,7 @@ const AttendanceModal = ({ open, onOpenChange, request }: Props) => {
           student_id: request.student_id,
           status: request.status,
         },
-        newStatus
+        newStatus,
       );
       return newStatus;
     },
@@ -93,9 +83,7 @@ const AttendanceModal = ({ open, onOpenChange, request }: Props) => {
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Atender Solicitação</DialogTitle>
-          <DialogDescription>
-            Conclua ou devolva a demanda para a fila de trabalho.
-          </DialogDescription>
+          <DialogDescription>Conclua ou devolva a demanda para a fila de trabalho.</DialogDescription>
         </DialogHeader>
 
         {request && (
@@ -103,14 +91,12 @@ const AttendanceModal = ({ open, onOpenChange, request }: Props) => {
             {/* Detalhes */}
             <div className="rounded-xl border border-border/60 bg-muted/30 p-4 flex flex-col gap-3">
               <div className="flex items-start justify-between gap-3">
-                <h4 className="text-base font-bold text-foreground leading-tight">
-                  {request.title}
-                </h4>
+                <h4 className="text-base font-bold text-foreground leading-tight">{request.title}</h4>
                 <Badge
                   variant="outline"
                   className={cn(
                     "shrink-0 capitalize text-[11px] font-semibold",
-                    PRIORITY_STYLES[request.priority] ?? PRIORITY_STYLES.media
+                    PRIORITY_STYLES[request.priority] ?? PRIORITY_STYLES.media,
                   )}
                 >
                   <Flag className="h-3 w-3 mr-1" />
@@ -127,9 +113,7 @@ const AttendanceModal = ({ open, onOpenChange, request }: Props) => {
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Tag className="h-3.5 w-3.5 shrink-0" />
-                  <span className="font-medium text-foreground capitalize truncate">
-                    {request.type ?? "—"}
-                  </span>
+                  <span className="font-medium text-foreground capitalize truncate">{request.type ?? "—"}</span>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground sm:col-span-2">
                   <Calendar className="h-3.5 w-3.5 shrink-0" />
@@ -150,7 +134,7 @@ const AttendanceModal = ({ open, onOpenChange, request }: Props) => {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => goTo(`/admin/alunos/${request.student_id}`)}
+                  onClick={() => goTo(`/secretaria/matricula/${request.student_id}`)}
                   disabled={isLoading}
                   className="gap-1.5 justify-center h-9"
                 >
