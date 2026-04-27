@@ -52,11 +52,7 @@ const StudentsEdit = () => {
     queryKey: ["classes", schoolId],
     queryFn: async () => {
       if (!schoolId) return [];
-      const { data, error } = await supabase
-        .from("classes")
-        .select("id, name")
-        .eq("school_id", schoolId)
-        .order("name");
+      const { data, error } = await supabase.from("classes").select("id, name").eq("school_id", schoolId).order("name");
       if (error) throw error;
       return data || [];
     },
@@ -103,10 +99,8 @@ const StudentsEdit = () => {
     enabled: !!id,
   });
 
-  const set =
-    (key: string) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
-      setForm((prev: any) => ({ ...prev, [key]: e.target.value }));
+  const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+    setForm((prev: any) => ({ ...prev, [key]: e.target.value }));
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -127,13 +121,9 @@ const StudentsEdit = () => {
       let photoUrl: string | null = form.photo_url ?? null;
       if (photoFile && schoolId) {
         const filePath = `${schoolId}/photos/${Date.now()}_${photoFile.name}`;
-        const { error: upErr } = await supabase.storage
-          .from("student-assets")
-          .upload(filePath, photoFile);
+        const { error: upErr } = await supabase.storage.from("student-assets").upload(filePath, photoFile);
         if (upErr) throw upErr;
-        const { data: urlData } = supabase.storage
-          .from("student-assets")
-          .getPublicUrl(filePath);
+        const { data: urlData } = supabase.storage.from("student-assets").getPublicUrl(filePath);
         photoUrl = urlData.publicUrl;
       }
 
@@ -184,13 +174,23 @@ const StudentsEdit = () => {
     { label: "Alunos", href: "/admin/alunos" },
     { label: "Editar Matrícula" },
   ];
+  // 🔥 PASSO 1 COMEÇA AQUI
+  const { data: documents = [] } = useQuery({
+    queryKey: ["student-documents", form.id],
+    queryFn: async () => {
+      if (!form.id) return [];
 
+      const { data, error } = await supabase.from("student_documents").select("*").eq("student_id", form.id);
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!form.id,
+  });
+  // 🔥 PASSO 1 TERMINA AQUI
   return (
     <AppLayout title="Editar Matrícula" breadcrumbs={breadcrumbs}>
-      <PageHeader
-        title="Editar Matrícula"
-        description="Atualize os dados do aluno e da matrícula vigente"
-      />
+      <PageHeader title="Editar Matrícula" description="Atualize os dados do aluno e da matrícula vigente" />
 
       {isLoading ? (
         <div className="text-center py-12 text-muted-foreground">Carregando matrícula...</div>
@@ -200,9 +200,7 @@ const StudentsEdit = () => {
             <h3 className="text-lg font-bold text-primary mb-6">Dados do Aluno</h3>
 
             <div className="mb-4">
-              <label className="block text-xs font-bold text-muted-foreground mb-2">
-                Foto do Aluno
-              </label>
+              <label className="block text-xs font-bold text-muted-foreground mb-2">Foto do Aluno</label>
               <div className="flex items-center gap-4">
                 {photoPreview ? (
                   <img
@@ -234,7 +232,12 @@ const StudentsEdit = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField label="Nome Completo" value={form.full_name} onChange={set("full_name")} />
-              <FormField label="Data de Nascimento" type="date" value={form.birth_date || ""} onChange={set("birth_date")} />
+              <FormField
+                label="Data de Nascimento"
+                type="date"
+                value={form.birth_date || ""}
+                onChange={set("birth_date")}
+              />
               <FormField label="CPF" value={form.cpf || ""} onChange={set("cpf")} />
               <FormField label="RG" value={form.rg || ""} onChange={set("rg")} />
               <FormField label="E-mail" value={form.email || ""} onChange={set("email")} />
@@ -242,10 +245,14 @@ const StudentsEdit = () => {
               <FormField
                 label="Tipo Sanguíneo"
                 options={[
-                  { value: "A+", label: "A+" }, { value: "A-", label: "A-" },
-                  { value: "B+", label: "B+" }, { value: "B-", label: "B-" },
-                  { value: "AB+", label: "AB+" }, { value: "AB-", label: "AB-" },
-                  { value: "O+", label: "O+" }, { value: "O-", label: "O-" },
+                  { value: "A+", label: "A+" },
+                  { value: "A-", label: "A-" },
+                  { value: "B+", label: "B+" },
+                  { value: "B-", label: "B-" },
+                  { value: "AB+", label: "AB+" },
+                  { value: "AB-", label: "AB-" },
+                  { value: "O+", label: "O+" },
+                  { value: "O-", label: "O-" },
                 ]}
                 value={form.blood_type || ""}
                 onChange={set("blood_type")}
