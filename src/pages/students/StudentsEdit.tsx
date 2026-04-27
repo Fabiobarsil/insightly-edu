@@ -7,7 +7,7 @@ import PageHeader from "@/components/shared/PageHeader";
 import FormField from "@/components/shared/FormField";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
-import { useQuery } from "@tanstack/react-query";
+
 /**
  * StudentsEdit
  * ------------------------------------------------------------------
