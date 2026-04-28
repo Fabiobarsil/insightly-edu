@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   DndContext,
   PointerSensor,
@@ -21,6 +22,22 @@ import {
   type KanbanStatus,
 } from "@/hooks/useSecretariaKanban";
 import type { CounterFilter } from "./SecretaryCounters";
+
+/** Resolve para onde clicar no card deve direcionar */
+function resolveCardAction(item: KanbanRequest): string {
+  const text = `${item.type ?? ""} ${item.title}`.toLowerCase();
+  // Documento pendente / histórico / declaração → ficha do aluno (aba Documentos)
+  if (item.student_id && (item.document_type || /document|histor|certif|declar/.test(text))) {
+    return `/admin/alunos/${item.student_id}?tab=documentos`;
+  }
+  // Demanda vinculada a aluno → detalhes do aluno
+  if (item.student_id) {
+    return `/admin/alunos/${item.student_id}`;
+  }
+  // Sem aluno → fila completa da secretaria
+  return "/admin/secretaria";
+}
+
 
 const COLUMNS = [
   {
