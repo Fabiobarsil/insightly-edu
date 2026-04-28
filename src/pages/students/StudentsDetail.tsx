@@ -75,7 +75,20 @@ const StudentsDetail = () => {
   const { id } = useParams();
   const { schoolId } = useSchoolId();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("pessoal");
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(() => {
+    const t = searchParams.get("tab");
+    return tabs.some((tab) => tab.id === t) ? (t as string) : "pessoal";
+  });
+
+  // Sincroniza aba quando o query param muda (navegação entre cards)
+  useEffect(() => {
+    const t = searchParams.get("tab");
+    if (t && tabs.some((tab) => tab.id === t) && t !== activeTab) {
+      setActiveTab(t);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
   const [declReason, setDeclReason] = useState("");
   const [customReason, setCustomReason] = useState("");
   const [guardianModalOpen, setGuardianModalOpen] = useState(false);
