@@ -43,7 +43,6 @@ const StudentsEdit = () => {
     academic_year: "",
     photo_url: null as string | null,
   });
-  const [documents, setDocuments] = useState<any[]>([]);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -175,23 +174,49 @@ const StudentsEdit = () => {
     { label: "Alunos", href: "/admin/alunos" },
     { label: "Editar Matrícula" },
   ];
-  // 🔥 PASSO 1 COMEÇA AQUI
+  // Documentos da matrícula — fonte única: Supabase (sem mock, sem fallback)
+  const documentsQueryKey = ["student-documents", form.id] as const;
   const { data: documents = [] } = useQuery({
-    queryKey: ["student-documents", form.id],
+    queryKey: documentsQueryKey,
     queryFn: async () => {
       if (!form.id) return [];
-
-      const { data, error } = await supabase.from("student_documents").select("*").eq("student_id", form.id);
-
-      if (error) throw error;
+      const { data, error } = await supabase
+        .from("student_documents")
+        .select("*")
+        .eq("student_id", form.id)
+        .order("created_at", { ascending: true });
+      if (error) {
+        console.error("[StudentsEdit] erro ao buscar student_documents:", error);
+        throw error;
+      }
+      console.log("[Supabase] student_documents:", data);
       return data || [];
     },
     enabled: !!form.id,
   });
-  // 🔥 PASSO 1 TERMINA AQUI
 
-  console.log("DOCUMENTOS:", documents);
-  console.log("STUDENT ID:", form.id);
+  const toggleDocStatus = useMutation({
+    mutationFn: async (doc: any) => {
+      const novoStatus = doc.status === "aprovado" ? "pendente" : "aprovado";
+      const { data, error } = await supabase
+        .from("student_documents")
+        .update({ status: novoStatus })
+        .eq("id", doc.id)
+        .select()
+        .maybeSingle();
+      if (error) {
+        console.error("[Supabase] update student_documents falhou:", error);
+        throw error;
+      }
+      console.log("[Supabase] documento atualizado:", data);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: documentsQueryKey });
+    },
+    onError: (err: any) => toast.error(err?.message || "Erro ao atualizar documento"),
+  });
+
   return (
     <AppLayout title="Editar Matrícula" breadcrumbs={breadcrumbs}>
       <PageHeader title="Editar Matrícula" description="Atualize os dados do aluno e da matrícula vigente" />
@@ -302,23 +327,10 @@ const StudentsEdit = () => {
                 <span className="text-sm font-medium">{doc.document_type}</span>
 
                 <button
-                  onClick={async () => {
-                    const novoStatus = doc.status === "aprovado" ? "pendente" : "aprovado";
-
-                    const { error } = await supabase
-                      .from("student_documents")
-                      .update({ status: novoStatus })
-                      .eq("id", doc.id);
-
-                    if (error) {
-                      toast.error("Erro ao atualizar documento");
-                      return;
-                    }
-
-                    // 🔥 atualiza na tela SEM reload
-                    setDocuments((prev) => prev.map((d) => (d.id === doc.id ? { ...d, status: novoStatus } : d)));
-                  }}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                  type="button"
+                  disabled={toggleDocStatus.isPending}
+                  onClick={() => toggleDocStatus.mutate(doc)}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all disabled:opacity-60 ${
                     doc.status === "aprovado"
                       ? "bg-green-100 text-green-700 hover:bg-green-200"
                       : "bg-red-100 text-red-700 hover:bg-red-200"
