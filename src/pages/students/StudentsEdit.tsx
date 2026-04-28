@@ -43,6 +43,7 @@ const StudentsEdit = () => {
     academic_year: "",
     photo_url: null as string | null,
   });
+  const [documents, setDocuments] = useState<any[]>([]);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
