@@ -19,15 +19,6 @@ const maritalOptions = [
   { value: "uniao_estavel", label: "União Estável" },
 ];
 
-const docChecklist = [
-  { key: "certidao_nascimento", label: "Certidão de Nascimento", obrigatorio: true },
-  { key: "comprovante_residencia", label: "Comprovante de Residência", obrigatorio: true },
-  { key: "carteira_vacinacao", label: "Carteira de Vacinação", obrigatorio: true },
-  { key: "foto_3x4", label: "Foto 3x4", obrigatorio: false },
-  { key: "historico_escolar", label: "Histórico Escolar Anterior", obrigatorio: true },
-  { key: "laudo_medico", label: "Laudo Médico (PcD)", obrigatorio: false },
-];
-
 const emptyParent = () => ({
   id: null as string | null,
   full_name: "", cpf: "", phone: "", email: "",
@@ -52,7 +43,6 @@ const StudentsCreate = () => {
   });
   const [father, setFather] = useState<any>({ ...emptyParent(), is_financial: true, is_pedagogical: true });
   const [mother, setMother] = useState<any>(emptyParent());
-  const [docs, setDocs] = useState<Record<string, boolean>>({});
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [existingPhotoUrl, setExistingPhotoUrl] = useState<string | null>(null);
@@ -100,6 +90,60 @@ const StudentsCreate = () => {
     enabled: !!schoolId,
   });
 
+  const documentsQueryKey = ["student-documents", studentIdParam, schoolId] as const;
+  const { data: documents = [], isLoading: documentsLoading } = useQuery({
+    queryKey: documentsQueryKey,
+    queryFn: async () => {
+      if (!studentIdParam || !schoolId) return [];
+      const { data, error } = await supabase
+        .from("student_documents")
+        .select("*")
+        .eq("school_id", schoolId)
+        .eq("student_id", studentIdParam)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: isEdit && !!studentIdParam && !!schoolId,
+  });
+
+  const toggleDocumentStatus = useMutation({
+    mutationFn: async (doc: any) => {
+      const nextStatus = doc.status === "aprovado" ? "pendente" : "aprovado";
+      const { data, error } = await supabase
+        .from("student_documents")
+        .update({ status: nextStatus })
+        .eq("id", doc.id)
+        .eq("student_id", studentIdParam!)
+        .eq("school_id", schoolId!)
+        .select()
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: documentsQueryKey }),
+    onError: (err: any) => toast.error(err?.message || "Erro ao atualizar documento"),
+  });
+
+  useEffect(() => {
+    if (!isEdit || !studentIdParam || !schoolId) return;
+
+    const queryKey = ["student-documents", studentIdParam, schoolId] as const;
+
+    const channel = supabase
+      .channel(`student-documents-${studentIdParam}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "student_documents", filter: `student_id=eq.${studentIdParam}` },
+        () => queryClient.invalidateQueries({ queryKey }),
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isEdit, queryClient, schoolId, studentIdParam]);
+
   // Pré-carrega aluno + responsáveis quando em modo edição
   const { data: studentData } = useQuery({
     queryKey: ["student-edit", studentIdParam],
@@ -144,13 +188,7 @@ const StudentsCreate = () => {
         .limit(1)
         .maybeSingle();
 
-      // Documentos do aluno (checklist)
-      const { data: studentDocs } = await supabase
-        .from("student_documents")
-        .select("document_type, status")
-        .eq("student_id", studentIdParam);
-
-      return { student, links: linksWithGuardians, enrollment, studentDocs: studentDocs || [] };
+      return { student, links: linksWithGuardians, enrollment };
     },
     enabled: isEdit && !!studentIdParam,
   });
@@ -224,20 +262,10 @@ const StudentsCreate = () => {
     }
     if (outro) setForm((prev) => ({ ...prev, guardian_id: outro.id }));
 
-    // Hidrata checklist de documentos.
-    // Importante: se houver duplicatas no banco, qualquer registro `true` prevalece (nunca rebaixar para false).
-    const docsMap: Record<string, boolean> = {};
-    ((studentData as any).studentDocs || []).forEach((d: any) => {
-      if (!d.document_type) return;
-      docsMap[d.document_type] = docsMap[d.document_type] || !!d.status;
-    });
-    setDocs(docsMap);
   }, [studentData]);
 
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
-
-  const toggleDoc = (key: string) => setDocs((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -467,82 +495,14 @@ const StudentsCreate = () => {
       const { error: linkErr } = await supabase.from("student_guardians").insert(links);
       if (linkErr) throw linkErr;
 
-      // Persiste checklist de documentos (substitui o conjunto atual)
-      await supabase.from("student_documents").delete().eq("student_id", studentId);
-      const docsToInsert = docChecklist.map((d) => ({
-        student_id: studentId,
-        school_id: schoolId,
-        document_type: d.key,
-        status: docs[d.key] ? "aprovado" : "pendente",
-      }));
-      if (docsToInsert.length > 0) {
-        const { error: docErr } = await supabase.from("student_documents").insert(docsToInsert);
-        if (docErr) throw docErr;
-      }
-
-      // Fluxo Secretaria: cria/fecha demandas de documentos pendentes
-      const studentName = form.full_name.trim();
-      const missingObrigatorios = docChecklist.filter((d) => d.obrigatorio && !docs[d.key]);
-      const completedObrigatorios = docChecklist.filter((d) => d.obrigatorio && docs[d.key]);
-
-      const { data: existingReqs } = await supabase
-        .from("secretary_requests")
-        .select("id, request_type, status, description")
-        .eq("school_id", schoolId)
-        .eq("student_id", studentId)
-        .eq("request_type", "documento_pendente");
-
-      const existingByKey = new Map<string, any>();
-      (existingReqs || []).forEach((r: any) => {
-        const m = r.description?.match(/^\[([^\]]+)\]/);
-        if (m) existingByKey.set(m[1], r);
-      });
-
-      const newRequests = missingObrigatorios
-        .filter((d) => {
-          const ex = existingByKey.get(d.key);
-          return !ex || ex.status === "resolvido";
-        })
-        .map((d) => ({
-          school_id: schoolId,
-          student_id: studentId,
-          student_name: studentName,
-          class_id: form.class_id || null,
-          request_type: "documento_pendente",
-          description: `[${d.key}] ${d.label} pendente para ${studentName}`,
-          priority: "alta",
-          origin: "matricula",
-          status: "aberto",
-          student_status: form.status || "ativo",
-        }));
-      if (newRequests.length > 0) {
-        await supabase.from("secretary_requests").insert(newRequests as any);
-      }
-
-      const toResolveIds = completedObrigatorios
-        .map((d) => existingByKey.get(d.key))
-        .filter((r) => r && r.status !== "resolvido")
-        .map((r) => r.id);
-      if (toResolveIds.length > 0) {
-        await supabase
-          .from("secretary_requests")
-          .update({ status: "resolvido", updated_at: new Date().toISOString() })
-          .in("id", toResolveIds);
-      }
-
-      return { missingCount: missingObrigatorios.length, newReqCount: newRequests.length };
+      return { studentId };
     },
     onSuccess: (result: any) => {
       queryClient.invalidateQueries({ queryKey: ["students", schoolId] });
       queryClient.invalidateQueries({ queryKey: ["student-edit", studentIdParam] });
       queryClient.invalidateQueries({ queryKey: ["secretary_requests"] });
       queryClient.invalidateQueries({ queryKey: ["operational-metrics"] });
-      const baseMsg = isEdit ? "Matrícula atualizada!" : "Aluno matriculado!";
-      if (result?.missingCount > 0) {
-        toast.warning(`${baseMsg} ${result.missingCount} documento(s) pendente(s) — enviado à fila da Secretaria.`);
-      } else {
-        toast.success(`${baseMsg} Documentação completa.`);
-      }
+      toast.success(isEdit ? "Matrícula atualizada!" : "Aluno matriculado!");
       navigate(isEdit ? `/admin/alunos/${studentIdParam}` : "/admin/alunos");
     },
     onError: (err: any) => toast.error(err.message || "Erro ao salvar"),
@@ -558,8 +518,6 @@ const StudentsCreate = () => {
       setLoading(false);
     }
   };
-
-  const missingRequired = docChecklist.filter((d) => d.obrigatorio && !docs[d.key]);
 
   const pageTitle = isEdit ? "Editar Matrícula" : "Cadastrar Aluno";
   const pageDesc = isEdit ? "Atualize os dados do aluno e da matrícula" : "Preencha os dados do novo aluno";
@@ -800,30 +758,44 @@ const StudentsCreate = () => {
           ))}
         </div>
 
-        {/* Checklist de documentos */}
-        <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-sm font-bold text-primary">Documentos de Matrícula</h4>
-            {missingRequired.length > 0 && (
-              <span className="text-xs font-bold text-destructive">
-                {missingRequired.length} obrigatório(s) pendente(s)
-              </span>
+        {isEdit && (
+          <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-sm font-bold text-primary">Documentos da Matrícula</h4>
+            </div>
+
+            {documentsLoading ? (
+              <p className="text-sm text-muted-foreground">Carregando documentos...</p>
+            ) : documents.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhum documento encontrado</p>
+            ) : (
+              <div className="space-y-2">
+                {documents.map((doc: any) => {
+                  const approved = doc.status === "aprovado";
+                  return (
+                    <div key={doc.id} className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-border/60">
+                      <span className="text-sm text-primary font-medium capitalize">
+                        {String(doc.document_type || "").replace(/_/g, " ")}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={toggleDocumentStatus.isPending}
+                        onClick={() => toggleDocumentStatus.mutate(doc)}
+                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors disabled:opacity-60 ${
+                          approved
+                            ? "bg-secondary/10 text-secondary hover:bg-secondary/15"
+                            : "bg-destructive/10 text-destructive hover:bg-destructive/15"
+                        }`}
+                      >
+                        {approved ? "Aprovado" : "Pendente"}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
-          <div className="space-y-2">
-            {docChecklist.map((d) => (
-              <label key={d.key} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-accent/30 transition-colors cursor-pointer">
-                <input type="checkbox" checked={!!docs[d.key]} onChange={() => toggleDoc(d.key)} className="w-4 h-4 rounded border-border text-secondary focus:ring-secondary" />
-                <span className="text-sm text-primary font-medium flex-1">{d.label}</span>
-                {d.obrigatorio ? (
-                  <span className="text-[10px] font-bold text-warning-foreground bg-warning/15 px-2 py-0.5 rounded-full">Obrigatório</span>
-                ) : (
-                  <span className="text-[10px] font-bold text-muted-foreground bg-accent px-2 py-0.5 rounded-full">Opcional</span>
-                )}
-              </label>
-            ))}
-          </div>
-        </div>
+        )}
 
         {/* Botões finais — único ponto de submit */}
         <div className="flex items-center gap-3 pt-2">
