@@ -91,7 +91,14 @@ const AttendanceModal = ({ open, onOpenChange, request }: Props) => {
             {/* Detalhes */}
             <div className="rounded-xl border border-border/60 bg-muted/30 p-4 flex flex-col gap-3">
               <div className="flex items-start justify-between gap-3">
-                <h4 className="text-base font-bold text-foreground leading-tight">{request.title}</h4>
+                <div className="min-w-0">
+                  <h4 className="text-base font-bold text-foreground leading-tight">{request.title}</h4>
+                  {request.document_type && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Documento: <span className="font-medium text-foreground capitalize">{String(request.document_type).replace(/_/g, " ")}</span>
+                    </p>
+                  )}
+                </div>
                 <Badge
                   variant="outline"
                   className={cn(
