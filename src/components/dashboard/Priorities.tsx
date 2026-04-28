@@ -45,23 +45,23 @@ const Priorities = () => {
 
       // 2. Pending documents (order 1)
       const pendingDocs = docsRes.data ?? [];
-      console.log("DOC:", pendingDocs);
+
       pendingDocs.forEach((doc) => {
+        if (!doc) return;
+
         items.push({
           icon: "ri-file-warning-line",
           iconClass: "bg-amber-50 text-amber-600",
 
-          // 👇 agora é individual
-          name: "Documento pendente",
-          desc: doc.document_type || "Documento obrigatório",
+          name: `Documento pendente — ${doc?.student_name ?? "Aluno"}`,
+          desc: doc?.document_type ?? "Documento obrigatório",
 
           status: "Pendente",
           statusClass: "bg-amber-50 text-amber-700",
           urgency: "border-l-amber-500",
           order: 1,
 
-          // 🔥 ESSENCIAL
-          student_id: doc.student_id,
+          student_id: doc?.student_id ?? null,
         });
       });
       // 3. Low performance (order 2)
