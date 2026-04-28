@@ -278,22 +278,46 @@ interface CardProps {
   item: KanbanRequest;
   nextStatus: KanbanStatus | null;
   onAdvance: () => void;
+  onClickCard: () => void;
 }
 
-const KanbanCard = ({ item, nextStatus, onAdvance }: CardProps) => {
+const KanbanCard = ({ item, nextStatus, onAdvance, onClickCard }: CardProps) => {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: item.id,
   });
+
+  // Distingue clique de drag: registra posição no pointer down e só dispara
+  // o clique se o movimento total foi menor que 4px (mesma activation distance).
+  const downPos = useState<{ x: number; y: number } | null>(null);
+  const setDownPos = downPos[1];
+  const downRef = downPos[0];
 
   return (
     <article
       ref={setNodeRef}
       {...attributes}
       {...listeners}
+      onPointerDownCapture={(e) => setDownPos({ x: e.clientX, y: e.clientY })}
+      onClick={(e) => {
+        // ignora cliques nos botões de ação (já têm stopPropagation)
+        if ((e.target as HTMLElement).closest("button")) return;
+        if (!downRef) return onClickCard();
+        const dx = Math.abs(e.clientX - downRef.x);
+        const dy = Math.abs(e.clientY - downRef.y);
+        if (dx < 4 && dy < 4) onClickCard();
+      }}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClickCard();
+        }
+      }}
       className={cn(
-        "group/card relative bg-card border border-border/50 border-l-4 rounded-md px-3 py-2.5 shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing",
+        "group/card relative bg-card border border-border/50 border-l-4 rounded-md px-3 py-2.5 shadow-sm hover:shadow-md hover:border-primary/40 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30",
         PRIORITY_BORDER[item.priority] || "border-l-muted",
-        isDragging && "opacity-40"
+        isDragging && "opacity-40 cursor-grabbing"
       )}
     >
       <p className="text-sm font-medium text-foreground truncate pr-12">
