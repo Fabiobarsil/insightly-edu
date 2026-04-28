@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
@@ -11,6 +12,7 @@ interface PriorityItem {
   statusClass: string;
   urgency: string;
   order: number;
+  student_id?: string | null;
 }
 
 const Priorities = () => {
@@ -53,8 +55,8 @@ const Priorities = () => {
           icon: "ri-file-warning-line",
           iconClass: "bg-amber-50 text-amber-600",
 
-          name: `Documento pendente — ${doc?.student_name ?? "Aluno"}`,
-          desc: doc?.document_type ?? "Documento obrigatório",
+          name: `Documento pendente — ${(doc as any)?.student_name ?? "Aluno"}`,
+          desc: (doc as any)?.document_type ?? "Documento obrigatório",
 
           status: "Pendente",
           statusClass: "bg-amber-50 text-amber-700",

@@ -15,6 +15,8 @@ import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 
 const PRIORITY_ORDER = ["urgente", "alta", "media", "baixa"];
+
+const NavigateInit = () => null; // placeholder removed
 const PRIORITY_MAP: Record<string, { label: string; class: string }> = {
   baixa: { label: "Baixa", class: "bg-muted text-muted-foreground" },
   media: { label: "Média", class: "bg-primary/10 text-primary" },

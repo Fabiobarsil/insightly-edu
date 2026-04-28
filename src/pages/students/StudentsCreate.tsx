@@ -473,7 +473,7 @@ const StudentsCreate = () => {
         student_id: studentId,
         school_id: schoolId,
         document_type: d.key,
-        status: !!docs[d.key],
+        status: docs[d.key] ? "aprovado" : "pendente",
       }));
       if (docsToInsert.length > 0) {
         const { error: docErr } = await supabase.from("student_documents").insert(docsToInsert);
