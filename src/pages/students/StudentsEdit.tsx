@@ -273,7 +273,6 @@ const StudentsEdit = () => {
               </div>
             </div>
           </div>
-
           <div className="bg-card border border-border/60 rounded-xl certus-shadow p-6">
             <h3 className="text-lg font-bold text-primary mb-6">Dados da Matrícula</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -290,7 +289,35 @@ const StudentsEdit = () => {
               />
             </div>
           </div>
+          {/* 👇 COLOCA AQUI */}
+          <div className="bg-card border border-border/60 rounded-xl certus-shadow p-6">
+            <h3 className="text-lg font-bold text-primary mb-4">Documentos da Matrícula</h3>
 
+            {documents.length === 0 && <p className="text-sm text-muted-foreground">Nenhum documento encontrado</p>}
+
+            {documents.map((doc) => (
+              <div key={doc.id} className="flex items-center justify-between p-3 border rounded-lg mb-2">
+                <span className="text-sm font-medium">{doc.document_type}</span>
+
+                <button
+                  onClick={async () => {
+                    const novoStatus = doc.status === "aprovado" ? "pendente" : "aprovado";
+
+                    await supabase.from("student_documents").update({ status: novoStatus }).eq("id", doc.id);
+
+                    window.location.reload();
+                  }}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold ${
+                    doc.status === "aprovado" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                  }`}
+                >
+                  {doc.status === "aprovado" ? "✔ Entregue" : "❌ Pendente"}
+                </button>
+              </div>
+            ))}
+          </div>{" "}
+          // FIM Dados da Matrícula
+          {/* 👇 AGORA VEM O BOTÃO SALVAR */}
           <div className="flex items-center gap-3 pt-2">
             <button
               type="submit"
