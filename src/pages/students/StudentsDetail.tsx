@@ -220,21 +220,32 @@ const StudentsDetail = () => {
     win.document.close();
   };
 
-  const { data: documents = [] } = useQuery({
+  // Documentos da matrícula — fonte: student_documents (status + arquivo opcional)
+  const { data: studentDocs = [] } = useQuery({
     queryKey: ["student-documents", id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("documents")
+        .from("student_documents")
         .select("*")
-        .eq("student_id", id!)
-        .order("created_at", { ascending: false });
+        .eq("student_id", id!);
       if (error) {
-        console.error("❌ ERRO AO BUSCAR DOCUMENTOS:", error);
+        console.error("❌ ERRO AO BUSCAR student_documents:", error);
         throw error;
       }
       return data || [];
     },
     enabled: !!id && activeTab === "documentos",
+  });
+
+  // Mescla checklist obrigatória com registros do banco
+  const docsChecklist = REQUIRED_DOCS.map((req) => {
+    const found = (studentDocs as any[]).find((d) => d.document_type === req.type);
+    return {
+      type: req.type,
+      label: req.label,
+      record: found || null,
+      status: found?.status === "aprovado" ? "aprovado" : "pendente",
+    };
   });
 
   const unlinkGuardianMutation = useMutation({
@@ -254,101 +265,125 @@ const StudentsDetail = () => {
   });
 
   const uploadDocMutation = useMutation({
-    mutationFn: async (file: File) => {
-      console.log("🔥 UPLOAD INICIOU");
-
+    mutationFn: async ({ file, docType }: { file: File; docType: string }) => {
       if (!schoolId) throw new Error("Sem escola vinculada");
-
-      setUploadingDoc(true);
+      setUploadingType(docType);
 
       const cleanFileName = file.name
         .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") // remove acentos
-        .replace(/\s+/g, "_") // espaço vira _
-        .replace(/[^a-zA-Z0-9._-]/g, ""); // remove caracteres estranhos
-      const filePath = `${schoolId}/${id}/${Date.now()}_${cleanFileName}`;
-      console.log("📁 PATH:", filePath);
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, "_")
+        .replace(/[^a-zA-Z0-9._-]/g, "");
+      const filePath = `${schoolId}/${id}/${docType}_${Date.now()}_${cleanFileName}`;
 
-      const { error: upErr } = await supabase.storage.from("student-assets").upload(filePath, file);
+      const { error: upErr } = await supabase.storage
+        .from("student-documents")
+        .upload(filePath, file, { upsert: true });
+      if (upErr) throw upErr;
 
-      console.log("📦 PASSOU UPLOAD");
+      // Verifica se já existe registro para esse tipo
+      const existing = (studentDocs as any[]).find((d) => d.document_type === docType);
 
-      if (upErr) {
-        console.error("❌ ERRO UPLOAD:", upErr);
-        throw upErr;
+      if (existing) {
+        const { error } = await supabase
+          .from("student_documents")
+          .update({
+            status: "aprovado",
+            file_path: filePath,
+            file_name: cleanFileName,
+          })
+          .eq("id", existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("student_documents").insert({
+          school_id: schoolId,
+          student_id: id!,
+          document_type: docType,
+          status: "aprovado",
+          file_path: filePath,
+          file_name: cleanFileName,
+        });
+        if (error) throw error;
       }
-
-      const { data: urlData } = supabase.storage.from("student-assets").getPublicUrl(filePath);
-
-      console.log("🔗 URL:", urlData?.publicUrl);
-
-      const { error: docErr } = await supabase.from("documents").insert({
-        school_id: schoolId,
-        student_id: id!,
-        name: cleanFileName,
-        file_url: urlData.publicUrl,
-        file_path: filePath,
-        status: "recebido",
-      });
-
-      console.log("💾 TENTOU INSERT");
-
-      if (docErr) {
-        console.error("❌ ERRO INSERT:", docErr);
-        throw docErr;
-      }
-
-      console.log("✅ INSERT OK");
     },
-
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["student-documents", id] });
-      setUploadingDoc(false);
+      setUploadingType(null);
       toast.success("Documento enviado!");
     },
-
     onError: (err: any) => {
-      setUploadingDoc(false);
-      console.error("❌ ERRO FINAL:", err);
+      setUploadingType(null);
+      console.error("❌ UPLOAD:", err);
       toast.error(err.message || "Erro ao enviar documento");
     },
   });
 
-  // 🔐 gerar URL assinada (evita bloqueio do navegador)
+  const toggleDocStatus = useMutation({
+    mutationFn: async (item: { type: string; record: any | null }) => {
+      const novoStatus = item.record?.status === "aprovado" ? "pendente" : "aprovado";
+      if (item.record) {
+        const { error } = await supabase
+          .from("student_documents")
+          .update({ status: novoStatus })
+          .eq("id", item.record.id);
+        if (error) throw error;
+      } else {
+        if (!schoolId) throw new Error("Sem escola vinculada");
+        const { error } = await supabase.from("student_documents").insert({
+          school_id: schoolId,
+          student_id: id!,
+          document_type: item.type,
+          status: novoStatus,
+        });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["student-documents", id] }),
+    onError: (err: any) => toast.error(err.message || "Erro ao atualizar status"),
+  });
+
+  // 🔐 gerar URL assinada (bucket privado)
   const getSignedUrl = async (filePath: string) => {
     const { data, error } = await supabase.storage
-      .from("student-assets")
+      .from("student-documents")
       .createSignedUrl(filePath, 60);
     if (error) {
-      console.error("Erro ao gerar signed URL:", error);
+      console.error("Erro signed URL:", error);
       return null;
     }
     return data?.signedUrl;
   };
 
-  // 👁 preview do documento
   const handlePreview = async (doc: any) => {
+    if (!doc?.file_path) return;
     const url = await getSignedUrl(doc.file_path);
     if (!url) return;
     setPreviewDoc({ ...doc, file_url: url });
   };
 
-  // ⬇ download do documento
   const handleDownload = async (doc: any) => {
+    if (!doc?.file_path) return;
     const url = await getSignedUrl(doc.file_path);
     if (!url) return;
     const link = document.createElement("a");
     link.href = url;
-    link.download = doc.name;
+    link.download = doc.file_name || "documento";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
+  const handleSelectFile = (docType: string) => {
+    pendingTypeRef.current = docType;
+    docInputRef.current?.click();
+  };
+
   const handleDocUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) uploadDocMutation.mutate(file);
+    const docType = pendingTypeRef.current;
+    if (file && docType) uploadDocMutation.mutate({ file, docType });
     if (docInputRef.current) docInputRef.current.value = "";
+    pendingTypeRef.current = null;
   };
 
   const handleGenerate = (docName: string) => {
