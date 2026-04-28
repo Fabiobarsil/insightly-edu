@@ -465,8 +465,6 @@ const StudentsCreate = () => {
     }
   };
 
-  const missingRequired = docChecklist.filter((d) => d.obrigatorio && !docs[d.key]);
-
   const pageTitle = isEdit ? "Editar Matrícula" : "Cadastrar Aluno";
   const pageDesc = isEdit ? "Atualize os dados do aluno e da matrícula" : "Preencha os dados do novo aluno";
   const breadcrumbs = isEdit
@@ -704,31 +702,6 @@ const StudentsCreate = () => {
               </div>
             </div>
           ))}
-        </div>
-
-        {/* Checklist de documentos */}
-        <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-sm font-bold text-primary">Documentos de Matrícula</h4>
-            {missingRequired.length > 0 && (
-              <span className="text-xs font-bold text-destructive">
-                {missingRequired.length} obrigatório(s) pendente(s)
-              </span>
-            )}
-          </div>
-          <div className="space-y-2">
-            {docChecklist.map((d) => (
-              <label key={d.key} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-accent/30 transition-colors cursor-pointer">
-                <input type="checkbox" checked={!!docs[d.key]} onChange={() => toggleDoc(d.key)} className="w-4 h-4 rounded border-border text-secondary focus:ring-secondary" />
-                <span className="text-sm text-primary font-medium flex-1">{d.label}</span>
-                {d.obrigatorio ? (
-                  <span className="text-[10px] font-bold text-warning-foreground bg-warning/15 px-2 py-0.5 rounded-full">Obrigatório</span>
-                ) : (
-                  <span className="text-[10px] font-bold text-muted-foreground bg-accent px-2 py-0.5 rounded-full">Opcional</span>
-                )}
-              </label>
-            ))}
-          </div>
         </div>
 
         {/* Botões finais — único ponto de submit */}
