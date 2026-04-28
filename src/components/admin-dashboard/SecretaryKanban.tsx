@@ -186,6 +186,7 @@ const SecretaryKanban = ({ filter = "all" }: Props) => {
               key={col.id}
               column={col}
               items={grouped[col.id] || []}
+              onCardClick={(item) => navigate(resolveCardAction(item))}
               onAdvance={async (item) => {
                 if (!col.next) return;
                 try {
