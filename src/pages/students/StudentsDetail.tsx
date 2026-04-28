@@ -33,6 +33,20 @@ const officialDocs = [
   { id: "frequencia", nome: "Declaração de Frequência", icon: "ri-calendar-check-line" },
 ];
 
+// Documentos obrigatórios para matrícula (checklist padrão)
+const REQUIRED_DOCS: { type: string; label: string }[] = [
+  { type: "certidao_nascimento", label: "Certidão de Nascimento" },
+  { type: "rg", label: "RG" },
+  { type: "cpf", label: "CPF" },
+  { type: "comprovante_residencia", label: "Comprovante de Residência" },
+  { type: "historico_escolar", label: "Histórico Escolar" },
+  { type: "declaracao_transferencia", label: "Declaração de Transferência" },
+  { type: "foto_3x4", label: "Foto 3x4" },
+  { type: "cartao_vacina", label: "Cartão de Vacina" },
+  { type: "rg_responsavel", label: "RG do Responsável" },
+  { type: "cpf_responsavel", label: "CPF do Responsável" },
+];
+
 const declReasons = [
   "Para fins de comprovação de matrícula",
   "Para fins de transferência escolar",

@@ -1902,6 +1902,9 @@ export type Database = {
         Row: {
           created_at: string | null
           document_type: string
+          file_name: string | null
+          file_path: string | null
+          file_url: string | null
           id: string
           school_id: string
           status: string | null
@@ -1911,6 +1914,9 @@ export type Database = {
         Insert: {
           created_at?: string | null
           document_type: string
+          file_name?: string | null
+          file_path?: string | null
+          file_url?: string | null
           id?: string
           school_id: string
           status?: string | null
@@ -1920,6 +1926,9 @@ export type Database = {
         Update: {
           created_at?: string | null
           document_type?: string
+          file_name?: string | null
+          file_path?: string | null
+          file_url?: string | null
           id?: string
           school_id?: string
           status?: string | null
