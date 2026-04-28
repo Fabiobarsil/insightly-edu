@@ -278,16 +278,6 @@ const SecretariaDashboard = () => {
                             ) : (
                               <span className="text-xs text-muted-foreground">✓</span>
                             )}
-                          </td>
-                              {next === "concluido" ? (
-                                <><CheckCircle2 className="h-3.5 w-3.5" /> Resolver</>
-                              ) : (
-                                <>→ {STATUS_MAP[next]?.label}</>
-                              )}
-                            </button>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">✓</span>
-                          )}
                         </td>
                       </tr>
                     );
