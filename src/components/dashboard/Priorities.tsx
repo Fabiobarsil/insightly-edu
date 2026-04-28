@@ -125,7 +125,16 @@ const Priorities = () => {
                   Ver
                 </button>
                 <button
-                  onClick={() => toast.success(`Resolvendo: ${item.name}`)}
+                  onClick={() => {
+                    console.log("ITEM:", item);
+
+                    if (!item.student_id) {
+                      toast.error("Aluno não identificado");
+                      return;
+                    }
+
+                    navigate(`/secretaria/matricula/${item.student_id}`);
+                  }}
                   className="text-[11px] font-bold px-2 py-1 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/90 transition-colors"
                 >
                   Resolver
