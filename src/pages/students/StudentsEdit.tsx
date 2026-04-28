@@ -324,7 +324,9 @@ const StudentsEdit = () => {
 
             {documents.map((doc) => (
               <div key={doc.id} className="flex items-center justify-between p-3 border rounded-lg mb-2">
-                <span className="text-sm font-medium">{doc.document_type}</span>
+                <span className="text-sm font-medium capitalize">
+                  {String(doc.document_type || "").replace(/_/g, " ")}
+                </span>
 
                 <button
                   type="button"
