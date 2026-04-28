@@ -16,6 +16,8 @@ export interface KanbanRequest {
   status: KanbanStatus;
   priority: "alta" | "media" | "baixa" | string;
   created_at: string;
+  student_document_id: string | null;
+  document_type: string | null;
 }
 
 const PRIORITY_ORDER: Record<string, number> = {
