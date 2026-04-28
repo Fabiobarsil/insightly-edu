@@ -752,69 +752,95 @@ const StudentsDetail = () => {
         <div className="space-y-6">
           <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="text-sm font-bold text-primary">Documentos do Aluno</h4>
-              <button
-                onClick={() => docInputRef.current?.click()}
-                disabled={uploadingDoc}
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-secondary text-secondary-foreground text-xs font-bold hover:bg-secondary/90 transition-colors disabled:opacity-50"
-              >
-                <i className={uploadingDoc ? "ri-loader-4-line animate-spin" : "ri-upload-2-line"} />{" "}
-                {uploadingDoc ? "Enviando..." : "Upload Documento"}
-              </button>
-              <input
-                ref={docInputRef}
-                type="file"
-                className="hidden"
-                onChange={handleDocUpload}
-                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-              />
+              <div>
+                <h4 className="text-sm font-bold text-primary">Documentos do Aluno</h4>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Documentos obrigatórios para a matrícula. Faça upload, baixe ou marque como entregue.
+                </p>
+              </div>
+              <div className="text-xs font-bold text-muted-foreground">
+                {docsChecklist.filter((d) => d.status === "aprovado").length}/{docsChecklist.length} entregues
+              </div>
             </div>
 
-            {documents.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground text-sm">Nenhum documento enviado.</div>
-            ) : (
-              <div className="space-y-2">
-                {documents.map((doc: any) => (
+            <input
+              ref={docInputRef}
+              type="file"
+              className="hidden"
+              onChange={handleDocUpload}
+              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+            />
+
+            <div className="space-y-2">
+              {docsChecklist.map((item) => {
+                const aprovado = item.status === "aprovado";
+                const hasFile = !!item.record?.file_path;
+                const isUploading = uploadingType === item.type;
+                return (
                   <div
-                    key={doc.id}
-                    className="flex items-center justify-between px-4 py-3 rounded-xl border border-border/40 hover:bg-accent/30 transition-colors"
+                    key={item.type}
+                    className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-border/40 hover:bg-accent/30 transition-colors"
                   >
-                    <div className="flex items-center gap-3">
-                      <i className="ri-file-line text-lg text-secondary" />
-                      <div>
-                        <div className="text-sm font-medium text-primary">{doc.name || "Documento"}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {doc.created_at ? new Date(doc.created_at).toLocaleDateString("pt-BR") : "—"}
-                          {doc.status && (
-                            <span className="ml-2 px-2 py-0.5 rounded-full bg-accent text-[10px] font-bold">
-                              {doc.status}
-                            </span>
-                          )}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <i
+                        className={`ri-file-line text-lg ${aprovado ? "text-secondary" : "text-muted-foreground"}`}
+                      />
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-primary truncate">{item.label}</div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {hasFile ? item.record.file_name : "Nenhum arquivo enviado"}
                         </div>
                       </div>
                     </div>
-                    {doc.file_url && (
-                     <div className="flex gap-2">
-  <button
-    onClick={() => handlePreview(doc)}
-    className="text-xs font-bold text-blue-600 hover:underline"
-  >
-    Ver
-  </button>
 
-  <button
-    onClick={() => handleDownload(doc)}
-    className="text-xs font-bold text-secondary hover:underline"
-  >
-    <i className="ri-download-line mr-1" />
-    Baixar
-  </button>
-</div>
-                    )}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => toggleDocStatus.mutate(item)}
+                        disabled={toggleDocStatus.isPending}
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition-colors disabled:opacity-60 ${
+                          aprovado
+                            ? "bg-secondary/15 text-secondary hover:bg-secondary/25"
+                            : "bg-destructive/10 text-destructive hover:bg-destructive/20"
+                        }`}
+                        title="Alternar status"
+                      >
+                        {aprovado ? "✔ Aprovado" : "● Pendente"}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleSelectFile(item.type)}
+                        disabled={isUploading}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[10px] border border-border text-xs font-bold text-primary hover:bg-accent transition-colors disabled:opacity-60"
+                      >
+                        <i className={isUploading ? "ri-loader-4-line animate-spin" : "ri-upload-2-line"} />
+                        {hasFile ? "Trocar" : "Upload"}
+                      </button>
+
+                      {hasFile && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handlePreview(item.record)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[10px] border border-border text-xs font-bold text-primary hover:bg-accent transition-colors"
+                          >
+                            <i className="ri-eye-line" /> Ver
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDownload(item.record)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[10px] bg-secondary text-secondary-foreground text-xs font-bold hover:bg-secondary/90 transition-colors"
+                          >
+                            <i className="ri-download-line" /> Baixar
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
+                );
+              })}
+            </div>
           </div>
 
           <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow">
