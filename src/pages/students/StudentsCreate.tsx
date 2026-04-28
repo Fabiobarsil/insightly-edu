@@ -128,19 +128,21 @@ const StudentsCreate = () => {
   useEffect(() => {
     if (!isEdit || !studentIdParam || !schoolId) return;
 
+    const queryKey = ["student-documents", studentIdParam, schoolId] as const;
+
     const channel = supabase
       .channel(`student-documents-${studentIdParam}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "student_documents", filter: `student_id=eq.${studentIdParam}` },
-        () => queryClient.invalidateQueries({ queryKey: documentsQueryKey }),
+        () => queryClient.invalidateQueries({ queryKey }),
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [documentsQueryKey, isEdit, queryClient, schoolId, studentIdParam]);
+  }, [isEdit, queryClient, schoolId, studentIdParam]);
 
   // Pré-carrega aluno + responsáveis quando em modo edição
   const { data: studentData } = useQuery({
@@ -760,7 +762,6 @@ const StudentsCreate = () => {
           <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow">
             <div className="flex items-center justify-between mb-4">
               <h4 className="text-sm font-bold text-primary">Documentos da Matrícula</h4>
-              <span className="text-[11px] text-muted-foreground">Fonte: student_documents</span>
             </div>
 
             {documentsLoading ? (
