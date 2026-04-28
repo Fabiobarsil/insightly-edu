@@ -94,6 +94,7 @@ interface Props {
 const SecretaryKanban = ({ filter = "all" }: Props) => {
   const { requests, loading, updateStatus } = useSecretariaKanban();
   const [activeId, setActiveId] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
