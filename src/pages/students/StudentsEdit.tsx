@@ -291,7 +291,7 @@ const StudentsEdit = () => {
               />
             </div>
           </div>
-          {/* 👇 COLOCA AQUI */}
+          {/* 👇 DOCUMENTOS DA MATRÍCULA */}
           <div className="bg-card border border-border/60 rounded-xl certus-shadow p-6">
             <h3 className="text-lg font-bold text-primary mb-4">Documentos da Matrícula</h3>
 
@@ -305,20 +305,30 @@ const StudentsEdit = () => {
                   onClick={async () => {
                     const novoStatus = doc.status === "aprovado" ? "pendente" : "aprovado";
 
-                    await supabase.from("student_documents").update({ status: novoStatus }).eq("id", doc.id);
+                    const { error } = await supabase
+                      .from("student_documents")
+                      .update({ status: novoStatus })
+                      .eq("id", doc.id);
 
-                    window.location.reload();
+                    if (error) {
+                      toast.error("Erro ao atualizar documento");
+                      return;
+                    }
+
+                    // 🔥 atualiza na tela SEM reload
+                    setDocuments((prev) => prev.map((d) => (d.id === doc.id ? { ...d, status: novoStatus } : d)));
                   }}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold ${
-                    doc.status === "aprovado" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                    doc.status === "aprovado"
+                      ? "bg-green-100 text-green-700 hover:bg-green-200"
+                      : "bg-red-100 text-red-700 hover:bg-red-200"
                   }`}
                 >
                   {doc.status === "aprovado" ? "✔ Entregue" : "❌ Pendente"}
                 </button>
               </div>
             ))}
-          </div>{" "}
-          // FIM Dados da Matrícula
+          </div>
           {/* 👇 AGORA VEM O BOTÃO SALVAR */}
           <div className="flex items-center gap-3 pt-2">
             <button
