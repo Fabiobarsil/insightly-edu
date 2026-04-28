@@ -441,82 +441,14 @@ const StudentsCreate = () => {
       const { error: linkErr } = await supabase.from("student_guardians").insert(links);
       if (linkErr) throw linkErr;
 
-      // Persiste checklist de documentos (substitui o conjunto atual)
-      await supabase.from("student_documents").delete().eq("student_id", studentId);
-      const docsToInsert = docChecklist.map((d) => ({
-        student_id: studentId,
-        school_id: schoolId,
-        document_type: d.key,
-        status: docs[d.key] ? "aprovado" : "pendente",
-      }));
-      if (docsToInsert.length > 0) {
-        const { error: docErr } = await supabase.from("student_documents").insert(docsToInsert);
-        if (docErr) throw docErr;
-      }
-
-      // Fluxo Secretaria: cria/fecha demandas de documentos pendentes
-      const studentName = form.full_name.trim();
-      const missingObrigatorios = docChecklist.filter((d) => d.obrigatorio && !docs[d.key]);
-      const completedObrigatorios = docChecklist.filter((d) => d.obrigatorio && docs[d.key]);
-
-      const { data: existingReqs } = await supabase
-        .from("secretary_requests")
-        .select("id, request_type, status, description")
-        .eq("school_id", schoolId)
-        .eq("student_id", studentId)
-        .eq("request_type", "documento_pendente");
-
-      const existingByKey = new Map<string, any>();
-      (existingReqs || []).forEach((r: any) => {
-        const m = r.description?.match(/^\[([^\]]+)\]/);
-        if (m) existingByKey.set(m[1], r);
-      });
-
-      const newRequests = missingObrigatorios
-        .filter((d) => {
-          const ex = existingByKey.get(d.key);
-          return !ex || ex.status === "resolvido";
-        })
-        .map((d) => ({
-          school_id: schoolId,
-          student_id: studentId,
-          student_name: studentName,
-          class_id: form.class_id || null,
-          request_type: "documento_pendente",
-          description: `[${d.key}] ${d.label} pendente para ${studentName}`,
-          priority: "alta",
-          origin: "matricula",
-          status: "aberto",
-          student_status: form.status || "ativo",
-        }));
-      if (newRequests.length > 0) {
-        await supabase.from("secretary_requests").insert(newRequests as any);
-      }
-
-      const toResolveIds = completedObrigatorios
-        .map((d) => existingByKey.get(d.key))
-        .filter((r) => r && r.status !== "resolvido")
-        .map((r) => r.id);
-      if (toResolveIds.length > 0) {
-        await supabase
-          .from("secretary_requests")
-          .update({ status: "resolvido", updated_at: new Date().toISOString() })
-          .in("id", toResolveIds);
-      }
-
-      return { missingCount: missingObrigatorios.length, newReqCount: newRequests.length };
+      return { studentId };
     },
     onSuccess: (result: any) => {
       queryClient.invalidateQueries({ queryKey: ["students", schoolId] });
       queryClient.invalidateQueries({ queryKey: ["student-edit", studentIdParam] });
       queryClient.invalidateQueries({ queryKey: ["secretary_requests"] });
       queryClient.invalidateQueries({ queryKey: ["operational-metrics"] });
-      const baseMsg = isEdit ? "Matrícula atualizada!" : "Aluno matriculado!";
-      if (result?.missingCount > 0) {
-        toast.warning(`${baseMsg} ${result.missingCount} documento(s) pendente(s) — enviado à fila da Secretaria.`);
-      } else {
-        toast.success(`${baseMsg} Documentação completa.`);
-      }
+      toast.success(isEdit ? "Matrícula atualizada!" : "Aluno matriculado!");
       navigate(isEdit ? `/admin/alunos/${studentIdParam}` : "/admin/alunos");
     },
     onError: (err: any) => toast.error(err.message || "Erro ao salvar"),
