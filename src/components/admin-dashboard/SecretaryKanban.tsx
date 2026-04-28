@@ -216,9 +216,10 @@ interface ColumnProps {
   column: (typeof COLUMNS)[number];
   items: KanbanRequest[];
   onAdvance: (item: KanbanRequest) => void;
+  onCardClick: (item: KanbanRequest) => void;
 }
 
-const KanbanColumn = ({ column, items, onAdvance }: ColumnProps) => {
+const KanbanColumn = ({ column, items, onAdvance, onCardClick }: ColumnProps) => {
   const Icon = column.icon;
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
 
@@ -262,6 +263,7 @@ const KanbanColumn = ({ column, items, onAdvance }: ColumnProps) => {
               item={item}
               nextStatus={column.next}
               onAdvance={() => onAdvance(item)}
+              onClickCard={() => onCardClick(item)}
             />
           ))
         )}
