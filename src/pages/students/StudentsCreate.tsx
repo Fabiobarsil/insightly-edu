@@ -19,15 +19,6 @@ const maritalOptions = [
   { value: "uniao_estavel", label: "União Estável" },
 ];
 
-const docChecklist = [
-  { key: "certidao_nascimento", label: "Certidão de Nascimento", obrigatorio: true },
-  { key: "comprovante_residencia", label: "Comprovante de Residência", obrigatorio: true },
-  { key: "carteira_vacinacao", label: "Carteira de Vacinação", obrigatorio: true },
-  { key: "foto_3x4", label: "Foto 3x4", obrigatorio: false },
-  { key: "historico_escolar", label: "Histórico Escolar Anterior", obrigatorio: true },
-  { key: "laudo_medico", label: "Laudo Médico (PcD)", obrigatorio: false },
-];
-
 const emptyParent = () => ({
   id: null as string | null,
   full_name: "", cpf: "", phone: "", email: "",
@@ -52,7 +43,6 @@ const StudentsCreate = () => {
   });
   const [father, setFather] = useState<any>({ ...emptyParent(), is_financial: true, is_pedagogical: true });
   const [mother, setMother] = useState<any>(emptyParent());
-  const [docs, setDocs] = useState<Record<string, boolean>>({});
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [existingPhotoUrl, setExistingPhotoUrl] = useState<string | null>(null);
@@ -144,13 +134,7 @@ const StudentsCreate = () => {
         .limit(1)
         .maybeSingle();
 
-      // Documentos do aluno (checklist)
-      const { data: studentDocs } = await supabase
-        .from("student_documents")
-        .select("document_type, status")
-        .eq("student_id", studentIdParam);
-
-      return { student, links: linksWithGuardians, enrollment, studentDocs: studentDocs || [] };
+      return { student, links: linksWithGuardians, enrollment };
     },
     enabled: isEdit && !!studentIdParam,
   });
@@ -224,20 +208,10 @@ const StudentsCreate = () => {
     }
     if (outro) setForm((prev) => ({ ...prev, guardian_id: outro.id }));
 
-    // Hidrata checklist de documentos.
-    // Importante: se houver duplicatas no banco, qualquer registro `true` prevalece (nunca rebaixar para false).
-    const docsMap: Record<string, boolean> = {};
-    ((studentData as any).studentDocs || []).forEach((d: any) => {
-      if (!d.document_type) return;
-      docsMap[d.document_type] = docsMap[d.document_type] || !!d.status;
-    });
-    setDocs(docsMap);
   }, [studentData]);
 
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
-
-  const toggleDoc = (key: string) => setDocs((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
