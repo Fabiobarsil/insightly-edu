@@ -51,7 +51,7 @@ export function useSecretariaKanban() {
 
       const { data, error } = await supabase
         .from("secretaria_requests")
-        .select("id, school_id, student_id, title, type, status, priority, created_at")
+        .select("id, school_id, student_id, student_document_id, title, type, status, priority, created_at")
         .eq("school_id", schoolId)
         .order("created_at", { ascending: true });
 
@@ -74,6 +74,21 @@ export function useSecretariaKanban() {
         });
       }
 
+      // Busca document_type para enriquecer demandas de documento
+      const docIds = Array.from(
+        new Set(rawRows.map((r) => r.student_document_id).filter(Boolean))
+      ) as string[];
+      const docTypeMap: Record<string, string> = {};
+      if (docIds.length > 0) {
+        const { data: docs } = await supabase
+          .from("student_documents")
+          .select("id, document_type")
+          .in("id", docIds);
+        (docs || []).forEach((d: any) => {
+          docTypeMap[d.id] = d.document_type;
+        });
+      }
+
       const rows: KanbanRequest[] = rawRows.map((r) => ({
         id: r.id,
         school_id: r.school_id,
@@ -84,6 +99,8 @@ export function useSecretariaKanban() {
         status: (r.status ?? "aberto") as KanbanStatus,
         priority: r.priority ?? "media",
         created_at: r.created_at,
+        student_document_id: r.student_document_id ?? null,
+        document_type: r.student_document_id ? docTypeMap[r.student_document_id] ?? null : null,
       }));
 
       // priority desc, created_at asc
