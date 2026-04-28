@@ -756,6 +756,46 @@ const StudentsCreate = () => {
           ))}
         </div>
 
+        {isEdit && (
+          <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-sm font-bold text-primary">Documentos da Matrícula</h4>
+              <span className="text-[11px] text-muted-foreground">Fonte: student_documents</span>
+            </div>
+
+            {documentsLoading ? (
+              <p className="text-sm text-muted-foreground">Carregando documentos...</p>
+            ) : documents.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhum documento encontrado</p>
+            ) : (
+              <div className="space-y-2">
+                {documents.map((doc: any) => {
+                  const approved = doc.status === "aprovado";
+                  return (
+                    <div key={doc.id} className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-border/60">
+                      <span className="text-sm text-primary font-medium capitalize">
+                        {String(doc.document_type || "").replace(/_/g, " ")}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={toggleDocumentStatus.isPending}
+                        onClick={() => toggleDocumentStatus.mutate(doc)}
+                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors disabled:opacity-60 ${
+                          approved
+                            ? "bg-secondary/10 text-secondary hover:bg-secondary/15"
+                            : "bg-destructive/10 text-destructive hover:bg-destructive/15"
+                        }`}
+                      >
+                        {approved ? "Aprovado" : "Pendente"}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Botões finais — único ponto de submit */}
         <div className="flex items-center gap-3 pt-2">
           <button
