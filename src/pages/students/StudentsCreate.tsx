@@ -90,6 +90,58 @@ const StudentsCreate = () => {
     enabled: !!schoolId,
   });
 
+  const documentsQueryKey = ["student-documents", studentIdParam, schoolId] as const;
+  const { data: documents = [], isLoading: documentsLoading } = useQuery({
+    queryKey: documentsQueryKey,
+    queryFn: async () => {
+      if (!studentIdParam || !schoolId) return [];
+      const { data, error } = await supabase
+        .from("student_documents")
+        .select("*")
+        .eq("school_id", schoolId)
+        .eq("student_id", studentIdParam)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: isEdit && !!studentIdParam && !!schoolId,
+  });
+
+  const toggleDocumentStatus = useMutation({
+    mutationFn: async (doc: any) => {
+      const nextStatus = doc.status === "aprovado" ? "pendente" : "aprovado";
+      const { data, error } = await supabase
+        .from("student_documents")
+        .update({ status: nextStatus })
+        .eq("id", doc.id)
+        .eq("student_id", studentIdParam!)
+        .eq("school_id", schoolId!)
+        .select()
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: documentsQueryKey }),
+    onError: (err: any) => toast.error(err?.message || "Erro ao atualizar documento"),
+  });
+
+  useEffect(() => {
+    if (!isEdit || !studentIdParam || !schoolId) return;
+
+    const channel = supabase
+      .channel(`student-documents-${studentIdParam}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "student_documents", filter: `student_id=eq.${studentIdParam}` },
+        () => queryClient.invalidateQueries({ queryKey: documentsQueryKey }),
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [documentsQueryKey, isEdit, queryClient, schoolId, studentIdParam]);
+
   // Pré-carrega aluno + responsáveis quando em modo edição
   const { data: studentData } = useQuery({
     queryKey: ["student-edit", studentIdParam],
