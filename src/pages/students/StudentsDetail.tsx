@@ -33,6 +33,20 @@ const officialDocs = [
   { id: "frequencia", nome: "Declaração de Frequência", icon: "ri-calendar-check-line" },
 ];
 
+// Documentos obrigatórios para matrícula (checklist padrão)
+const REQUIRED_DOCS: { type: string; label: string }[] = [
+  { type: "certidao_nascimento", label: "Certidão de Nascimento" },
+  { type: "rg", label: "RG" },
+  { type: "cpf", label: "CPF" },
+  { type: "comprovante_residencia", label: "Comprovante de Residência" },
+  { type: "historico_escolar", label: "Histórico Escolar" },
+  { type: "declaracao_transferencia", label: "Declaração de Transferência" },
+  { type: "foto_3x4", label: "Foto 3x4" },
+  { type: "cartao_vacina", label: "Cartão de Vacina" },
+  { type: "rg_responsavel", label: "RG do Responsável" },
+  { type: "cpf_responsavel", label: "CPF do Responsável" },
+];
+
 const declReasons = [
   "Para fins de comprovação de matrícula",
   "Para fins de transferência escolar",
@@ -66,9 +80,10 @@ const StudentsDetail = () => {
   const [customReason, setCustomReason] = useState("");
   const [guardianModalOpen, setGuardianModalOpen] = useState(false);
   const [editingGuardianId, setEditingGuardianId] = useState<string | null>(null);
-  const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [uploadingType, setUploadingType] = useState<string | null>(null);
   const [previewDoc, setPreviewDoc] = useState<any | null>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
+  const pendingTypeRef = useRef<string | null>(null);
 
   const { data: student, isLoading } = useQuery({
     queryKey: ["student", id],
@@ -205,21 +220,32 @@ const StudentsDetail = () => {
     win.document.close();
   };
 
-  const { data: documents = [] } = useQuery({
+  // Documentos da matrícula — fonte: student_documents (status + arquivo opcional)
+  const { data: studentDocs = [] } = useQuery({
     queryKey: ["student-documents", id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("documents")
+        .from("student_documents")
         .select("*")
-        .eq("student_id", id!)
-        .order("created_at", { ascending: false });
+        .eq("student_id", id!);
       if (error) {
-        console.error("❌ ERRO AO BUSCAR DOCUMENTOS:", error);
+        console.error("❌ ERRO AO BUSCAR student_documents:", error);
         throw error;
       }
       return data || [];
     },
     enabled: !!id && activeTab === "documentos",
+  });
+
+  // Mescla checklist obrigatória com registros do banco
+  const docsChecklist = REQUIRED_DOCS.map((req) => {
+    const found = (studentDocs as any[]).find((d) => d.document_type === req.type);
+    return {
+      type: req.type,
+      label: req.label,
+      record: found || null,
+      status: found?.status === "aprovado" ? "aprovado" : "pendente",
+    };
   });
 
   const unlinkGuardianMutation = useMutation({
@@ -239,101 +265,125 @@ const StudentsDetail = () => {
   });
 
   const uploadDocMutation = useMutation({
-    mutationFn: async (file: File) => {
-      console.log("🔥 UPLOAD INICIOU");
-
+    mutationFn: async ({ file, docType }: { file: File; docType: string }) => {
       if (!schoolId) throw new Error("Sem escola vinculada");
-
-      setUploadingDoc(true);
+      setUploadingType(docType);
 
       const cleanFileName = file.name
         .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") // remove acentos
-        .replace(/\s+/g, "_") // espaço vira _
-        .replace(/[^a-zA-Z0-9._-]/g, ""); // remove caracteres estranhos
-      const filePath = `${schoolId}/${id}/${Date.now()}_${cleanFileName}`;
-      console.log("📁 PATH:", filePath);
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, "_")
+        .replace(/[^a-zA-Z0-9._-]/g, "");
+      const filePath = `${schoolId}/${id}/${docType}_${Date.now()}_${cleanFileName}`;
 
-      const { error: upErr } = await supabase.storage.from("student-assets").upload(filePath, file);
+      const { error: upErr } = await supabase.storage
+        .from("student-documents")
+        .upload(filePath, file, { upsert: true });
+      if (upErr) throw upErr;
 
-      console.log("📦 PASSOU UPLOAD");
+      // Verifica se já existe registro para esse tipo
+      const existing = (studentDocs as any[]).find((d) => d.document_type === docType);
 
-      if (upErr) {
-        console.error("❌ ERRO UPLOAD:", upErr);
-        throw upErr;
+      if (existing) {
+        const { error } = await supabase
+          .from("student_documents")
+          .update({
+            status: "aprovado",
+            file_path: filePath,
+            file_name: cleanFileName,
+          })
+          .eq("id", existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("student_documents").insert({
+          school_id: schoolId,
+          student_id: id!,
+          document_type: docType,
+          status: "aprovado",
+          file_path: filePath,
+          file_name: cleanFileName,
+        });
+        if (error) throw error;
       }
-
-      const { data: urlData } = supabase.storage.from("student-assets").getPublicUrl(filePath);
-
-      console.log("🔗 URL:", urlData?.publicUrl);
-
-      const { error: docErr } = await supabase.from("documents").insert({
-        school_id: schoolId,
-        student_id: id!,
-        name: cleanFileName,
-        file_url: urlData.publicUrl,
-        file_path: filePath,
-        status: "recebido",
-      });
-
-      console.log("💾 TENTOU INSERT");
-
-      if (docErr) {
-        console.error("❌ ERRO INSERT:", docErr);
-        throw docErr;
-      }
-
-      console.log("✅ INSERT OK");
     },
-
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["student-documents", id] });
-      setUploadingDoc(false);
+      setUploadingType(null);
       toast.success("Documento enviado!");
     },
-
     onError: (err: any) => {
-      setUploadingDoc(false);
-      console.error("❌ ERRO FINAL:", err);
+      setUploadingType(null);
+      console.error("❌ UPLOAD:", err);
       toast.error(err.message || "Erro ao enviar documento");
     },
   });
 
-  // 🔐 gerar URL assinada (evita bloqueio do navegador)
+  const toggleDocStatus = useMutation({
+    mutationFn: async (item: { type: string; record: any | null }) => {
+      const novoStatus = item.record?.status === "aprovado" ? "pendente" : "aprovado";
+      if (item.record) {
+        const { error } = await supabase
+          .from("student_documents")
+          .update({ status: novoStatus })
+          .eq("id", item.record.id);
+        if (error) throw error;
+      } else {
+        if (!schoolId) throw new Error("Sem escola vinculada");
+        const { error } = await supabase.from("student_documents").insert({
+          school_id: schoolId,
+          student_id: id!,
+          document_type: item.type,
+          status: novoStatus,
+        });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["student-documents", id] }),
+    onError: (err: any) => toast.error(err.message || "Erro ao atualizar status"),
+  });
+
+  // 🔐 gerar URL assinada (bucket privado)
   const getSignedUrl = async (filePath: string) => {
     const { data, error } = await supabase.storage
-      .from("student-assets")
+      .from("student-documents")
       .createSignedUrl(filePath, 60);
     if (error) {
-      console.error("Erro ao gerar signed URL:", error);
+      console.error("Erro signed URL:", error);
       return null;
     }
     return data?.signedUrl;
   };
 
-  // 👁 preview do documento
   const handlePreview = async (doc: any) => {
+    if (!doc?.file_path) return;
     const url = await getSignedUrl(doc.file_path);
     if (!url) return;
     setPreviewDoc({ ...doc, file_url: url });
   };
 
-  // ⬇ download do documento
   const handleDownload = async (doc: any) => {
+    if (!doc?.file_path) return;
     const url = await getSignedUrl(doc.file_path);
     if (!url) return;
     const link = document.createElement("a");
     link.href = url;
-    link.download = doc.name;
+    link.download = doc.file_name || "documento";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
+  const handleSelectFile = (docType: string) => {
+    pendingTypeRef.current = docType;
+    docInputRef.current?.click();
+  };
+
   const handleDocUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) uploadDocMutation.mutate(file);
+    const docType = pendingTypeRef.current;
+    if (file && docType) uploadDocMutation.mutate({ file, docType });
     if (docInputRef.current) docInputRef.current.value = "";
+    pendingTypeRef.current = null;
   };
 
   const handleGenerate = (docName: string) => {
@@ -702,69 +752,95 @@ const StudentsDetail = () => {
         <div className="space-y-6">
           <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="text-sm font-bold text-primary">Documentos do Aluno</h4>
-              <button
-                onClick={() => docInputRef.current?.click()}
-                disabled={uploadingDoc}
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-secondary text-secondary-foreground text-xs font-bold hover:bg-secondary/90 transition-colors disabled:opacity-50"
-              >
-                <i className={uploadingDoc ? "ri-loader-4-line animate-spin" : "ri-upload-2-line"} />{" "}
-                {uploadingDoc ? "Enviando..." : "Upload Documento"}
-              </button>
-              <input
-                ref={docInputRef}
-                type="file"
-                className="hidden"
-                onChange={handleDocUpload}
-                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-              />
+              <div>
+                <h4 className="text-sm font-bold text-primary">Documentos do Aluno</h4>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Documentos obrigatórios para a matrícula. Faça upload, baixe ou marque como entregue.
+                </p>
+              </div>
+              <div className="text-xs font-bold text-muted-foreground">
+                {docsChecklist.filter((d) => d.status === "aprovado").length}/{docsChecklist.length} entregues
+              </div>
             </div>
 
-            {documents.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground text-sm">Nenhum documento enviado.</div>
-            ) : (
-              <div className="space-y-2">
-                {documents.map((doc: any) => (
+            <input
+              ref={docInputRef}
+              type="file"
+              className="hidden"
+              onChange={handleDocUpload}
+              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+            />
+
+            <div className="space-y-2">
+              {docsChecklist.map((item) => {
+                const aprovado = item.status === "aprovado";
+                const hasFile = !!item.record?.file_path;
+                const isUploading = uploadingType === item.type;
+                return (
                   <div
-                    key={doc.id}
-                    className="flex items-center justify-between px-4 py-3 rounded-xl border border-border/40 hover:bg-accent/30 transition-colors"
+                    key={item.type}
+                    className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-border/40 hover:bg-accent/30 transition-colors"
                   >
-                    <div className="flex items-center gap-3">
-                      <i className="ri-file-line text-lg text-secondary" />
-                      <div>
-                        <div className="text-sm font-medium text-primary">{doc.name || "Documento"}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {doc.created_at ? new Date(doc.created_at).toLocaleDateString("pt-BR") : "—"}
-                          {doc.status && (
-                            <span className="ml-2 px-2 py-0.5 rounded-full bg-accent text-[10px] font-bold">
-                              {doc.status}
-                            </span>
-                          )}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <i
+                        className={`ri-file-line text-lg ${aprovado ? "text-secondary" : "text-muted-foreground"}`}
+                      />
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-primary truncate">{item.label}</div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {hasFile ? item.record.file_name : "Nenhum arquivo enviado"}
                         </div>
                       </div>
                     </div>
-                    {doc.file_url && (
-                     <div className="flex gap-2">
-  <button
-    onClick={() => handlePreview(doc)}
-    className="text-xs font-bold text-blue-600 hover:underline"
-  >
-    Ver
-  </button>
 
-  <button
-    onClick={() => handleDownload(doc)}
-    className="text-xs font-bold text-secondary hover:underline"
-  >
-    <i className="ri-download-line mr-1" />
-    Baixar
-  </button>
-</div>
-                    )}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => toggleDocStatus.mutate(item)}
+                        disabled={toggleDocStatus.isPending}
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition-colors disabled:opacity-60 ${
+                          aprovado
+                            ? "bg-secondary/15 text-secondary hover:bg-secondary/25"
+                            : "bg-destructive/10 text-destructive hover:bg-destructive/20"
+                        }`}
+                        title="Alternar status"
+                      >
+                        {aprovado ? "✔ Aprovado" : "● Pendente"}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleSelectFile(item.type)}
+                        disabled={isUploading}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[10px] border border-border text-xs font-bold text-primary hover:bg-accent transition-colors disabled:opacity-60"
+                      >
+                        <i className={isUploading ? "ri-loader-4-line animate-spin" : "ri-upload-2-line"} />
+                        {hasFile ? "Trocar" : "Upload"}
+                      </button>
+
+                      {hasFile && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handlePreview(item.record)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[10px] border border-border text-xs font-bold text-primary hover:bg-accent transition-colors"
+                          >
+                            <i className="ri-eye-line" /> Ver
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDownload(item.record)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[10px] bg-secondary text-secondary-foreground text-xs font-bold hover:bg-secondary/90 transition-colors"
+                          >
+                            <i className="ri-download-line" /> Baixar
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
+                );
+              })}
+            </div>
           </div>
 
           <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow">
