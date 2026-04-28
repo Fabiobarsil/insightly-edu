@@ -1543,6 +1543,13 @@ export type Database = {
             foreignKeyName: "secretaria_actions_request_id_fkey"
             columns: ["request_id"]
             isOneToOne: false
+            referencedRelation: "secretaria_demands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "secretaria_actions_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
             referencedRelation: "secretaria_requests"
             referencedColumns: ["id"]
           },
@@ -1579,30 +1586,36 @@ export type Database = {
       secretaria_requests: {
         Row: {
           created_at: string | null
+          document_type: string | null
           id: string
           priority: string | null
           school_id: string
           status: string | null
+          student_document_id: string | null
           student_id: string | null
           title: string
           type: string | null
         }
         Insert: {
           created_at?: string | null
+          document_type?: string | null
           id?: string
           priority?: string | null
           school_id: string
           status?: string | null
+          student_document_id?: string | null
           student_id?: string | null
           title: string
           type?: string | null
         }
         Update: {
           created_at?: string | null
+          document_type?: string | null
           id?: string
           priority?: string | null
           school_id?: string
           status?: string | null
+          student_document_id?: string | null
           student_id?: string | null
           title?: string
           type?: string | null
@@ -1613,6 +1626,13 @@ export type Database = {
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "secretaria_requests_student_document_id_fkey"
+            columns: ["student_document_id"]
+            isOneToOne: false
+            referencedRelation: "student_documents"
             referencedColumns: ["id"]
           },
           {
@@ -1884,7 +1904,7 @@ export type Database = {
           document_type: string
           id: string
           school_id: string
-          status: boolean | null
+          status: string | null
           student_id: string
           updated_at: string | null
         }
@@ -1893,7 +1913,7 @@ export type Database = {
           document_type: string
           id?: string
           school_id: string
-          status?: boolean | null
+          status?: string | null
           student_id: string
           updated_at?: string | null
         }
@@ -1902,7 +1922,7 @@ export type Database = {
           document_type?: string
           id?: string
           school_id?: string
-          status?: boolean | null
+          status?: string | null
           student_id?: string
           updated_at?: string | null
         }
@@ -2489,14 +2509,44 @@ export type Database = {
       secretaria_demands: {
         Row: {
           created_at: string | null
+          document_status: string | null
+          document_type: string | null
           id: string | null
-          priority: string | null
+          request_status: string | null
           school_id: string | null
-          status: string | null
-          student_name: string | null
-          type: string | null
+          student_id: string | null
+          title: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "secretaria_requests_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "secretaria_requests_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "secretaria_requests_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_student_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "secretaria_requests_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_students_active"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       v_boletim: {
         Row: {

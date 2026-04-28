@@ -44,7 +44,7 @@ export function useSecretariaDashboard(): SecretariaDashboardData {
           .from("student_documents")
           .select("id", { count: "exact", head: true })
           .eq("school_id", schoolId)
-          .eq("status", false),
+          .neq("status", "aprovado"),
 
         // 3. Fila operacional (aberto + em_andamento + pendente)
         supabase

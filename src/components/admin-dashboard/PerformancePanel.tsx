@@ -78,8 +78,8 @@ const PerformancePanel = () => {
       });
 
       const docs = docsRes.data ?? [];
-      const docOk = docs.filter((d) => d.status === true).length;
-      const docPending = docs.filter((d) => d.status === false || d.status === null).length;
+      const docOk = docs.filter((d) => d.status === "aprovado").length;
+      const docPending = docs.filter((d) => d.status !== "aprovado").length;
 
       // Timeline metrics
       const totalDone = (reqsRes.data ?? []).filter((r) => r.status === "concluido").length;
