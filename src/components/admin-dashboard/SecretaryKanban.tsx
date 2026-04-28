@@ -288,22 +288,22 @@ const KanbanCard = ({ item, nextStatus, onAdvance, onClickCard }: CardProps) => 
 
   // Distingue clique de drag: registra posição no pointer down e só dispara
   // o clique se o movimento total foi menor que 4px (mesma activation distance).
-  const downPos = useState<{ x: number; y: number } | null>(null);
-  const setDownPos = downPos[1];
-  const downRef = downPos[0];
+  const downRef = useRef<{ x: number; y: number } | null>(null);
 
   return (
     <article
       ref={setNodeRef}
       {...attributes}
       {...listeners}
-      onPointerDownCapture={(e) => setDownPos({ x: e.clientX, y: e.clientY })}
+      onPointerDownCapture={(e) => {
+        downRef.current = { x: e.clientX, y: e.clientY };
+      }}
       onClick={(e) => {
-        // ignora cliques nos botões de ação (já têm stopPropagation)
         if ((e.target as HTMLElement).closest("button")) return;
-        if (!downRef) return onClickCard();
-        const dx = Math.abs(e.clientX - downRef.x);
-        const dy = Math.abs(e.clientY - downRef.y);
+        const start = downRef.current;
+        if (!start) return onClickCard();
+        const dx = Math.abs(e.clientX - start.x);
+        const dy = Math.abs(e.clientY - start.y);
         if (dx < 4 && dy < 4) onClickCard();
       }}
       role="button"
