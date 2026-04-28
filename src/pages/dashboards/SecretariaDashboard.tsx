@@ -36,6 +36,7 @@ type ListModalType = "pendentes" | "resolvidos" | "atrasados" | null;
 const SecretariaDashboard = () => {
   const { schoolId } = useSchoolId();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [modalOpen, setModalOpen] = useState(false);
   const [classifyId, setClassifyId] = useState<string | null>(null);
   const [listModal, setListModal] = useState<ListModalType>(null);
