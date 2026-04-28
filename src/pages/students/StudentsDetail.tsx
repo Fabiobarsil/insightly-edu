@@ -80,9 +80,10 @@ const StudentsDetail = () => {
   const [customReason, setCustomReason] = useState("");
   const [guardianModalOpen, setGuardianModalOpen] = useState(false);
   const [editingGuardianId, setEditingGuardianId] = useState<string | null>(null);
-  const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [uploadingType, setUploadingType] = useState<string | null>(null);
   const [previewDoc, setPreviewDoc] = useState<any | null>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
+  const pendingTypeRef = useRef<string | null>(null);
 
   const { data: student, isLoading } = useQuery({
     queryKey: ["student", id],
