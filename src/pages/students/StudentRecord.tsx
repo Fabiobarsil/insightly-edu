@@ -486,7 +486,7 @@ ${interventionsHtml}
 
         {/* ═══ 2. TIMELINE ═══════════════════════════════════════════ */}
         {gradesByTerm.length >= 2 && (
-          <section className="bg-card rounded-2xl border border-border/40 p-6 shadow-sm">
+          <section className="bg-white border border-slate-200 rounded-lg p-6">
             <h2 className="text-base font-bold text-primary mb-4 flex items-center gap-2">
               <i className="ri-line-chart-line text-secondary" /> Linha do Tempo — Evolução Acadêmica
             </h2>
@@ -527,7 +527,7 @@ ${interventionsHtml}
         {/* ═══ 3. DIAGNÓSTICO + 4. RADAR ═════════════════════════════ */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Diagnóstico */}
-          <section className="bg-card rounded-2xl border border-border/40 p-6 shadow-sm">
+          <section className="bg-white border border-slate-200 rounded-lg p-6">
             <h2 className="text-base font-bold text-primary mb-4 flex items-center gap-2">
               <i className="ri-stethoscope-line text-destructive" /> Diagnóstico
             </h2>
@@ -581,7 +581,7 @@ ${interventionsHtml}
           </section>
 
           {/* Radar */}
-          <section className="bg-card rounded-2xl border border-border/40 p-6 shadow-sm">
+          <section className="bg-white border border-slate-200 rounded-lg p-6">
             <h2 className="text-base font-bold text-primary mb-4 flex items-center gap-2">
               <i className="ri-compass-3-line text-secondary" /> Radar de Competências
             </h2>
@@ -604,7 +604,7 @@ ${interventionsHtml}
         </div>
 
         {/* ═══ 5. INTERVENÇÕES ═════════════════════════════════════════ */}
-        <section className="bg-card rounded-2xl border border-border/40 p-6 shadow-sm">
+        <section className="bg-white border border-slate-200 rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-bold text-primary flex items-center gap-2">
               <i className="ri-shield-check-line text-secondary" /> Intervenções Pedagógicas
@@ -676,7 +676,7 @@ ${interventionsHtml}
         </section>
 
         {/* ═══ 6. AÇÕES RECOMENDADAS ═════════════════════════════════ */}
-        <section className="bg-card rounded-2xl border border-border/40 p-6 shadow-sm">
+        <section className="bg-white border border-slate-200 rounded-lg p-6">
           <h2 className="text-base font-bold text-primary mb-4 flex items-center gap-2">
             <i className="ri-flashlight-line text-warning" /> Ações Recomendadas
           </h2>
@@ -721,7 +721,7 @@ ${interventionsHtml}
         </section>
 
         {/* ═══ 7. COMPORTAMENTO ═══════════════════════════════════════ */}
-        <section className="bg-card rounded-2xl border border-border/40 p-6 shadow-sm">
+        <section className="bg-white border border-slate-200 rounded-lg p-6">
           <h2 className="text-base font-bold text-primary mb-4 flex items-center gap-2">
             <i className="ri-emotion-line text-secondary" /> Comportamento
           </h2>
