@@ -56,7 +56,7 @@ const ACTION_META: Record<string, { label: string; Icon: any; badge: string }> =
   alterou: {
     label: "Alterou status",
     Icon: ArrowRight,
-    badge: "bg-muted text-muted-foreground",
+    badge: "bg-LawnGreen text-blue-foreground",
   },
 };
 
