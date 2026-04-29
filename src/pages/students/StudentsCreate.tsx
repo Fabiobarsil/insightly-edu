@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AppLayout from "@/components/layout/AppLayout";
 import PageHeader from "@/components/shared/PageHeader";
@@ -33,6 +34,10 @@ const StudentsCreate = () => {
   const { schoolId } = useSchoolId();
   const { id: studentIdParam } = useParams<{ id?: string }>();
   const isEdit = !!studentIdParam;
+  const [searchParams] = useSearchParams();
+  const requestId = searchParams.get("request_id");
+  const returnTo = searchParams.get("returnTo");
+  const showReturnBanner = isEdit && returnTo === "attendance" && !!requestId;
 
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -519,16 +524,31 @@ const StudentsCreate = () => {
     }
   };
 
-  const pageTitle = isEdit ? "Editar Matrícula" : "Cadastrar Aluno";
+  const pageTitle = isEdit ? "Ficha do Aluno" : "Cadastrar Aluno";
   const pageDesc = isEdit ? "Atualize os dados do aluno e da matrícula" : "Preencha os dados do novo aluno";
   const breadcrumbs = isEdit
-    ? [{ label: "Secretaria", href: "/admin/dashboard" }, { label: "Alunos", href: "/admin/alunos" }, { label: "Editar Matrícula" }]
+    ? [{ label: "Secretaria", href: "/admin/dashboard" }, { label: "Alunos", href: "/admin/alunos" }, { label: "Ficha do Aluno" }]
     : [{ label: "Alunos", href: "/admin/alunos" }, { label: "Novo Aluno" }];
   const cancelHref = isEdit ? `/admin/alunos/${studentIdParam}` : "/admin/alunos";
 
   return (
     <AppLayout title={pageTitle} breadcrumbs={breadcrumbs}>
       <PageHeader title={pageTitle} description={pageDesc} />
+      {showReturnBanner && (
+        <div className="mb-4 flex items-center justify-between gap-3 bg-primary/5 border border-primary/30 rounded-xl px-4 py-3">
+          <p className="text-sm text-foreground">
+            Você abriu esta ficha a partir de um atendimento em andamento.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate(`/admin/dashboard?attend=${requestId}`)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar ao Atendimento
+          </button>
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Dados do Aluno */}
         <div className="bg-card border border-border/60 rounded-xl certus-shadow p-6">
