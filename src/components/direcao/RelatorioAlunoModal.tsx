@@ -30,25 +30,85 @@ interface Props {
 
 export default function RelatorioAlunoModal({ open, onOpenChange, schoolId }: Props) {
   const navigate = useNavigate();
+  const [year, setYear] = useState<string>("");
+  const [gradeName, setGradeName] = useState<string>(""); // série
+  const [shiftName, setShiftName] = useState<string>(""); // turno
+  const [classId, setClassId] = useState<string>("");
   const [studentId, setStudentId] = useState<string>("");
 
   useEffect(() => {
-    if (!open) setStudentId("");
+    if (!open) {
+      setYear(""); setGradeName(""); setShiftName(""); setClassId(""); setStudentId("");
+    }
   }, [open]);
 
-  const { data: students = [], isLoading: loadingStudents } = useQuery({
-    queryKey: ["rel-aluno-students", schoolId],
+  // Reset cascata
+  useEffect(() => { setGradeName(""); setShiftName(""); setClassId(""); setStudentId(""); }, [year]);
+  useEffect(() => { setShiftName(""); setClassId(""); setStudentId(""); }, [gradeName]);
+  useEffect(() => { setClassId(""); setStudentId(""); }, [shiftName]);
+  useEffect(() => { setStudentId(""); }, [classId]);
+
+  // Todas as turmas da escola
+  const { data: classes = [], isLoading: loadingClasses } = useQuery({
+    queryKey: ["rel-aluno-classes", schoolId],
     enabled: !!schoolId && open,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("students")
-        .select("id, full_name")
+        .from("classes")
+        .select("id, name, grade, shift, academic_year")
         .eq("school_id", schoolId!)
-        .order("full_name");
+        .order("name");
       if (error) throw error;
       return data ?? [];
     },
   });
+
+  const years = useMemo(
+    () => Array.from(new Set(classes.map((c: any) => c.academic_year).filter(Boolean))).sort((a: any, b: any) => b - a),
+    [classes]
+  );
+  const grades = useMemo(
+    () => Array.from(new Set(classes.filter((c: any) => !year || String(c.academic_year) === year).map((c: any) => c.grade).filter(Boolean))).sort(),
+    [classes, year]
+  );
+  const shifts = useMemo(
+    () => Array.from(new Set(classes
+      .filter((c: any) => (!year || String(c.academic_year) === year) && (!gradeName || c.grade === gradeName))
+      .map((c: any) => c.shift).filter(Boolean))).sort(),
+    [classes, year, gradeName]
+  );
+  const filteredClasses = useMemo(
+    () => classes.filter((c: any) =>
+      (!year || String(c.academic_year) === year) &&
+      (!gradeName || c.grade === gradeName) &&
+      (!shiftName || c.shift === shiftName)
+    ),
+    [classes, year, gradeName, shiftName]
+  );
+
+  // Alunos da turma selecionada (via student_enrollments ativo)
+  const { data: students = [], isLoading: loadingStudents } = useQuery({
+    queryKey: ["rel-aluno-students", schoolId, classId, year],
+    enabled: !!schoolId && !!classId,
+    queryFn: async () => {
+      const q = supabase
+        .from("student_enrollments")
+        .select("student_id, students:student_id(id, full_name)")
+        .eq("school_id", schoolId!)
+        .eq("class_id", classId)
+        .eq("status", "ativo");
+      const { data, error } = year ? await q.eq("academic_year", Number(year)) : await q;
+      if (error) throw error;
+      const list = (data ?? [])
+        .map((r: any) => r.students)
+        .filter(Boolean);
+      // dedup
+      const map = new Map<string, any>();
+      list.forEach((s: any) => map.set(s.id, s));
+      return Array.from(map.values()).sort((a: any, b: any) => (a.full_name || "").localeCompare(b.full_name || ""));
+    },
+  });
+
 
   const { data: enrollment } = useQuery({
     queryKey: ["rel-aluno-enrollment", schoolId, studentId],
