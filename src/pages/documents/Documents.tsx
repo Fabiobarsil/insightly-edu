@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AppLayout from "@/components/layout/AppLayout";
 import PageHeader from "@/components/shared/PageHeader";
@@ -15,9 +15,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Eye, FileDown, Pencil } from "lucide-react";
 import html2pdf from "html2pdf.js";
 
-type Tab = "documentos" | "oficiais" | "declaracoes";
+type Tab = "oficiais" | "declaracoes" | "documentos";
 
-const docChecklist = [
+interface ChecklistItem { nome: string; obrigatorio: boolean }
+
+const defaultChecklist: ChecklistItem[] = [
   { nome: "Certidão de Nascimento", obrigatorio: true },
   { nome: "Comprovante de Residência", obrigatorio: true },
   { nome: "Carteira de Vacinação", obrigatorio: true },
@@ -50,8 +52,51 @@ const defaultReasons = [
 const DECL_TEMPLATE = `Declaramos, para os devidos fins, que o(a) aluno(a) {{nome}}, encontra-se devidamente matriculado(a) nesta instituição de ensino, no ano letivo de {{ano}}, cursando a turma {{turma}}.\n\nMotivo: {{motivo}}.\n\nA presente declaração é expedida a pedido do interessado para os fins acima citados.`;
 
 const Documents = () => {
-  const [tab, setTab] = useState<Tab>("documentos");
+  const [tab, setTab] = useState<Tab>("oficiais");
   const { schoolId } = useSchoolId();
+
+  // Checklist editável (persistido por escola em localStorage)
+  const checklistKey = schoolId ? `docChecklist:${schoolId}` : "docChecklist:default";
+  const [docChecklist, setDocChecklist] = useState<ChecklistItem[]>(defaultChecklist);
+  const [newDocName, setNewDocName] = useState("");
+  const [newDocRequired, setNewDocRequired] = useState(true);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(checklistKey);
+      if (raw) setDocChecklist(JSON.parse(raw));
+      else setDocChecklist(defaultChecklist);
+    } catch {
+      setDocChecklist(defaultChecklist);
+    }
+  }, [checklistKey]);
+
+  const persistChecklist = (next: ChecklistItem[]) => {
+    setDocChecklist(next);
+    try { localStorage.setItem(checklistKey, JSON.stringify(next)); } catch {}
+  };
+
+  const handleAddChecklistItem = () => {
+    const nome = newDocName.trim();
+    if (!nome) return;
+    if (docChecklist.some((d) => d.nome.toLowerCase() === nome.toLowerCase())) {
+      toast.error("Documento já existe no checklist");
+      return;
+    }
+    persistChecklist([...docChecklist, { nome, obrigatorio: newDocRequired }]);
+    setNewDocName("");
+    setNewDocRequired(true);
+    toast.success("Documento adicionado ao checklist!");
+  };
+
+  const handleRemoveChecklistItem = (nome: string) => {
+    persistChecklist(docChecklist.filter((d) => d.nome !== nome));
+    toast.success("Documento removido");
+  };
+
+  const handleToggleRequired = (nome: string) => {
+    persistChecklist(docChecklist.map((d) => d.nome === nome ? { ...d, obrigatorio: !d.obrigatorio } : d));
+  };
 
   const [certModalOpen, setCertModalOpen] = useState(false);
   const [genericModalOpen, setGenericModalOpen] = useState(false);
