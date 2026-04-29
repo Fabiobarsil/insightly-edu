@@ -558,25 +558,13 @@ export default function DirecaoEscolar() {
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-3">
-            <Button
-              variant="default"
-              onClick={() => {
-                toast.info("Gerando relatório geral...");
-                navigate("/admin/indicadores");
-              }}
-            >
+            <Button variant="default" onClick={() => setOpenRelGeral(true)}>
               Gerar Relatório Geral
             </Button>
             <Button variant="outline" onClick={() => setOpenRelTurma(true)}>
               Relatório por Turma
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                toast.info("Selecione o aluno");
-                navigate("/admin/alunos");
-              }}
-            >
+            <Button variant="outline" onClick={() => setOpenRelAluno(true)}>
               Relatório por Aluno
             </Button>
           </CardContent>
