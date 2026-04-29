@@ -93,7 +93,7 @@ export default function RelatorioAlunoModal({ open, onOpenChange, schoolId }: Pr
     queryFn: async () => {
       const q = supabase
         .from("student_enrollments")
-        .select("student_id, students:student_id(id, full_name)")
+        .select("id, student_id, students!fk_enrollment_student(id, full_name)")
         .eq("school_id", schoolId!)
         .eq("class_id", classId)
         .eq("status", "ativo");
@@ -119,6 +119,8 @@ export default function RelatorioAlunoModal({ open, onOpenChange, schoolId }: Pr
         .select("id, class_id, academic_year, status")
         .eq("school_id", schoolId!)
         .eq("student_id", studentId)
+        .eq("class_id", classId)
+        .eq("academic_year", Number(year))
         .order("academic_year", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -128,14 +130,15 @@ export default function RelatorioAlunoModal({ open, onOpenChange, schoolId }: Pr
   });
 
   const { data: grades = [], isLoading: loadingGrades } = useQuery({
-    queryKey: ["rel-aluno-grades", schoolId, studentId],
-    enabled: !!schoolId && !!studentId,
+    queryKey: ["rel-aluno-grades", schoolId, studentId, enrollment?.id],
+    enabled: !!schoolId && !!studentId && !!enrollment?.id,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("grades")
         .select("id, grade_value, assignment_id, term")
         .eq("school_id", schoolId!)
-        .eq("student_id", studentId);
+        .eq("student_id", studentId)
+        .eq("enrollment_id", enrollment!.id);
       if (error) throw error;
       return data ?? [];
     },
