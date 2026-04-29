@@ -50,7 +50,7 @@ function parseAddress(addr: string) {
 
 const tabs = [
   { id: "escola", label: "Dados da Escola", icon: "ri-building-line" },
-  { id: "professores", label: "Cadastro de Professor", icon: "ri-user-star-line" },
+  { id: "professores", label: "Equipe Escolar", icon: "ri-team-line" },
   { id: "templates", label: "Mensagens e Templates", icon: "ri-chat-3-line" },
   { id: "documentos", label: "Cabeçalho Oficial", icon: "ri-draft-line" },
   { id: "assinaturas", label: "Assinaturas", icon: "ri-quill-pen-line" },
