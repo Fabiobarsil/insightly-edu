@@ -67,7 +67,7 @@ export default function RelatorioAlunoModal({ open, onOpenChange, schoolId }: Pr
     () => Array.from(new Set(classes.map((c: any) => c.academic_year).filter(Boolean))).sort((a: any, b: any) => b - a),
     [classes]
   );
-  const grades = useMemo(
+  const gradeOptions = useMemo(
     () => Array.from(new Set(classes.filter((c: any) => !year || String(c.academic_year) === year).map((c: any) => c.grade).filter(Boolean))).sort(),
     [classes, year]
   );
