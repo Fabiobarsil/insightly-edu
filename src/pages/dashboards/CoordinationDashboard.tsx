@@ -496,43 +496,43 @@ const CoordinationDashboard = () => {
 
         {/* 🧠 2. CAUSAS DE RISCO — Compacto */}
         <div className="grid grid-cols-3 gap-3">
-          <div className="rounded-lg border border-border/50 bg-card p-3">
+          <div className="rounded-lg border border-slate-200 bg-white border-l-4 border-l-red-500 p-3">
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-7 h-7 rounded-md bg-destructive/10 flex items-center justify-center">
-                <XCircle className="h-3.5 w-3.5 text-destructive" />
+              <div className="w-7 h-7 rounded-md bg-red-100 flex items-center justify-center">
+                <XCircle className="h-3.5 w-3.5 text-red-600" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-foreground">Frequência</p>
-                <p className="text-[10px] text-muted-foreground">{onlyFreq} alunos</p>
+                <p className="text-xs font-semibold text-slate-900">Frequência</p>
+                <p className="text-[10px] text-slate-500">{onlyFreq} alunos</p>
               </div>
             </div>
-            <p className="text-[10px] text-muted-foreground">{Math.round((onlyFreq / riskTotal) * 100)}% do risco</p>
+            <p className="text-[10px] text-slate-500">{Math.round((onlyFreq / riskTotal) * 100)}% do risco</p>
           </div>
 
-          <div className="rounded-lg border border-border/50 bg-card p-3">
+          <div className="rounded-lg border border-slate-200 bg-white border-l-4 border-l-yellow-500 p-3">
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-7 h-7 rounded-md bg-warning/10 flex items-center justify-center">
-                <TrendingDown className="h-3.5 w-3.5 text-warning-foreground" />
+              <div className="w-7 h-7 rounded-md bg-yellow-100 flex items-center justify-center">
+                <TrendingDown className="h-3.5 w-3.5 text-yellow-700" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-foreground">Notas</p>
-                <p className="text-[10px] text-muted-foreground">{onlyGrade} alunos</p>
+                <p className="text-xs font-semibold text-slate-900">Notas</p>
+                <p className="text-[10px] text-slate-500">{onlyGrade} alunos</p>
               </div>
             </div>
-            <p className="text-[10px] text-muted-foreground">{Math.round((onlyGrade / riskTotal) * 100)}% do risco</p>
+            <p className="text-[10px] text-slate-500">{Math.round((onlyGrade / riskTotal) * 100)}% do risco</p>
           </div>
 
-          <div className="rounded-lg border border-destructive/20 bg-destructive/[0.02] p-3">
+          <div className="rounded-lg border border-red-300 bg-red-100 border-l-4 border-l-red-600 p-3">
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-7 h-7 rounded-md bg-destructive/10 flex items-center justify-center">
-                <Flame className="h-3.5 w-3.5 text-destructive" />
+              <div className="w-7 h-7 rounded-md bg-red-200 flex items-center justify-center">
+                <Flame className="h-3.5 w-3.5 text-red-700" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-destructive">Dupla Causa</p>
-                <p className="text-[10px] text-muted-foreground">{bothCount} alunos</p>
+                <p className="text-xs font-semibold text-red-800">Dupla Causa</p>
+                <p className="text-[10px] text-red-700">{bothCount} alunos</p>
               </div>
             </div>
-            <p className="text-[10px] text-muted-foreground">{Math.round((bothCount / riskTotal) * 100)}% do risco</p>
+            <p className="text-[10px] text-red-700">{Math.round((bothCount / riskTotal) * 100)}% do risco</p>
           </div>
         </div>
 
