@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import RelatorioTurmaModal from "@/components/direcao/RelatorioTurmaModal";
+import RelatorioGeralModal from "@/components/direcao/RelatorioGeralModal";
+import RelatorioAlunoModal from "@/components/direcao/RelatorioAlunoModal";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -55,6 +57,8 @@ export default function DirecaoEscolar() {
   const navigate = useNavigate();
   const { schoolId, loading: loadingSchool } = useSchoolId();
   const [openRelTurma, setOpenRelTurma] = useState(false);
+  const [openRelGeral, setOpenRelGeral] = useState(false);
+  const [openRelAluno, setOpenRelAluno] = useState(false);
 
   // ---------- DEMANDAS DA SECRETARIA (mantido p/ Lista de Ação) ----------
   const { data: requests = [], isLoading: loadingReq } = useQuery({
@@ -554,25 +558,13 @@ export default function DirecaoEscolar() {
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-3">
-            <Button
-              variant="default"
-              onClick={() => {
-                toast.info("Gerando relatório geral...");
-                navigate("/admin/indicadores");
-              }}
-            >
+            <Button variant="default" onClick={() => setOpenRelGeral(true)}>
               Gerar Relatório Geral
             </Button>
             <Button variant="outline" onClick={() => setOpenRelTurma(true)}>
               Relatório por Turma
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                toast.info("Selecione o aluno");
-                navigate("/admin/alunos");
-              }}
-            >
+            <Button variant="outline" onClick={() => setOpenRelAluno(true)}>
               Relatório por Aluno
             </Button>
           </CardContent>
@@ -659,6 +651,16 @@ export default function DirecaoEscolar() {
       <RelatorioTurmaModal
         open={openRelTurma}
         onOpenChange={setOpenRelTurma}
+        schoolId={schoolId}
+      />
+      <RelatorioGeralModal
+        open={openRelGeral}
+        onOpenChange={setOpenRelGeral}
+        schoolId={schoolId}
+      />
+      <RelatorioAlunoModal
+        open={openRelAluno}
+        onOpenChange={setOpenRelAluno}
         schoolId={schoolId}
       />
     </RoleLayout>
