@@ -318,7 +318,7 @@ const StudentRecord = () => {
       <div className="space-y-8 max-w-5xl mx-auto">
 
         {/* ═══ 1. HERO ═══════════════════════════════════════════════ */}
-        <section className={cn("rounded-2xl border p-6 md:p-8 relative overflow-hidden", situation.bg, "border-border/40")}>
+        <section className={cn("rounded-lg p-6 md:p-8 relative overflow-hidden", situation.bg)}>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
             {/* Photo — destaque circular */}
             {student.photo_url ? (
