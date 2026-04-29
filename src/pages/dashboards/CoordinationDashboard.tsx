@@ -568,19 +568,19 @@ const CoordinationDashboard = () => {
                     (i) => i.student_id === s.id && (i.status === "aberto" || i.status === "em_andamento")
                   );
                   return (
-                    <div key={s.id} className={`rounded-lg border p-4 space-y-3 transition-colors ${
+                    <div key={s.id} className={`rounded-lg border p-4 space-y-3 ${
                       s.severity === "critica"
-                        ? "border-destructive/30 bg-destructive/[0.03]"
+                        ? "border-red-300 bg-red-50"
                         : s.severity === "alta"
-                          ? "border-warning/30 bg-warning/[0.02]"
-                          : "border-border/50"
+                          ? "border-amber-300 bg-amber-50"
+                          : "border-slate-200 bg-white"
                     }`}>
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
-                            s.severity === "critica" ? "bg-destructive/15 text-destructive"
-                              : s.severity === "alta" ? "bg-warning/15 text-warning-foreground"
-                                : "bg-muted/50 text-muted-foreground"
+                            s.severity === "critica" ? "bg-red-200 text-red-800"
+                              : s.severity === "alta" ? "bg-amber-200 text-amber-800"
+                                : "bg-slate-100 text-slate-600"
                           }`}>
                             {s.full_name.charAt(0)}
                           </div>
