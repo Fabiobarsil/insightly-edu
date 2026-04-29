@@ -193,7 +193,7 @@ const TeacherRegistrationTab = ({ schoolId }: Props) => {
       <div className="bg-card border border-border/60 rounded-xl certus-shadow p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-bold text-primary flex items-center gap-2">
-            <i className={currentTab.icon} /> {currentTab.label} Cadastrados
+            <i className={cn(currentTab.icon, "text-base", currentTab.color)} /> {currentTab.label} Cadastrados
           </h3>
           <button
             onClick={scrollToForm}
