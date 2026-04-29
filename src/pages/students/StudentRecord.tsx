@@ -594,9 +594,9 @@ ${interventionsHtml}
               </RadarChart>
             </ResponsiveContainer>
             {/* Radar interpretation */}
-            <div className="mt-3 p-3 rounded-xl bg-muted/5 border border-border/20">
-              <p className="text-xs text-muted-foreground leading-relaxed italic">
-                <i className="ri-focus-3-line mr-1 text-secondary" />
+            <div className="mt-3 p-3 rounded-lg bg-white border border-slate-200">
+              <p className="text-xs text-slate-600 leading-relaxed italic">
+                <i className="ri-focus-3-line mr-1 text-emerald-600" />
                 {radarInsight}
               </p>
             </div>
