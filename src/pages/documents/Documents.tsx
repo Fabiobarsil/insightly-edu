@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AppLayout from "@/components/layout/AppLayout";
 import PageHeader from "@/components/shared/PageHeader";
@@ -15,9 +15,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Eye, FileDown, Pencil } from "lucide-react";
 import html2pdf from "html2pdf.js";
 
-type Tab = "documentos" | "oficiais" | "declaracoes";
+type Tab = "oficiais" | "declaracoes" | "documentos";
 
-const docChecklist = [
+interface ChecklistItem { nome: string; obrigatorio: boolean }
+
+const defaultChecklist: ChecklistItem[] = [
   { nome: "Certidão de Nascimento", obrigatorio: true },
   { nome: "Comprovante de Residência", obrigatorio: true },
   { nome: "Carteira de Vacinação", obrigatorio: true },
@@ -50,8 +52,51 @@ const defaultReasons = [
 const DECL_TEMPLATE = `Declaramos, para os devidos fins, que o(a) aluno(a) {{nome}}, encontra-se devidamente matriculado(a) nesta instituição de ensino, no ano letivo de {{ano}}, cursando a turma {{turma}}.\n\nMotivo: {{motivo}}.\n\nA presente declaração é expedida a pedido do interessado para os fins acima citados.`;
 
 const Documents = () => {
-  const [tab, setTab] = useState<Tab>("documentos");
+  const [tab, setTab] = useState<Tab>("oficiais");
   const { schoolId } = useSchoolId();
+
+  // Checklist editável (persistido por escola em localStorage)
+  const checklistKey = schoolId ? `docChecklist:${schoolId}` : "docChecklist:default";
+  const [docChecklist, setDocChecklist] = useState<ChecklistItem[]>(defaultChecklist);
+  const [newDocName, setNewDocName] = useState("");
+  const [newDocRequired, setNewDocRequired] = useState(true);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(checklistKey);
+      if (raw) setDocChecklist(JSON.parse(raw));
+      else setDocChecklist(defaultChecklist);
+    } catch {
+      setDocChecklist(defaultChecklist);
+    }
+  }, [checklistKey]);
+
+  const persistChecklist = (next: ChecklistItem[]) => {
+    setDocChecklist(next);
+    try { localStorage.setItem(checklistKey, JSON.stringify(next)); } catch {}
+  };
+
+  const handleAddChecklistItem = () => {
+    const nome = newDocName.trim();
+    if (!nome) return;
+    if (docChecklist.some((d) => d.nome.toLowerCase() === nome.toLowerCase())) {
+      toast.error("Documento já existe no checklist");
+      return;
+    }
+    persistChecklist([...docChecklist, { nome, obrigatorio: newDocRequired }]);
+    setNewDocName("");
+    setNewDocRequired(true);
+    toast.success("Documento adicionado ao checklist!");
+  };
+
+  const handleRemoveChecklistItem = (nome: string) => {
+    persistChecklist(docChecklist.filter((d) => d.nome !== nome));
+    toast.success("Documento removido");
+  };
+
+  const handleToggleRequired = (nome: string) => {
+    persistChecklist(docChecklist.map((d) => d.nome === nome ? { ...d, obrigatorio: !d.obrigatorio } : d));
+  };
 
   const [certModalOpen, setCertModalOpen] = useState(false);
   const [genericModalOpen, setGenericModalOpen] = useState(false);
@@ -156,9 +201,9 @@ const Documents = () => {
   const handleReasonChange = (v: string) => { setDeclReason(v); setShowDeclPreview(false); };
 
   const tabs: { id: Tab; label: string; icon: string }[] = [
-    { id: "documentos", label: "Checklist de Docs", icon: "ri-file-list-3-line" },
     { id: "oficiais", label: "Docs Oficiais", icon: "ri-file-text-line" },
     { id: "declaracoes", label: "Declarações", icon: "ri-draft-line" },
+    { id: "documentos", label: "Checklist de Docs", icon: "ri-file-list-3-line" },
   ];
 
   return (
@@ -184,19 +229,70 @@ const Documents = () => {
 
       {/* Tab: Checklist */}
       {tab === "documentos" && (
-        <div className="bg-card border border-border/60 rounded-xl certus-shadow">
-          <div className="px-5 py-3 border-b border-border/40">
-            <h4 className="text-sm font-bold text-primary">Documentos necessários para matrícula</h4>
-          </div>
-          {docChecklist.map((d, i) => (
-            <div key={i} className="flex items-center justify-between px-5 py-4 border-b border-border/20 last:border-0 hover:bg-accent/30 transition-colors">
-              <div className="flex items-center gap-3">
-                <i className="ri-file-text-line text-lg text-muted-foreground" />
-                <span className="text-sm font-bold text-primary">{d.nome}</span>
-              </div>
-              <StatusBadge status={d.obrigatorio ? "warning" : "info"} label={d.obrigatorio ? "Obrigatório" : "Opcional"} />
+        <div className="space-y-4">
+          {/* Form para adicionar novo documento */}
+          <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow">
+            <h4 className="text-sm font-bold text-primary mb-4">Adicionar Documento ao Checklist</h4>
+            <div className="flex flex-col md:flex-row gap-3">
+              <input
+                value={newDocName}
+                onChange={(e) => setNewDocName(e.target.value)}
+                placeholder="Nome do documento (ex: RG do Responsável)"
+                onKeyDown={(e) => e.key === "Enter" && handleAddChecklistItem()}
+                className="flex-1 border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+              />
+              <label className="flex items-center gap-2 px-3 text-xs font-bold text-muted-foreground cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={newDocRequired}
+                  onChange={(e) => setNewDocRequired(e.target.checked)}
+                  className="h-4 w-4 accent-[hsl(var(--secondary))]"
+                />
+                Obrigatório
+              </label>
+              <button
+                onClick={handleAddChecklistItem}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[12px] bg-secondary text-secondary-foreground text-sm font-bold hover:bg-secondary/90 transition-colors"
+              >
+                <i className="ri-add-line" /> Adicionar
+              </button>
             </div>
-          ))}
+          </div>
+
+          {/* Lista do checklist */}
+          <div className="bg-card border border-border/60 rounded-xl certus-shadow">
+            <div className="px-5 py-3 border-b border-border/40">
+              <h4 className="text-sm font-bold text-primary">Documentos necessários para matrícula</h4>
+            </div>
+            {docChecklist.length === 0 && (
+              <div className="px-5 py-8 text-center text-sm text-muted-foreground">
+                Nenhum documento cadastrado. Adicione acima.
+              </div>
+            )}
+            {docChecklist.map((d, i) => (
+              <div key={i} className="flex items-center justify-between px-5 py-4 border-b border-border/20 last:border-0 hover:bg-accent/30 transition-colors">
+                <div className="flex items-center gap-3">
+                  <i className="ri-file-text-line text-lg text-muted-foreground" />
+                  <span className="text-sm font-bold text-primary">{d.nome}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => handleToggleRequired(d.nome)}
+                    title="Alternar obrigatório/opcional"
+                    className="cursor-pointer"
+                  >
+                    <StatusBadge status={d.obrigatorio ? "warning" : "info"} label={d.obrigatorio ? "Obrigatório" : "Opcional"} />
+                  </button>
+                  <button
+                    onClick={() => handleRemoveChecklistItem(d.nome)}
+                    className="text-xs text-destructive hover:underline font-bold"
+                  >
+                    Remover
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
