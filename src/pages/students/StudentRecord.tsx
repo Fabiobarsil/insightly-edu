@@ -62,9 +62,9 @@ const statusColor: Record<string, string> = {
 };
 
 function getSituation(media: number, freq: number) {
-  if (media < 5 || freq < 60) return { label: "Em risco crítico", color: "text-destructive", bg: "bg-destructive/10", icon: "ri-alert-fill", level: "critico" };
-  if (media < 6 || freq < 75) return { label: "Em recuperação", color: "text-warning-foreground", bg: "bg-warning/10", icon: "ri-error-warning-line", level: "atencao" };
-  return { label: "Saudável", color: "text-secondary", bg: "bg-secondary/10", icon: "ri-heart-pulse-line", level: "saudavel" };
+  if (media < 5 || freq < 60) return { label: "Em risco crítico", color: "text-red-700 font-semibold", bg: "bg-red-100 border border-red-300", badge: "bg-red-200 text-red-800 font-semibold", icon: "ri-alert-fill", level: "critico" };
+  if (media < 6 || freq < 75) return { label: "Em recuperação", color: "text-amber-800 font-semibold", bg: "bg-amber-100 border border-amber-300", badge: "bg-amber-200 text-amber-800 font-semibold", icon: "ri-error-warning-line", level: "atencao" };
+  return { label: "Saudável", color: "text-emerald-800 font-semibold", bg: "bg-emerald-100 border border-emerald-300", badge: "bg-emerald-200 text-emerald-800 font-semibold", icon: "ri-heart-pulse-line", level: "saudavel" };
 }
 
 function generateHeroNarrative(name: string, media: number, freq: number, hasGrades: boolean, hasAttendance: boolean): string {
