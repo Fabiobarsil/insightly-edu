@@ -48,13 +48,18 @@ const BEHAVIOR_OPTIONS = [
 // ─── Helpers ─────────────────────────────────────────────────────────
 const severityLabel: Record<string, string> = { alta: "Alto", media: "Médio", baixa: "Baixo" };
 const severityColor: Record<string, string> = {
-  alta: "bg-destructive/15 text-destructive",
-  media: "bg-warning/15 text-warning-foreground",
-  baixa: "bg-secondary/15 text-secondary",
+  alta: "bg-red-100 text-red-800 border border-red-300",
+  media: "bg-amber-100 text-amber-800 border border-amber-300",
+  baixa: "bg-emerald-100 text-emerald-800 border border-emerald-300",
 };
 const impactLabel: Record<string, string> = { melhorou: "Melhorou", piorou: "Piorou", sem_mudanca: "Sem mudança" };
 const impactIcon: Record<string, string> = { melhorou: "ri-arrow-up-line", piorou: "ri-arrow-down-line", sem_mudanca: "ri-subtract-line" };
 const statusLabel: Record<string, string> = { aberto: "Aberto", em_andamento: "Em andamento", resolvido: "Resolvido" };
+const statusColor: Record<string, string> = {
+  aberto: "bg-amber-100 text-amber-800 border border-amber-300",
+  em_andamento: "bg-amber-100 text-amber-800 border border-amber-300",
+  resolvido: "bg-emerald-100 text-emerald-800 border border-emerald-300",
+};
 
 function getSituation(media: number, freq: number) {
   if (media < 5 || freq < 60) return { label: "Em risco crítico", color: "text-destructive", bg: "bg-destructive/10", icon: "ri-alert-fill", level: "critico" };
