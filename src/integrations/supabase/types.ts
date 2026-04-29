@@ -1510,6 +1510,7 @@ export type Database = {
           created_at: string | null
           from_status: string | null
           id: string
+          notes: string | null
           performed_by: string | null
           request_id: string | null
           school_id: string
@@ -1521,6 +1522,7 @@ export type Database = {
           created_at?: string | null
           from_status?: string | null
           id?: string
+          notes?: string | null
           performed_by?: string | null
           request_id?: string | null
           school_id: string
@@ -1532,6 +1534,7 @@ export type Database = {
           created_at?: string | null
           from_status?: string | null
           id?: string
+          notes?: string | null
           performed_by?: string | null
           request_id?: string | null
           school_id?: string

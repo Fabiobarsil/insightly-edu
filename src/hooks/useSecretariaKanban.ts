@@ -1,38 +1,77 @@
 import { useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { differenceInCalendarDays, isSameDay } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolContext } from "./useSchoolContext";
 import { updateRequestStatus } from "@/lib/secretariaActions";
 
 export type KanbanStatus = "aberto" | "em_andamento" | "concluido";
+export type ComputedPriority = "alta" | "media" | "baixa";
 
 export interface KanbanRequest {
   id: string;
   school_id: string;
   student_id: string | null;
   student_name: string | null;
+  student_class: string | null;
+  student_grade: string | null;
   title: string;
   type: string | null;
   status: KanbanStatus;
-  priority: "alta" | "media" | "baixa" | string;
+  priority: ComputedPriority;
   created_at: string;
   student_document_id: string | null;
   document_type: string | null;
+  days_open: number;
 }
 
 const PRIORITY_ORDER: Record<string, number> = {
   alta: 3,
-  urgente: 4,
   media: 2,
   baixa: 1,
 };
 
 /**
+ * Documentos considerados obrigatórios para fins de priorização automática.
+ * Se a demanda for de um destes documentos pendentes, ela é marcada como ALTA.
+ */
+const MANDATORY_DOC_TYPES = new Set([
+  "certidao_nascimento",
+  "rg",
+  "cpf",
+  "comprovante_residencia",
+  "historico_escolar",
+  "foto_3x4",
+]);
+
+/**
+ * Calcula a prioridade da demanda automaticamente, conforme regra do produto:
+ * - alta:  aberta há > 3 dias OU documento obrigatório pendente
+ * - media: aberta há 1 a 3 dias
+ * - baixa: aberta hoje
+ */
+function computePriority(
+  createdAt: string,
+  documentType: string | null,
+  type: string | null
+): ComputedPriority {
+  const days = Math.max(0, differenceInCalendarDays(new Date(), new Date(createdAt)));
+  const isMandatoryDoc =
+    !!documentType &&
+    MANDATORY_DOC_TYPES.has(documentType) &&
+    (type ?? "").toLowerCase().includes("document");
+  if (days > 3 || isMandatoryDoc) return "alta";
+  if (days >= 1) return "media";
+  return "baixa";
+}
+
+/**
  * Hook do Kanban da Secretaria Digital.
  * - Lê de `secretaria_requests` filtrando por school_id.
- * - Faz join com students(full_name) para exibir o nome do aluno.
- * - Ordena por prioridade (desc) e created_at (asc).
- * - Atualiza status com optimistic update + rollback em caso de erro.
+ * - Enriquece com nome do aluno, turma/série e tipo de documento.
+ * - Calcula prioridade automaticamente (regra única do produto).
+ * - Mantém na coluna "Concluído" apenas itens concluídos no dia atual; os
+ *   demais saem da fila e ficam disponíveis no histórico.
  */
 export function useSecretariaKanban() {
   const { schoolId, loading: schoolLoading } = useSchoolContext();
@@ -59,18 +98,33 @@ export function useSecretariaKanban() {
 
       const rawRows = (data || []) as any[];
 
-      // Busca nomes de alunos em uma única query (evita dependência de FK declarada)
+      // Busca nome + turma do aluno em uma única query
       const studentIds = Array.from(
         new Set(rawRows.map((r) => r.student_id).filter(Boolean))
       ) as string[];
-      let nameMap: Record<string, string> = {};
+      const studentMap: Record<string, { full_name: string; class_id: string | null }> = {};
       if (studentIds.length > 0) {
         const { data: students } = await supabase
           .from("students")
-          .select("id, full_name")
+          .select("id, full_name, class_id")
           .in("id", studentIds);
         (students || []).forEach((s: any) => {
-          nameMap[s.id] = s.full_name;
+          studentMap[s.id] = { full_name: s.full_name, class_id: s.class_id };
+        });
+      }
+
+      // Busca nome da turma + série
+      const classIds = Array.from(
+        new Set(Object.values(studentMap).map((s) => s.class_id).filter(Boolean))
+      ) as string[];
+      const classMap: Record<string, { name: string; grade: string | null }> = {};
+      if (classIds.length > 0) {
+        const { data: classes } = await supabase
+          .from("classes")
+          .select("id, name, grade")
+          .in("id", classIds);
+        (classes || []).forEach((c: any) => {
+          classMap[c.id] = { name: c.name, grade: c.grade ?? null };
         });
       }
 
@@ -89,34 +143,84 @@ export function useSecretariaKanban() {
         });
       }
 
-      const rows: KanbanRequest[] = rawRows.map((r) => ({
-        id: r.id,
-        school_id: r.school_id,
-        student_id: r.student_id,
-        student_name: r.student_id ? nameMap[r.student_id] ?? null : null,
-        title: r.title,
-        type: r.type,
-        status: (r.status ?? "aberto") as KanbanStatus,
-        priority: r.priority ?? "media",
-        created_at: r.created_at,
-        student_document_id: r.student_document_id ?? null,
-        document_type: r.student_document_id ? docTypeMap[r.student_document_id] ?? null : null,
-      }));
+      const rows: KanbanRequest[] = rawRows.map((r) => {
+        const docType = r.student_document_id ? docTypeMap[r.student_document_id] ?? null : null;
+        const student = r.student_id ? studentMap[r.student_id] : null;
+        const klass = student?.class_id ? classMap[student.class_id] : null;
+        const days = Math.max(0, differenceInCalendarDays(new Date(), new Date(r.created_at)));
+        return {
+          id: r.id,
+          school_id: r.school_id,
+          student_id: r.student_id,
+          student_name: student?.full_name ?? null,
+          student_class: klass?.name ?? null,
+          student_grade: klass?.grade ?? null,
+          title: r.title,
+          type: r.type,
+          status: (r.status ?? "aberto") as KanbanStatus,
+          priority: computePriority(r.created_at, docType, r.type),
+          created_at: r.created_at,
+          student_document_id: r.student_document_id ?? null,
+          document_type: docType,
+          days_open: days,
+        };
+      });
 
-      // priority desc, created_at asc
-      rows.sort((a, b) => {
+      // Concluídos antigos (não hoje) saem da fila → ficam só no histórico
+      const today = new Date();
+      const filtered = rows.filter((r) => {
+        if (r.status !== "concluido") return true;
+        return isSameDay(new Date(r.created_at), today) || isSameDay(new Date(r.created_at), today)
+          ? true
+          : false;
+      });
+
+      // Para concluídos: usar created_at como proxy de "concluído hoje" não é ideal.
+      // Como `secretaria_requests` não tem updated_at, usamos a tabela de ações para
+      // descobrir quando foi concluído. Buscamos a última ação 'concluiu' por request.
+      const concluidoIds = rows.filter((r) => r.status === "concluido").map((r) => r.id);
+      const concludedTodaySet = new Set<string>();
+      if (concluidoIds.length > 0) {
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        const { data: acts } = await supabase
+          .from("secretaria_actions")
+          .select("request_id, created_at, to_status")
+          .in("request_id", concluidoIds)
+          .eq("to_status", "concluido")
+          .gte("created_at", startOfToday.toISOString());
+        (acts || []).forEach((a: any) => {
+          if (a.request_id) concludedTodaySet.add(a.request_id);
+        });
+      }
+
+      const finalRows = rows.filter((r) => {
+        if (r.status !== "concluido") return true;
+        return concludedTodaySet.has(r.id);
+      });
+
+      // Ordenação: prioridade desc, depois mais antigos primeiro
+      finalRows.sort((a, b) => {
         const pa = PRIORITY_ORDER[a.priority] ?? 0;
         const pb = PRIORITY_ORDER[b.priority] ?? 0;
         if (pb !== pa) return pb - pa;
         return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       });
 
-      return rows;
+      return finalRows;
     },
   });
 
   const mutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: KanbanStatus }) => {
+    mutationFn: async ({
+      id,
+      status,
+      notes,
+    }: {
+      id: string;
+      status: KanbanStatus;
+      notes?: string | null;
+    }) => {
       if (!schoolId) throw new Error("schoolId ausente");
       const current = (queryClient.getQueryData<KanbanRequest[]>(queryKey) || requests).find(
         (r) => r.id === id
@@ -129,7 +233,8 @@ export function useSecretariaKanban() {
           student_id: current.student_id,
           status: current.status,
         },
-        status
+        status,
+        notes ?? null
       );
     },
     onMutate: async ({ id, status }) => {
@@ -153,7 +258,8 @@ export function useSecretariaKanban() {
   });
 
   const updateStatus = useCallback(
-    (id: string, status: KanbanStatus) => mutation.mutateAsync({ id, status }),
+    (id: string, status: KanbanStatus, notes?: string | null) =>
+      mutation.mutateAsync({ id, status, notes }),
     [mutation]
   );
 

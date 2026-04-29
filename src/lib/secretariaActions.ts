@@ -36,7 +36,8 @@ export const mapActionType = (
  */
 export async function updateRequestStatus(
   request: SecretariaRequestRef,
-  newStatus: RequestStatus
+  newStatus: RequestStatus,
+  notes: string | null = null
 ): Promise<void> {
   const fromStatus = request.status;
 
@@ -49,7 +50,7 @@ export async function updateRequestStatus(
 
   // PASSO 2: registro da ação (best-effort)
   const actionType = mapActionType(fromStatus, newStatus);
-  if (!actionType) return;
+  if (!actionType && !notes) return;
 
   const { data: auth } = await supabase.auth.getUser();
   const performedBy = auth?.user?.id ?? null;
@@ -60,10 +61,11 @@ export async function updateRequestStatus(
       school_id: request.school_id,
       request_id: request.id,
       student_id: request.student_id,
-      action_type: actionType,
+      action_type: actionType ?? "observacao",
       from_status: fromStatus,
       to_status: newStatus,
       performed_by: performedBy,
+      notes: notes && notes.trim() ? notes.trim() : null,
     });
 
   if (actionError) {

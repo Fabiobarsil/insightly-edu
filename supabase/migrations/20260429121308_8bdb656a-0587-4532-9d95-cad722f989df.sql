@@ -1,0 +1,1 @@
+ALTER TABLE public.secretaria_actions ADD COLUMN IF NOT EXISTS notes text;
