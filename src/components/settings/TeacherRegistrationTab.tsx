@@ -18,12 +18,12 @@ interface Props {
 }
 
 const PROF_TABS = [
-  { id: "diretor", label: "Direção", icon: "ri-briefcase-line" },
-  { id: "coordenador", label: "Coordenação", icon: "ri-compass-3-line" },
-  { id: "secretaria", label: "Secretaria", icon: "ri-archive-line" },
-  { id: "professor", label: "Professores", icon: "ri-user-star-line" },
-  { id: "psicologo", label: "Psicólogos", icon: "ri-mental-health-line" },
-  { id: "auxiliar", label: "Auxiliares", icon: "ri-team-line" },
+  { id: "diretor", label: "Direção", icon: "ri-shield-star-fill", color: "text-amber-500" },
+  { id: "coordenador", label: "Coordenação", icon: "ri-compass-3-fill", color: "text-blue-500" },
+  { id: "secretaria", label: "Secretaria", icon: "ri-mail-send-fill", color: "text-violet-500" },
+  { id: "professor", label: "Professores", icon: "ri-graduation-cap-fill", color: "text-emerald-500" },
+  { id: "psicologo", label: "Psicólogos", icon: "ri-mental-health-fill", color: "text-pink-500" },
+  { id: "auxiliar", label: "Auxiliares", icon: "ri-hand-heart-fill", color: "text-orange-500" },
 ] as const;
 
 type ProfType = typeof PROF_TABS[number]["id"];
