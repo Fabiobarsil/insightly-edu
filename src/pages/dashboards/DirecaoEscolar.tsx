@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, ClipboardList, Clock, CheckCircle2, ArrowRight } from "lucide-react";
 import { differenceInDays, format } from "date-fns";
+import RoleLayout from "@/components/layout/RoleLayout";
 
 const STATUS_LABEL: Record<string, { label: string; class: string }> = {
   aberto: { label: "Pendente", class: "bg-blue-100 text-blue-700" },
