@@ -207,23 +207,71 @@ export default function RelatorioAlunoModal({ open, onOpenChange, schoolId }: Pr
           <DialogTitle>Relatório por Aluno</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Selecione o aluno</label>
-          <Select value={studentId} onValueChange={setStudentId} disabled={loadingStudents}>
-            <SelectTrigger>
-              <SelectValue placeholder="Escolha um aluno..." />
-            </SelectTrigger>
-            <SelectContent>
-              {students.map((s: any) => (
-                <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Ano letivo</label>
+            <Select value={year} onValueChange={setYear} disabled={loadingClasses}>
+              <SelectTrigger><SelectValue placeholder="Selecione o ano" /></SelectTrigger>
+              <SelectContent>
+                {years.map((y: any) => (
+                  <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Série</label>
+            <Select value={gradeName} onValueChange={setGradeName} disabled={!year}>
+              <SelectTrigger><SelectValue placeholder="Selecione a série" /></SelectTrigger>
+              <SelectContent>
+                {gradeOptions.map((g: any) => (
+                  <SelectItem key={g} value={g}>{g}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Turno</label>
+            <Select value={shiftName} onValueChange={setShiftName} disabled={!gradeName}>
+              <SelectTrigger><SelectValue placeholder="Selecione o turno" /></SelectTrigger>
+              <SelectContent>
+                {shifts.map((s: any) => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Turma</label>
+            <Select value={classId} onValueChange={setClassId} disabled={!shiftName}>
+              <SelectTrigger><SelectValue placeholder="Selecione a turma" /></SelectTrigger>
+              <SelectContent>
+                {filteredClasses.map((c: any) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1 md:col-span-2">
+            <label className="text-xs font-medium text-muted-foreground">Aluno</label>
+            <Select value={studentId} onValueChange={setStudentId} disabled={!classId || loadingStudents}>
+              <SelectTrigger><SelectValue placeholder={classId ? "Escolha um aluno..." : "Selecione a turma primeiro"} /></SelectTrigger>
+              <SelectContent>
+                {students.map((s: any) => (
+                  <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {!studentId && (
-          <p className="text-sm text-muted-foreground py-12 text-center">
-            Selecione um aluno para gerar o relatório.
+          <p className="text-sm text-muted-foreground py-8 text-center">
+            Filtre por ano, série, turno e turma para escolher o aluno.
           </p>
         )}
 
