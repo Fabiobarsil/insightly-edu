@@ -686,7 +686,7 @@ const CoordinationDashboard = () => {
           </div>
 
           {/* Gráfico compacto */}
-          <div className="lg:col-span-2 rounded-lg border border-border/40 bg-card p-4">
+          <div className="lg:col-span-2 rounded-lg border border-slate-200 bg-white p-4">
             <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
               <Activity className="h-3.5 w-3.5" /> Evolução do Desempenho
             </p>
