@@ -787,7 +787,7 @@ const CoordinationDashboard = () => {
 
         {/* ── INTERVENÇÕES — RESOLVIDAS ── */}
         {resolvedInterventions.length > 0 && (
-          <Card className="rounded-2xl border-border/50">
+          <Card className="rounded-lg border border-slate-200 bg-white shadow-none">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-bold flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-secondary" />
