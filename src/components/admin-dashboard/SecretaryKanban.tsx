@@ -1,5 +1,4 @@
 import { useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   DndContext,
   PointerSensor,
@@ -11,7 +10,16 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { Clock, PlayCircle, CheckCircle2, ArrowRight, Check, Loader2 } from "lucide-react";
+import {
+  Clock,
+  PlayCircle,
+  CheckCircle2,
+  ArrowRight,
+  Check,
+  Loader2,
+  FileText,
+  GraduationCap,
+} from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -21,23 +29,8 @@ import {
   type KanbanRequest,
   type KanbanStatus,
 } from "@/hooks/useSecretariaKanban";
+import AttendanceModal from "@/components/secretaria/AttendanceModal";
 import type { CounterFilter } from "./SecretaryCounters";
-
-/** Resolve para onde clicar no card deve direcionar */
-function resolveCardAction(item: KanbanRequest): string {
-  const text = `${item.type ?? ""} ${item.title}`.toLowerCase();
-  // Documento pendente / histórico / declaração → ficha do aluno (aba Documentos)
-  if (item.student_id && (item.document_type || /document|histor|certif|declar/.test(text))) {
-    return `/admin/alunos/${item.student_id}?tab=documentos`;
-  }
-  // Demanda vinculada a aluno → detalhes do aluno
-  if (item.student_id) {
-    return `/admin/alunos/${item.student_id}`;
-  }
-  // Sem aluno → fila completa da secretaria
-  return "/admin/secretaria";
-}
-
 
 const COLUMNS = [
   {
@@ -58,7 +51,7 @@ const COLUMNS = [
   },
   {
     id: "concluido" as KanbanStatus,
-    title: "Concluído",
+    title: "Concluído (hoje)",
     icon: CheckCircle2,
     accent: "border-t-emerald-500",
     iconClass: "bg-emerald-500/10 text-emerald-600",
@@ -67,24 +60,35 @@ const COLUMNS = [
 ] as const;
 
 const PRIORITY_BORDER: Record<string, string> = {
-  urgente: "border-l-destructive",
   alta: "border-l-destructive",
   media: "border-l-amber-500",
-  baixa: "border-l-muted-foreground/40",
+  baixa: "border-l-emerald-500",
 };
 
 const PRIORITY_DOT: Record<string, string> = {
-  urgente: "bg-destructive",
   alta: "bg-destructive",
   media: "bg-amber-500",
-  baixa: "bg-muted-foreground/50",
+  baixa: "bg-emerald-500",
 };
 
 const PRIORITY_LABEL: Record<string, string> = {
-  urgente: "Urgente",
   alta: "Alta",
   media: "Média",
   baixa: "Baixa",
+};
+
+/** Formata o nome do documento ("rg" → "RG", "certidao_nascimento" → "Certidão de Nascimento") */
+const DOC_LABELS: Record<string, string> = {
+  rg: "RG",
+  cpf: "CPF",
+  certidao_nascimento: "Certidão de Nascimento",
+  comprovante_residencia: "Comprovante de Residência",
+  historico_escolar: "Histórico Escolar",
+  foto_3x4: "Foto 3x4",
+};
+export const formatDocType = (t?: string | null) => {
+  if (!t) return "";
+  return DOC_LABELS[t] ?? t.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 };
 
 interface Props {
@@ -94,7 +98,8 @@ interface Props {
 const SecretaryKanban = ({ filter = "all" }: Props) => {
   const { requests, loading, updateStatus } = useSecretariaKanban();
   const [activeId, setActiveId] = useState<string | null>(null);
-  const navigate = useNavigate();
+  const [selected, setSelected] = useState<KanbanRequest | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
@@ -104,7 +109,7 @@ const SecretaryKanban = ({ filter = "all" }: Props) => {
     switch (filter) {
       case "alerts":
         return requests.filter(
-          (r) => (r.priority === "alta" || r.priority === "urgente") && r.status !== "concluido"
+          (r) => r.priority === "alta" && r.status !== "concluido"
         );
       case "queue":
         return requests.filter((r) => r.status !== "concluido");
@@ -129,7 +134,7 @@ const SecretaryKanban = ({ filter = "all" }: Props) => {
   });
 
   const filterLabel: Record<CounterFilter, string> = {
-    all: "Todas as demandas",
+    all: "Todas as demandas ativas",
     students: "Filtro: Alunos",
     documents: "Filtro: Documentos",
     queue: "Filtro: Fila ativa",
@@ -161,14 +166,21 @@ const SecretaryKanban = ({ filter = "all" }: Props) => {
     }
   };
 
+  const openAttendance = (item: KanbanRequest) => {
+    setSelected(item);
+    setModalOpen(true);
+  };
+
   const activeItem = activeId ? requests.find((r) => r.id === activeId) : null;
 
   return (
     <section className="bg-card border border-border/60 rounded-xl p-5 shadow-sm">
       <header className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-base font-bold text-foreground">Fila operacional</h3>
-          <p className="text-xs text-muted-foreground">{filterLabel[filter]}</p>
+          <h3 className="text-lg font-bold text-foreground">Fila Operacional</h3>
+          <p className="text-xs text-muted-foreground">
+            {filterLabel[filter]} • Clique em uma demanda para atender
+          </p>
         </div>
         {loading && (
           <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
@@ -186,7 +198,7 @@ const SecretaryKanban = ({ filter = "all" }: Props) => {
               key={col.id}
               column={col}
               items={grouped[col.id] || []}
-              onCardClick={(item) => navigate(resolveCardAction(item))}
+              onCardClick={openAttendance}
               onAdvance={async (item) => {
                 if (!col.next) return;
                 try {
@@ -206,6 +218,12 @@ const SecretaryKanban = ({ filter = "all" }: Props) => {
           {activeItem ? <KanbanCardPreview item={activeItem} /> : null}
         </DragOverlay>
       </DndContext>
+
+      <AttendanceModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        request={selected}
+      />
     </section>
   );
 };
@@ -227,7 +245,7 @@ const KanbanColumn = ({ column, items, onAdvance, onCardClick }: ColumnProps) =>
     <div
       ref={setNodeRef}
       className={cn(
-        "bg-muted/30 border border-border/50 border-t-4 rounded-lg flex flex-col min-h-[320px] transition-colors",
+        "bg-muted/30 border border-border/50 border-t-4 rounded-lg flex flex-col min-h-[420px] transition-colors",
         column.accent,
         isOver && "bg-muted/60 ring-1 ring-primary/30"
       )}
@@ -281,14 +299,22 @@ interface CardProps {
   onClickCard: () => void;
 }
 
+const cardTitle = (item: KanbanRequest) => {
+  // Se for documento, prioriza "Documento pendente — <tipo>"
+  if (item.document_type) {
+    return `Documento pendente — ${formatDocType(item.document_type)}`;
+  }
+  return item.title;
+};
+
 const KanbanCard = ({ item, nextStatus, onAdvance, onClickCard }: CardProps) => {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: item.id,
   });
 
-  // Distingue clique de drag: registra posição no pointer down e só dispara
-  // o clique se o movimento total foi menor que 4px (mesma activation distance).
   const downRef = useRef<{ x: number; y: number } | null>(null);
+
+  const turmaLabel = [item.student_grade, item.student_class].filter(Boolean).join(" ");
 
   return (
     <article
@@ -320,12 +346,32 @@ const KanbanCard = ({ item, nextStatus, onAdvance, onClickCard }: CardProps) => 
         isDragging && "opacity-40 cursor-grabbing"
       )}
     >
-      <p className="text-sm font-medium text-foreground truncate pr-12">
-        {item.title}
-        {item.student_name ? ` — ${item.student_name}` : ""}
+      {/* Linha 1: tipo + título do documento */}
+      <p className="text-sm font-semibold text-foreground leading-snug pr-12 flex items-start gap-1.5">
+        {item.document_type && (
+          <FileText className="h-3.5 w-3.5 shrink-0 mt-0.5 text-muted-foreground" />
+        )}
+        <span className="line-clamp-2">{cardTitle(item)}</span>
       </p>
+
+      {/* Linha 2: aluno • turma */}
+      {item.student_name && (
+        <p className="text-[12px] text-foreground/80 mt-1 truncate flex items-center gap-1">
+          <span className="font-medium truncate">{item.student_name}</span>
+          {turmaLabel && (
+            <>
+              <span className="text-muted-foreground">•</span>
+              <GraduationCap className="h-3 w-3 text-muted-foreground shrink-0" />
+              <span className="text-muted-foreground truncate">{turmaLabel}</span>
+            </>
+          )}
+        </p>
+      )}
+
+      {/* Linha 3: tempo • prioridade */}
       <div className="flex items-center justify-between mt-1.5 gap-2">
         <span className="text-[11px] text-muted-foreground truncate">
+          Aberto{" "}
           {formatDistanceToNow(new Date(item.created_at), {
             addSuffix: true,
             locale: ptBR,
@@ -378,12 +424,17 @@ const KanbanCardPreview = ({ item }: { item: KanbanRequest }) => (
       PRIORITY_BORDER[item.priority] || "border-l-muted"
     )}
   >
-    <p className="text-sm font-medium text-foreground truncate">
-      {item.title}
-      {item.student_name ? ` — ${item.student_name}` : ""}
+    <p className="text-sm font-semibold text-foreground truncate">
+      {cardTitle(item)}
     </p>
+    {item.student_name && (
+      <p className="text-[12px] text-muted-foreground truncate">
+        {item.student_name}
+      </p>
+    )}
     <div className="flex items-center justify-between mt-1.5 gap-2">
       <span className="text-[11px] text-muted-foreground truncate">
+        Aberto{" "}
         {formatDistanceToNow(new Date(item.created_at), {
           addSuffix: true,
           locale: ptBR,
