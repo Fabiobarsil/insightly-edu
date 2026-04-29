@@ -104,7 +104,7 @@ const SecretaryKanban = ({ filter = "all" }: Props) => {
     switch (filter) {
       case "alerts":
         return requests.filter(
-          (r) => (r.priority === "alta" || r.priority === "urgente") && r.status !== "concluido"
+          (r) => r.priority === "alta" && r.status !== "concluido"
         );
       case "queue":
         return requests.filter((r) => r.status !== "concluido");

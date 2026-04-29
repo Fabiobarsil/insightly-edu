@@ -42,7 +42,7 @@ const SecretaryCounters = ({ active, onChange }: Props) => {
     (r) => (r.type ?? "").toLowerCase().includes("document") && r.status !== "concluido"
   ).length;
   const alertasCriticos = requests.filter(
-    (r) => (r.priority === "alta" || r.priority === "urgente") && r.status !== "concluido"
+    (r) => r.priority === "alta" && r.status !== "concluido"
   ).length;
   const concluidas = requests.filter((r) => r.status === "concluido").length;
   const totalReqs = filaOperacional + concluidas;
