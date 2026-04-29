@@ -2434,6 +2434,7 @@ export type Database = {
           profile_id: string | null
           school_id: string
           status: string | null
+          type_professional: string | null
         }
         Insert: {
           email?: string | null
@@ -2442,6 +2443,7 @@ export type Database = {
           profile_id?: string | null
           school_id: string
           status?: string | null
+          type_professional?: string | null
         }
         Update: {
           email?: string | null
@@ -2450,6 +2452,7 @@ export type Database = {
           profile_id?: string | null
           school_id?: string
           status?: string | null
+          type_professional?: string | null
         }
         Relationships: [
           {
