@@ -7,6 +7,7 @@ interface NavItem {
   icon: string;
   label: string;
   to: string;
+  color?: string;
 }
 
 const menusByRole: Record<DashboardRole, NavItem[]> = {
@@ -19,17 +20,17 @@ const menusByRole: Record<DashboardRole, NavItem[]> = {
     { icon: "ri-settings-3-line", label: "Administração", to: "/superadmin/configuracoes" },
   ],
   admin: [
-    { icon: "ri-home-office-line", label: "Secretaria", to: "/admin/dashboard" },
-    { icon: "ri-group-line", label: "Alunos", to: "/admin/alunos" },
-    { icon: "ri-book-open-line", label: "Turmas", to: "/admin/turmas" },
-    { icon: "ri-booklet-line", label: "Disciplinas", to: "/admin/disciplinas" },
-    { icon: "ri-user-star-line", label: "Professores", to: "/admin/professores" },
-    { icon: "ri-compass-3-line", label: "Coordenação", to: "/admin/coordenacao" },
-    { icon: "ri-building-line", label: "Direção", to: "/admin/direcao" },
-    { icon: "ri-file-text-line", label: "Documentos", to: "/admin/documentos" },
-    { icon: "ri-chat-3-line", label: "Comunicação", to: "/admin/comunicacao" },
-    { icon: "ri-award-line", label: "Preview Certificado", to: "/admin/certificado-preview" },
-    { icon: "ri-settings-3-line", label: "Administração", to: "/admin/configuracoes" },
+    { icon: "ri-home-smile-2-fill", label: "Secretaria", to: "/admin/dashboard", color: "text-emerald-400" },
+    { icon: "ri-team-fill", label: "Alunos", to: "/admin/alunos", color: "text-sky-400" },
+    { icon: "ri-book-2-fill", label: "Turmas", to: "/admin/turmas", color: "text-indigo-400" },
+    { icon: "ri-booklet-fill", label: "Disciplinas", to: "/admin/disciplinas", color: "text-fuchsia-400" },
+    { icon: "ri-graduation-cap-fill", label: "Professores", to: "/admin/professores", color: "text-emerald-400" },
+    { icon: "ri-compass-3-fill", label: "Coordenação", to: "/admin/coordenacao", color: "text-blue-400" },
+    { icon: "ri-shield-star-fill", label: "Direção", to: "/admin/direcao", color: "text-amber-400" },
+    { icon: "ri-file-text-fill", label: "Documentos", to: "/admin/documentos", color: "text-rose-400" },
+    { icon: "ri-chat-smile-3-fill", label: "Comunicação", to: "/admin/comunicacao", color: "text-cyan-400" },
+    { icon: "ri-medal-2-fill", label: "Preview Certificado", to: "/admin/certificado-preview", color: "text-yellow-400" },
+    { icon: "ri-settings-4-fill", label: "Administração", to: "/admin/configuracoes", color: "text-violet-400" },
   ],
   secretaria: [
     { icon: "ri-dashboard-3-line", label: "Dashboard", to: "/admin/dashboard" },
@@ -73,7 +74,7 @@ const RoleSidebar = () => {
             className="w-full flex items-center gap-[10px] px-3 py-2 rounded-[12px] text-sidebar-foreground/55 mb-0.5 transition-all duration-200 text-left text-sm hover:bg-sidebar-foreground/5 hover:text-sidebar-foreground/85"
             activeClassName="bg-secondary/15 text-secondary"
           >
-            <i className={cn(item.icon, "text-lg")} />
+            <i className={cn(item.icon, "text-lg", item.color)} />
             {item.label}
           </NavLink>
         ))}
