@@ -779,41 +779,35 @@ const StudentsCreate = () => {
         </div>
 
         {isEdit && (
-          <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="text-sm font-bold text-primary">Documentos da Matrícula</h4>
-            </div>
-
-            {documentsLoading ? (
-              <p className="text-sm text-muted-foreground">Carregando documentos...</p>
-            ) : documents.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nenhum documento encontrado</p>
-            ) : (
-              <div className="space-y-2">
-                {documents.map((doc: any) => {
-                  const approved = doc.status === "aprovado";
-                  return (
-                    <div key={doc.id} className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-border/60">
-                      <span className="text-sm text-primary font-medium capitalize">
-                        {String(doc.document_type || "").replace(/_/g, " ")}
+          <div className="bg-card border border-border/60 rounded-xl p-6 certus-shadow">
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div className="flex items-start gap-4 min-w-0">
+                <div className="w-12 h-12 rounded-xl bg-secondary/15 flex items-center justify-center shrink-0">
+                  <i className="ri-folder-upload-line text-2xl text-secondary" />
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-base font-bold text-primary">Entrega de Documentos</h4>
+                  <p className="text-xs text-muted-foreground mt-1 max-w-md">
+                    Gerencie o checklist de documentos da matrícula em uma página dedicada,
+                    com histórico de atendimentos do aluno.
+                  </p>
+                  {!documentsLoading && documents.length > 0 && (
+                    <div className="mt-3 flex items-center gap-3 text-xs">
+                      <span className="inline-flex items-center gap-1.5 font-bold text-secondary">
+                        <i className="ri-checkbox-circle-line" />
+                        {(documents as any[]).filter((d) => d.status === "aprovado").length}/{documents.length} aprovados
                       </span>
-                      <button
-                        type="button"
-                        disabled={toggleDocumentStatus.isPending}
-                        onClick={() => toggleDocumentStatus.mutate(doc)}
-                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors disabled:opacity-60 ${
-                          approved
-                            ? "bg-secondary/10 text-secondary hover:bg-secondary/15"
-                            : "bg-destructive/10 text-destructive hover:bg-destructive/15"
-                        }`}
-                      >
-                        {approved ? "Aprovado" : "Pendente"}
-                      </button>
                     </div>
-                  );
-                })}
+                  )}
+                </div>
               </div>
-            )}
+              <Link
+                to={`/admin/alunos/${studentIdParam}/entrega-documentos`}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[14px] bg-secondary text-secondary-foreground font-bold text-sm hover:bg-secondary/90 transition-colors shadow-md"
+              >
+                <i className="ri-folder-open-line" /> Abrir Entrega de Documentos
+              </Link>
+            </div>
           </div>
         )}
 
