@@ -30,25 +30,85 @@ interface Props {
 
 export default function RelatorioAlunoModal({ open, onOpenChange, schoolId }: Props) {
   const navigate = useNavigate();
+  const [year, setYear] = useState<string>("");
+  const [gradeName, setGradeName] = useState<string>(""); // série
+  const [shiftName, setShiftName] = useState<string>(""); // turno
+  const [classId, setClassId] = useState<string>("");
   const [studentId, setStudentId] = useState<string>("");
 
   useEffect(() => {
-    if (!open) setStudentId("");
+    if (!open) {
+      setYear(""); setGradeName(""); setShiftName(""); setClassId(""); setStudentId("");
+    }
   }, [open]);
 
-  const { data: students = [], isLoading: loadingStudents } = useQuery({
-    queryKey: ["rel-aluno-students", schoolId],
+  // Reset cascata
+  useEffect(() => { setGradeName(""); setShiftName(""); setClassId(""); setStudentId(""); }, [year]);
+  useEffect(() => { setShiftName(""); setClassId(""); setStudentId(""); }, [gradeName]);
+  useEffect(() => { setClassId(""); setStudentId(""); }, [shiftName]);
+  useEffect(() => { setStudentId(""); }, [classId]);
+
+  // Todas as turmas da escola
+  const { data: classes = [], isLoading: loadingClasses } = useQuery({
+    queryKey: ["rel-aluno-classes", schoolId],
     enabled: !!schoolId && open,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("students")
-        .select("id, full_name")
+        .from("classes")
+        .select("id, name, grade, shift, academic_year")
         .eq("school_id", schoolId!)
-        .order("full_name");
+        .order("name");
       if (error) throw error;
       return data ?? [];
     },
   });
+
+  const years = useMemo(
+    () => Array.from(new Set(classes.map((c: any) => c.academic_year).filter(Boolean))).sort((a: any, b: any) => b - a),
+    [classes]
+  );
+  const gradeOptions = useMemo(
+    () => Array.from(new Set(classes.filter((c: any) => !year || String(c.academic_year) === year).map((c: any) => c.grade).filter(Boolean))).sort(),
+    [classes, year]
+  );
+  const shifts = useMemo(
+    () => Array.from(new Set(classes
+      .filter((c: any) => (!year || String(c.academic_year) === year) && (!gradeName || c.grade === gradeName))
+      .map((c: any) => c.shift).filter(Boolean))).sort(),
+    [classes, year, gradeName]
+  );
+  const filteredClasses = useMemo(
+    () => classes.filter((c: any) =>
+      (!year || String(c.academic_year) === year) &&
+      (!gradeName || c.grade === gradeName) &&
+      (!shiftName || c.shift === shiftName)
+    ),
+    [classes, year, gradeName, shiftName]
+  );
+
+  // Alunos da turma selecionada (via student_enrollments ativo)
+  const { data: students = [], isLoading: loadingStudents } = useQuery({
+    queryKey: ["rel-aluno-students", schoolId, classId, year],
+    enabled: !!schoolId && !!classId,
+    queryFn: async () => {
+      const q = supabase
+        .from("student_enrollments")
+        .select("student_id, students:student_id(id, full_name)")
+        .eq("school_id", schoolId!)
+        .eq("class_id", classId)
+        .eq("status", "ativo");
+      const { data, error } = year ? await q.eq("academic_year", Number(year)) : await q;
+      if (error) throw error;
+      const list = (data ?? [])
+        .map((r: any) => r.students)
+        .filter(Boolean);
+      // dedup
+      const map = new Map<string, any>();
+      list.forEach((s: any) => map.set(s.id, s));
+      return Array.from(map.values()).sort((a: any, b: any) => (a.full_name || "").localeCompare(b.full_name || ""));
+    },
+  });
+
 
   const { data: enrollment } = useQuery({
     queryKey: ["rel-aluno-enrollment", schoolId, studentId],
@@ -147,23 +207,71 @@ export default function RelatorioAlunoModal({ open, onOpenChange, schoolId }: Pr
           <DialogTitle>Relatório por Aluno</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Selecione o aluno</label>
-          <Select value={studentId} onValueChange={setStudentId} disabled={loadingStudents}>
-            <SelectTrigger>
-              <SelectValue placeholder="Escolha um aluno..." />
-            </SelectTrigger>
-            <SelectContent>
-              {students.map((s: any) => (
-                <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Ano letivo</label>
+            <Select value={year} onValueChange={setYear} disabled={loadingClasses}>
+              <SelectTrigger><SelectValue placeholder="Selecione o ano" /></SelectTrigger>
+              <SelectContent>
+                {years.map((y: any) => (
+                  <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Série</label>
+            <Select value={gradeName} onValueChange={setGradeName} disabled={!year}>
+              <SelectTrigger><SelectValue placeholder="Selecione a série" /></SelectTrigger>
+              <SelectContent>
+                {gradeOptions.map((g: any) => (
+                  <SelectItem key={g} value={g}>{g}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Turno</label>
+            <Select value={shiftName} onValueChange={setShiftName} disabled={!gradeName}>
+              <SelectTrigger><SelectValue placeholder="Selecione o turno" /></SelectTrigger>
+              <SelectContent>
+                {shifts.map((s: any) => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Turma</label>
+            <Select value={classId} onValueChange={setClassId} disabled={!shiftName}>
+              <SelectTrigger><SelectValue placeholder="Selecione a turma" /></SelectTrigger>
+              <SelectContent>
+                {filteredClasses.map((c: any) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1 md:col-span-2">
+            <label className="text-xs font-medium text-muted-foreground">Aluno</label>
+            <Select value={studentId} onValueChange={setStudentId} disabled={!classId || loadingStudents}>
+              <SelectTrigger><SelectValue placeholder={classId ? "Escolha um aluno..." : "Selecione a turma primeiro"} /></SelectTrigger>
+              <SelectContent>
+                {students.map((s: any) => (
+                  <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {!studentId && (
-          <p className="text-sm text-muted-foreground py-12 text-center">
-            Selecione um aluno para gerar o relatório.
+          <p className="text-sm text-muted-foreground py-8 text-center">
+            Filtre por ano, série, turno e turma para escolher o aluno.
           </p>
         )}
 
