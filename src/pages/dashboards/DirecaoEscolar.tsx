@@ -78,13 +78,13 @@ export default function DirecaoEscolar() {
   const loading = loadingSchool || isLoading;
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      <header>
-        <h1 className="text-2xl font-bold text-foreground">Direção Escolar</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Painel de acompanhamento das demandas operacionais da secretaria.
-        </p>
-      </header>
+    <RoleLayout title="Direção Escolar">
+      <div className="p-6 space-y-6 max-w-7xl mx-auto">
+        <header>
+          <p className="text-sm text-muted-foreground">
+            Painel de acompanhamento das demandas operacionais da secretaria.
+          </p>
+        </header>
 
       {/* KPIs */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
