@@ -832,7 +832,7 @@ const CoordinationDashboard = () => {
 
         {/* Open coord requests to secretary */}
         {openCoordRequests.length > 0 && (
-          <Card className="rounded-2xl border-border/50">
+          <Card className="rounded-lg border border-slate-200 bg-white shadow-none">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-bold flex items-center gap-2">
                 <Bell className="h-4 w-4 text-primary" />
