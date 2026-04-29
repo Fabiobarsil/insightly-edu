@@ -537,7 +537,7 @@ const CoordinationDashboard = () => {
         </div>
 
         {/* 🎯 3. AÇÕES RECOMENDADAS — Destaque principal */}
-        <Card className="rounded-xl border-border/60 shadow-sm">
+        <Card className="rounded-lg border border-slate-200 bg-white shadow-none">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-bold flex items-center gap-2">
