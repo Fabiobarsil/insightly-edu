@@ -472,7 +472,7 @@ ${interventionsHtml}
           </div>
 
           {/* Narrative sentence — humanized */}
-          <div className="mt-5 p-4 rounded-xl bg-card/70 border border-border/30">
+          <div className="mt-5 p-4 rounded-lg bg-white border border-slate-200">
             <p className="text-sm text-foreground leading-relaxed">
               <i className={cn("mr-2",
                 situation.level === "critico" ? "ri-alarm-warning-line text-destructive" :
