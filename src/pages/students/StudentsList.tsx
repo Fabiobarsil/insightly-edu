@@ -37,7 +37,7 @@ const StudentsList = () => {
           academic_year,
           status,
           created_at,
-          students:fk_enrollment_student ( id, full_name, status, birth_date, photo_url ),
+          students:fk_enrollment_student ( id, full_name, status, birth_date, photo_url, enrollment_code ),
           classes:fk_enrollment_class ( id, name, grade, shift )
         `,
         )
@@ -60,6 +60,7 @@ const StudentsList = () => {
             students: student,
             full_name: student.full_name,
             photo_url: student.photo_url,
+            enrollment_code: student.enrollment_code || "—",
             class_id: e.class_id,
             class_name: classData?.name || "—",
             grade: classData?.grade || "—",
