@@ -800,7 +800,7 @@ const CoordinationDashboard = () => {
                   const student = students.find((st) => st.id === item.student_id);
                   const teacher = teachers.find((t) => t.id === item.teacher_id);
                   return (
-                    <div key={item.id} className="flex items-center gap-3 rounded-xl bg-muted/30 px-4 py-3">
+                    <div key={item.id} className="flex items-center gap-3 rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3">
                       <CheckCircle2 className="h-4 w-4 text-secondary shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{student?.full_name || "Aluno"}</p>
