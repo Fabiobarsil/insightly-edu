@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import RelatorioTurmaModal from "@/components/direcao/RelatorioTurmaModal";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -53,6 +54,7 @@ const isDone = (s: string) => s === "concluido" || s === "resolvido";
 export default function DirecaoEscolar() {
   const navigate = useNavigate();
   const { schoolId, loading: loadingSchool } = useSchoolId();
+  const [openRelTurma, setOpenRelTurma] = useState(false);
 
   // ---------- DEMANDAS DA SECRETARIA (mantido p/ Lista de Ação) ----------
   const { data: requests = [], isLoading: loadingReq } = useQuery({
@@ -561,13 +563,7 @@ export default function DirecaoEscolar() {
             >
               Gerar Relatório Geral
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                toast.info("Selecione a turma");
-                navigate("/admin/turmas");
-              }}
-            >
+            <Button variant="outline" onClick={() => setOpenRelTurma(true)}>
               Relatório por Turma
             </Button>
             <Button
@@ -660,6 +656,11 @@ export default function DirecaoEscolar() {
           </CardContent>
         </Card>
       </div>
+      <RelatorioTurmaModal
+        open={openRelTurma}
+        onOpenChange={setOpenRelTurma}
+        schoolId={schoolId}
+      />
     </RoleLayout>
   );
 }
