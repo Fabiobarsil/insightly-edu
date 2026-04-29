@@ -534,7 +534,7 @@ const StudentsDetail = () => {
           </div>
           <div className="bg-card border border-border/60 rounded-xl p-5 certus-shadow">
             <h4 className="text-sm font-bold text-primary mb-4">Dados Escolares</h4>
-            <InfoRow label="Matrícula" value={s.enrollment_number || "—"} />
+            <InfoRow label="Matrícula" value={s.enrollment_code || s.enrollment_number || "—"} />
             <InfoRow label="Turma" value={s.classes?.name || "—"} />
             <InfoRow label="Série" value={s.classes?.grade || "—"} />
             <InfoRow label="Turno" value={s.classes?.shift || "—"} />

@@ -433,10 +433,14 @@ const StudentsCreate = () => {
         const { data: student, error } = await supabase
           .from("students")
           .insert(studentPayload as any)
-          .select("id")
+          .select()
           .single();
         if (error) throw error;
         studentId = student.id;
+        console.log("Matrícula gerada:", (student as any).enrollment_code);
+        if ((student as any).enrollment_code) {
+          toast.success(`Matrícula gerada: ${(student as any).enrollment_code}`);
+        }
       }
 
       // Matrícula: só cria se não houver ativa naquele ano
