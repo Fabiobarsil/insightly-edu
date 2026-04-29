@@ -448,47 +448,47 @@ const CoordinationDashboard = () => {
         )}
 
         {/* 🔴 1. HERO — Compacto, foco em risco */}
-        <div className={`rounded-xl border bg-gradient-to-br ${heroColor} p-4`}>
+        <div className={`rounded-lg border bg-white border-slate-200 p-4`}>
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
               {heroIcon}
               <div>
-                <p className="text-sm font-bold text-foreground">
+                <p className="text-sm font-bold text-slate-900">
                   {trendDirection === "queda" ? "Em Queda" : trendDirection === "melhora" ? "Evoluindo" : "Estável"}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  Var: <span className={`font-semibold ${variation < 0 ? "text-destructive" : variation > 0 ? "text-secondary" : ""}`}>
+                <p className="text-xs text-slate-500">
+                  Var: <span className={`font-semibold ${variation < 0 ? "text-red-700" : variation > 0 ? "text-emerald-700" : ""}`}>
                     {variation >= 0 ? "+" : ""}{variation.toFixed(1)}
                   </span>
-                  {" · "}Média: <span className="text-muted-foreground">{avgGrade.toFixed(1)}</span>
+                  {" · "}Média: <span className="text-slate-700">{avgGrade.toFixed(1)}</span>
                 </p>
               </div>
             </div>
 
             <div className="flex gap-2 flex-wrap">
-              <div className="rounded-lg bg-card border border-border/50 px-3 py-2 text-center min-w-[70px]">
-                <p className="text-lg font-bold text-foreground">{totalStudents}</p>
-                <p className="text-[10px] text-muted-foreground">Ativos</p>
+              <div className="rounded-lg bg-white border border-slate-200 px-3 py-2 text-center min-w-[70px]">
+                <p className="text-lg font-bold text-slate-900">{totalStudents}</p>
+                <p className="text-[10px] text-slate-500">Ativos</p>
               </div>
-              <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-2 text-center min-w-[70px]">
-                <p className="text-lg font-bold text-destructive">{criticalCount}</p>
-                <p className="text-[10px] text-destructive font-medium">Crítico</p>
+              <div className="rounded-lg bg-red-100 border border-red-300 px-3 py-2 text-center min-w-[70px]">
+                <p className="text-lg font-bold text-red-700">{criticalCount}</p>
+                <p className="text-[10px] text-red-700 font-medium">Crítico</p>
               </div>
-              <div className="rounded-lg bg-warning/10 border border-warning/20 px-3 py-2 text-center min-w-[70px]">
-                <p className="text-lg font-bold text-warning-foreground">{atRiskList.length}</p>
-                <p className="text-[10px] text-warning-foreground font-medium">Em Risco</p>
+              <div className="rounded-lg bg-amber-100 border border-amber-300 px-3 py-2 text-center min-w-[70px]">
+                <p className="text-lg font-bold text-amber-800">{atRiskList.length}</p>
+                <p className="text-[10px] text-amber-800 font-medium">Em Risco</p>
               </div>
             </div>
           </div>
 
           <div className="flex gap-2 mt-3 flex-wrap">
-            <Button size="sm" className="text-xs gap-1.5 h-8" onClick={() => setFocusModalOpen(true)}>
+            <Button size="sm" className="text-xs gap-1.5 h-8 bg-slate-900 text-white hover:bg-slate-800" onClick={() => setFocusModalOpen(true)}>
               <Target className="h-3.5 w-3.5" /> Ações Recomendadas
             </Button>
-            <Button size="sm" variant="outline" className="text-xs gap-1.5 h-8" onClick={() => { resetForm(); setCreateModalOpen(true); }}>
+            <Button size="sm" variant="outline" className="text-xs gap-1.5 h-8 border border-slate-300 text-slate-700" onClick={() => { resetForm(); setCreateModalOpen(true); }}>
               <Plus className="h-3.5 w-3.5" /> Nova Intervenção
             </Button>
-            <Button size="sm" variant="ghost" className="text-xs gap-1.5 h-8" onClick={() => setRequestModalOpen(true)}>
+            <Button size="sm" variant="ghost" className="text-xs gap-1.5 h-8 text-slate-700" onClick={() => setRequestModalOpen(true)}>
               <FilePlus2 className="h-3.5 w-3.5" /> Solicitar Secretaria
             </Button>
           </div>
