@@ -665,6 +665,16 @@ export default function DirecaoEscolar() {
         onOpenChange={setOpenRelTurma}
         schoolId={schoolId}
       />
+      <RelatorioGeralModal
+        open={openRelGeral}
+        onOpenChange={setOpenRelGeral}
+        schoolId={schoolId}
+      />
+      <RelatorioAlunoModal
+        open={openRelAluno}
+        onOpenChange={setOpenRelAluno}
+        schoolId={schoolId}
+      />
     </RoleLayout>
   );
 }
