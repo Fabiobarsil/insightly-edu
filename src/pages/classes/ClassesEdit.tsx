@@ -162,6 +162,60 @@ const ClassesEdit = () => {
     onError: (err: any) => toast.error(err.message?.includes("duplicate") ? "Turno já existe" : "Erro ao criar turno"),
   });
 
+  const updateGrade = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const { error } = await supabase.from("school_grades").update({ name }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["school-grades"] });
+      setEditGrade(null);
+      toast.success("Série atualizada!");
+    },
+    onError: (err: any) => toast.error(err.message || "Erro ao atualizar série"),
+  });
+
+  const deleteGrade = useMutation({
+    mutationFn: async (gradeId: string) => {
+      const { error } = await supabase.from("school_grades").delete().eq("id", gradeId);
+      if (error) throw error;
+    },
+    onSuccess: (_d, gradeId) => {
+      queryClient.invalidateQueries({ queryKey: ["school-grades"] });
+      if (form.grade_id === gradeId) setForm((p) => ({ ...p, grade_id: "" }));
+      setDeleteGradeId(null);
+      toast.success("Série excluída!");
+    },
+    onError: (err: any) => toast.error(err.message || "Erro ao excluir série"),
+  });
+
+  const updateShift = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const { error } = await supabase.from("school_shifts").update({ name }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["school-shifts"] });
+      setEditShift(null);
+      toast.success("Turno atualizado!");
+    },
+    onError: (err: any) => toast.error(err.message || "Erro ao atualizar turno"),
+  });
+
+  const deleteShift = useMutation({
+    mutationFn: async (shiftId: string) => {
+      const { error } = await supabase.from("school_shifts").delete().eq("id", shiftId);
+      if (error) throw error;
+    },
+    onSuccess: (_d, shiftId) => {
+      queryClient.invalidateQueries({ queryKey: ["school-shifts"] });
+      if (form.shift_id === shiftId) setForm((p) => ({ ...p, shift_id: "" }));
+      setDeleteShiftId(null);
+      toast.success("Turno excluído!");
+    },
+    onError: (err: any) => toast.error(err.message || "Erro ao excluir turno"),
+  });
+
   // Update class
   const updateMutation = useMutation({
     mutationFn: async () => {
