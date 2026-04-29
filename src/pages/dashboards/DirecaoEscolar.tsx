@@ -57,6 +57,8 @@ export default function DirecaoEscolar() {
   const navigate = useNavigate();
   const { schoolId, loading: loadingSchool } = useSchoolId();
   const [openRelTurma, setOpenRelTurma] = useState(false);
+  const [openRelGeral, setOpenRelGeral] = useState(false);
+  const [openRelAluno, setOpenRelAluno] = useState(false);
 
   // ---------- DEMANDAS DA SECRETARIA (mantido p/ Lista de Ação) ----------
   const { data: requests = [], isLoading: loadingReq } = useQuery({
