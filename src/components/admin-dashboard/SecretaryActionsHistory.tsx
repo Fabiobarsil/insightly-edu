@@ -29,6 +29,7 @@ interface ActionRow {
   action_type: string;
   from_status: string | null;
   to_status: string | null;
+  notes: string | null;
   created_at: string;
   request_id: string | null;
   student_id: string | null;
@@ -74,7 +75,7 @@ const fetchActions = async (
   let query = supabase
     .from("secretaria_actions")
     .select(
-      "id, action_type, from_status, to_status, created_at, request_id, student_id"
+      "id, action_type, from_status, to_status, notes, created_at, request_id, student_id"
     )
     .eq("school_id", schoolId)
     .order("created_at", { ascending: false });
