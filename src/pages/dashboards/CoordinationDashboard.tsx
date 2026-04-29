@@ -768,15 +768,15 @@ const CoordinationDashboard = () => {
                   const student = students.find((st) => st.id === item.student_id);
                   const teacher = teachers.find((t) => t.id === item.teacher_id);
                   return (
-                    <div key={item.id} className="flex items-center gap-3 rounded-xl bg-primary/5 border border-primary/20 px-4 py-3">
-                      <Activity className="h-4 w-4 text-primary shrink-0" />
+                    <div key={item.id} className="flex items-center gap-3 rounded-lg bg-white border border-slate-200 px-4 py-3">
+                      <Activity className="h-4 w-4 text-slate-700 shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{student?.full_name || "Aluno"}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{item.reason}</p>
-                        {teacher && <p className="text-[10px] text-primary">Prof. {teacher.full_name}</p>}
-                        {item.teacher_notes && <p className="text-[10px] text-foreground mt-1">📝 {item.teacher_notes}</p>}
+                        <p className="text-sm font-medium text-slate-900 truncate">{student?.full_name || "Aluno"}</p>
+                        <p className="text-[10px] text-slate-500 truncate">{item.reason}</p>
+                        {teacher && <p className="text-[10px] text-slate-700">Prof. {teacher.full_name}</p>}
+                        {item.teacher_notes && <p className="text-[10px] text-slate-700 mt-1">📝 {item.teacher_notes}</p>}
                       </div>
-                      <Badge variant="outline" className="text-[9px] shrink-0">🔄 Em Andamento</Badge>
+                      <Badge variant="outline" className="text-[9px] shrink-0 border-slate-300 text-slate-700">🔄 Em Andamento</Badge>
                     </div>
                   );
                 })}
