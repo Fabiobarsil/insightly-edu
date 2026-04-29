@@ -435,13 +435,13 @@ const CoordinationDashboard = () => {
         {resolvedRequests.length > 0 && (
           <div className="flex flex-col gap-2">
             {resolvedRequests.map((r) => (
-              <div key={r.id} className="flex items-center gap-3 bg-secondary/10 border border-secondary/20 rounded-xl px-4 py-3">
-                <CheckCircle2 className="h-5 w-5 text-secondary shrink-0" />
+              <div key={r.id} className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3">
+                <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground">Solicitação Resolvida</p>
-                  <p className="text-xs text-muted-foreground">{r.request_type} — {r.student_name || "Sem aluno"}</p>
+                  <p className="text-sm font-semibold text-slate-900">Solicitação Resolvida</p>
+                  <p className="text-xs text-slate-500">{r.request_type} — {r.student_name || "Sem aluno"}</p>
                 </div>
-                <button onClick={() => dismissResolved.mutate(r.id)} className="text-xs font-semibold text-secondary hover:underline shrink-0">Dispensar</button>
+                <button onClick={() => dismissResolved.mutate(r.id)} className="text-xs font-semibold text-emerald-700 hover:underline shrink-0">Dispensar</button>
               </div>
             ))}
           </div>
