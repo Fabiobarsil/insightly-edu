@@ -18,11 +18,11 @@ interface Props {
 }
 
 const PROF_TABS = [
-  { id: "professor", label: "Professores", icon: "ri-user-star-line" },
-  { id: "psicologo", label: "Psicólogo", icon: "ri-mental-health-line" },
-  { id: "coordenador", label: "Coordenação", icon: "ri-compass-3-line" },
   { id: "diretor", label: "Direção", icon: "ri-briefcase-line" },
+  { id: "coordenador", label: "Coordenação", icon: "ri-compass-3-line" },
   { id: "secretaria", label: "Secretaria", icon: "ri-archive-line" },
+  { id: "professor", label: "Professores", icon: "ri-user-star-line" },
+  { id: "psicologo", label: "Psicólogos", icon: "ri-mental-health-line" },
   { id: "auxiliar", label: "Auxiliares", icon: "ri-team-line" },
 ] as const;
 
