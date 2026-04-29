@@ -323,10 +323,10 @@ const StudentRecord = () => {
             {/* Photo — destaque circular */}
             {student.photo_url ? (
               <img src={student.photo_url} alt={student.full_name}
-                className="w-24 h-24 rounded-full object-cover border-4 border-card shadow-xl ring-2 ring-border/20" />
+                className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-xl ring-2 ring-slate-200" />
             ) : (
-              <div className="w-24 h-24 rounded-full bg-card/80 border-4 border-card shadow-xl ring-2 ring-border/20 flex items-center justify-center">
-                <i className="ri-user-line text-4xl text-muted-foreground" />
+              <div className="w-24 h-24 rounded-full bg-white border-4 border-white shadow-xl ring-2 ring-slate-200 flex items-center justify-center">
+                <i className="ri-user-line text-4xl text-slate-400" />
               </div>
             )}
 
