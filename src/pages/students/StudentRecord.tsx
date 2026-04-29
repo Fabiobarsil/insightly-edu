@@ -730,7 +730,7 @@ ${interventionsHtml}
                   )}
                   className={cn(
                     "px-4 py-2 rounded-full text-xs font-bold transition-all border",
-                    active ? cn(b.color, "border-current") : "bg-muted/10 text-muted-foreground border-border/30 opacity-50 hover:opacity-80"
+                    active ? cn(b.color, "border") : "bg-slate-100 text-slate-500 border border-slate-300 opacity-60 hover:opacity-90"
                   )}
                 >
                   {b.tag}
