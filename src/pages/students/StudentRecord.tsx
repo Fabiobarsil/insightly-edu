@@ -37,12 +37,12 @@ type Intervention = {
 
 // ─── Behavior mock (local state, no new tables) ──────────────────────
 const BEHAVIOR_OPTIONS = [
-  { tag: "Participativo", color: "bg-secondary/15 text-secondary" },
-  { tag: "Distraído", color: "bg-warning/15 text-warning-foreground" },
-  { tag: "Evoluiu", color: "bg-secondary/15 text-secondary" },
-  { tag: "Indisciplinado", color: "bg-destructive/15 text-destructive" },
-  { tag: "Colaborativo", color: "bg-secondary/15 text-secondary" },
-  { tag: "Reservado", color: "bg-muted/20 text-muted-foreground" },
+  { tag: "Participativo", color: "bg-emerald-600 text-white" },
+  { tag: "Distraído", color: "bg-amber-100 text-amber-800 border-amber-300" },
+  { tag: "Evoluiu", color: "bg-emerald-600 text-white" },
+  { tag: "Indisciplinado", color: "bg-red-100 text-red-800 border-red-300" },
+  { tag: "Colaborativo", color: "bg-emerald-600 text-white" },
+  { tag: "Reservado", color: "bg-slate-100 text-slate-600 border-slate-300" },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────
