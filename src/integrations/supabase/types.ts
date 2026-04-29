@@ -2624,6 +2624,70 @@ export type Database = {
           },
         ]
       }
+      vw_secretaria_direcao: {
+        Row: {
+          created_at: string | null
+          deadline: string | null
+          description: string | null
+          id: string | null
+          origin: string | null
+          priority: string | null
+          request_type: string | null
+          school_id: string | null
+          status: string | null
+          student_id: string | null
+          student_name: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          deadline?: string | null
+          description?: string | null
+          id?: string | null
+          origin?: string | null
+          priority?: string | null
+          request_type?: string | null
+          school_id?: string | null
+          status?: string | null
+          student_id?: string | null
+          student_name?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          deadline?: string | null
+          description?: string | null
+          id?: string | null
+          origin?: string | null
+          priority?: string | null
+          request_type?: string | null
+          school_id?: string | null
+          status?: string | null
+          student_id?: string | null
+          student_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "secretary_requests_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "secretary_requests_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_student_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "secretary_requests_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "vw_students_active"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vw_student_performance: {
         Row: {
           full_name: string | null
