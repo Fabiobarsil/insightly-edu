@@ -527,9 +527,9 @@ ${interventionsHtml}
         {/* ═══ 3. DIAGNÓSTICO + 4. RADAR ═════════════════════════════ */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Diagnóstico */}
-          <section className="bg-white border border-slate-200 rounded-lg p-6">
-            <h2 className="text-base font-bold text-primary mb-4 flex items-center gap-2">
-              <i className="ri-stethoscope-line text-destructive" /> Diagnóstico
+          <section className="bg-white border border-slate-200 border-l-4 border-l-red-500 rounded-lg p-6">
+            <h2 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+              <i className="ri-stethoscope-line text-red-600" /> Diagnóstico
             </h2>
 
             {riskFactors.length > 0 ? (
@@ -537,25 +537,27 @@ ${interventionsHtml}
                 {riskFactors.map(f => (
                   <div key={f.label}>
                     <div className="flex justify-between text-xs font-bold mb-1">
-                      <span className="text-primary">{f.label}</span>
-                      <span className="text-muted-foreground">{f.percent}% impacto</span>
+                      <span className="text-slate-900">{f.label}</span>
+                      <span className="text-slate-500">{f.percent}% impacto</span>
                     </div>
-                    <div className="h-2 rounded-full bg-muted/20 overflow-hidden">
+                    <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
                       <div className={cn("h-full rounded-full transition-all", f.color)} style={{ width: `${f.percent}%` }} />
                     </div>
-                    <p className="text-[11px] text-muted-foreground mt-1">{f.description}</p>
+                    <p className="text-[11px] text-slate-500 mt-1">{f.description}</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground mb-5">Nenhum fator de risco identificado.</p>
+              <p className="text-sm text-slate-500 mb-5">Nenhum fator de risco identificado.</p>
             )}
 
             {/* Diagnostic insight */}
-            <div className="p-3 rounded-xl bg-muted/5 border border-border/20">
-              <p className="text-xs text-muted-foreground leading-relaxed italic">
-                <i className="ri-lightbulb-flash-line mr-1 text-warning" />
+            <div className="p-3 rounded-lg bg-white border border-slate-200">
+              <p className="text-xs text-slate-600 leading-relaxed italic">
+                <i className="ri-lightbulb-flash-line mr-1 text-amber-600" />
                 {diagnosticInsight}
+              </p>
+            </div>
               </p>
             </div>
 
