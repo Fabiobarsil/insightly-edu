@@ -160,6 +160,14 @@ const TeacherRegistrationTab = ({ schoolId }: Props) => {
 
   const currentTab = PROF_TABS.find((t) => t.id === profType)!;
   const showAssignments = profType === "professor";
+  const formRef = useRef<HTMLDivElement>(null);
+  const scrollToForm = () => {
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setTimeout(() => {
+      const input = formRef.current?.querySelector("input") as HTMLInputElement | null;
+      input?.focus();
+    }, 300);
+  };
 
   return (
     <div className="space-y-6">
@@ -183,9 +191,17 @@ const TeacherRegistrationTab = ({ schoolId }: Props) => {
 
       {/* Lista do tipo selecionado */}
       <div className="bg-card border border-border/60 rounded-xl certus-shadow p-6">
-        <h3 className="text-sm font-bold text-primary mb-4 flex items-center gap-2">
-          <i className={currentTab.icon} /> {currentTab.label} Cadastrados
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-bold text-primary flex items-center gap-2">
+            <i className={currentTab.icon} /> {currentTab.label} Cadastrados
+          </h3>
+          <button
+            onClick={scrollToForm}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 transition-colors"
+          >
+            <i className="ri-add-line" /> Adicionar
+          </button>
+        </div>
         {people.length === 0 ? (
           <div className="text-center py-6 text-muted-foreground text-sm border border-dashed border-border/60 rounded-xl">
             Nenhum registro cadastrado.
@@ -222,7 +238,7 @@ const TeacherRegistrationTab = ({ schoolId }: Props) => {
       </div>
 
       {/* Formulário de cadastro */}
-      <div className="bg-card border border-border/60 rounded-xl certus-shadow p-6">
+      <div ref={formRef} className="bg-card border border-border/60 rounded-xl certus-shadow p-6">
         <h3 className="text-sm font-bold text-primary mb-5 flex items-center gap-2">
           <i className="ri-user-add-line" /> Cadastrar Novo {currentTab.label.replace(/s$/, "")}
         </h3>
