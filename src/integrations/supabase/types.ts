@@ -2762,6 +2762,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_class"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_enrollment_class"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "grades_school_id_fkey"
             columns: ["school_id"]
             isOneToOne: false
@@ -2821,6 +2835,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_class"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_enrollment_class"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "grades_school_id_fkey"
             columns: ["school_id"]
             isOneToOne: false
@@ -2860,6 +2888,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_class"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_enrollment_class"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "grades_school_id_fkey"
             columns: ["school_id"]
             isOneToOne: false
@@ -2898,6 +2940,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_class"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_enrollment_class"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "grades_assignment_id_fkey"
             columns: ["assignment_id"]
             isOneToOne: false
@@ -2922,6 +2978,20 @@ export type Database = {
           student_id: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_class"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_enrollment_class"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "grades_school_id_fkey"
             columns: ["school_id"]
