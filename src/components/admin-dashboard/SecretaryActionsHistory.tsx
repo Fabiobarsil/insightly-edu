@@ -12,15 +12,10 @@ import {
   RefreshCw,
   ArrowRight,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
@@ -37,10 +32,7 @@ interface ActionRow {
   student_name: string | null;
 }
 
-const ACTION_META: Record<
-  string,
-  { label: string; Icon: any; badge: string }
-> = {
+const ACTION_META: Record<string, { label: string; Icon: any; badge: string }> = {
   iniciou: {
     label: "Iniciou atendimento",
     Icon: PlayCircle,
@@ -70,13 +62,11 @@ const ACTION_META: Record<
 
 const fetchActions = async (
   schoolId: string,
-  opts: { limit?: number; sinceMonthStart?: boolean }
+  opts: { limit?: number; sinceMonthStart?: boolean },
 ): Promise<ActionRow[]> => {
   let query = supabase
     .from("secretaria_actions")
-    .select(
-      "id, action_type, from_status, to_status, notes, created_at, request_id, student_id"
-    )
+    .select("id, action_type, from_status, to_status, notes, created_at, request_id, student_id")
     .eq("school_id", schoolId)
     .order("created_at", { ascending: false });
 
@@ -92,19 +82,12 @@ const fetchActions = async (
   const rows = (data || []) as any[];
 
   // Hidrata títulos e nomes (evita dependência de FK declarada)
-  const requestIds = Array.from(
-    new Set(rows.map((r) => r.request_id).filter(Boolean))
-  ) as string[];
-  const studentIds = Array.from(
-    new Set(rows.map((r) => r.student_id).filter(Boolean))
-  ) as string[];
+  const requestIds = Array.from(new Set(rows.map((r) => r.request_id).filter(Boolean))) as string[];
+  const studentIds = Array.from(new Set(rows.map((r) => r.student_id).filter(Boolean))) as string[];
 
   const [requestsRes, studentsRes] = await Promise.all([
     requestIds.length
-      ? supabase
-          .from("secretaria_requests")
-          .select("id, title")
-          .in("id", requestIds)
+      ? supabase.from("secretaria_requests").select("id, title").in("id", requestIds)
       : Promise.resolve({ data: [] as any[] }),
     studentIds.length
       ? supabase.from("students").select("id, full_name").in("id", studentIds)
@@ -125,8 +108,8 @@ const fetchActions = async (
     created_at: r.created_at,
     request_id: r.request_id,
     student_id: r.student_id,
-    request_title: r.request_id ? reqMap[r.request_id] ?? null : null,
-    student_name: r.student_id ? stuMap[r.student_id] ?? null : null,
+    request_title: r.request_id ? (reqMap[r.request_id] ?? null) : null,
+    student_name: r.student_id ? (stuMap[r.student_id] ?? null) : null,
   }));
 };
 
@@ -137,18 +120,11 @@ const ActionItem = ({ row }: { row: ActionRow }) => {
     addSuffix: true,
     locale: ptBR,
   });
-  const subject =
-    row.request_title ??
-    (row.student_name ? `Demanda de ${row.student_name}` : "Demanda");
+  const subject = row.request_title ?? (row.student_name ? `Demanda de ${row.student_name}` : "Demanda");
 
   return (
     <li className="flex items-center gap-3 px-4 py-2.5 hover:bg-accent/30 transition-colors">
-      <span
-        className={cn(
-          "h-8 w-8 rounded-full inline-flex items-center justify-center shrink-0",
-          meta.badge
-        )}
-      >
+      <span className={cn("h-8 w-8 rounded-full inline-flex items-center justify-center shrink-0", meta.badge)}>
         <Icon className="h-4 w-4" />
       </span>
       <div className="flex-1 min-w-0">
@@ -156,20 +132,12 @@ const ActionItem = ({ row }: { row: ActionRow }) => {
           <span className="font-bold">{meta.label}</span>
           <span className="text-muted-foreground font-normal"> — {subject}</span>
         </p>
-        {row.notes && (
-          <p className="text-[11px] text-muted-foreground italic truncate mt-0.5">
-            "{row.notes}"
-          </p>
-        )}
+        {row.notes && <p className="text-[11px] text-muted-foreground italic truncate mt-0.5">"{row.notes}"</p>}
         {row.student_name && row.request_title && !row.notes && (
-          <p className="text-[11px] text-muted-foreground truncate">
-            {row.student_name}
-          </p>
+          <p className="text-[11px] text-muted-foreground truncate">{row.student_name}</p>
         )}
       </div>
-      <span className="text-[11px] font-semibold text-muted-foreground whitespace-nowrap shrink-0">
-        {time}
-      </span>
+      <span className="text-[11px] font-semibold text-muted-foreground whitespace-nowrap shrink-0">{time}</span>
     </li>
   );
 };
@@ -190,10 +158,7 @@ const SecretaryActionsHistory = () => {
     queryFn: () => fetchActions(schoolId!, { sinceMonthStart: true }),
   });
 
-  const monthLabel = useMemo(
-    () => format(new Date(), "MMMM 'de' yyyy", { locale: ptBR }),
-    []
-  );
+  const monthLabel = useMemo(() => format(new Date(), "MMMM 'de' yyyy", { locale: ptBR }), []);
 
   return (
     <section className="bg-card border border-border/60 rounded-xl overflow-hidden shadow-sm">
@@ -201,16 +166,9 @@ const SecretaryActionsHistory = () => {
         <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
           <History className="h-4 w-4 text-primary" />
           Histórico de Ações
-          <span className="text-xs font-semibold text-muted-foreground">
-            (últimas 5)
-          </span>
+          <span className="text-xs font-semibold text-muted-foreground">(últimas 5)</span>
         </h3>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => setOpen(true)}
-          className="h-7 px-2.5 text-xs gap-1.5"
-        >
+        <Button size="sm" variant="outline" onClick={() => setOpen(true)} className="h-7 px-2.5 text-xs gap-1.5">
           Ver histórico do mês
         </Button>
       </header>
@@ -221,9 +179,7 @@ const SecretaryActionsHistory = () => {
         </div>
       ) : latest.length === 0 ? (
         <div className="px-4 py-3">
-          <p className="text-xs text-muted-foreground">
-            Nenhuma ação registrada ainda.
-          </p>
+          <p className="text-xs text-muted-foreground">Nenhuma ação registrada ainda.</p>
         </div>
       ) : (
         <ul className="divide-y divide-border/40">
@@ -240,9 +196,7 @@ const SecretaryActionsHistory = () => {
               <History className="h-5 w-5 text-primary" />
               Histórico de ações — <span className="capitalize">{monthLabel}</span>
             </DialogTitle>
-            <DialogDescription>
-              Todas as movimentações registradas pela Secretaria neste mês.
-            </DialogDescription>
+            <DialogDescription>Todas as movimentações registradas pela Secretaria neste mês.</DialogDescription>
           </DialogHeader>
 
           {monthlyLoading ? (
@@ -250,9 +204,7 @@ const SecretaryActionsHistory = () => {
               <Loader2 className="h-5 w-5 animate-spin" />
             </div>
           ) : monthly.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-6 text-center">
-              Nenhuma ação registrada neste mês.
-            </p>
+            <p className="text-sm text-muted-foreground py-6 text-center">Nenhuma ação registrada neste mês.</p>
           ) : (
             <ScrollArea className="max-h-[60vh] -mx-6">
               <ul className="divide-y divide-border/40">
