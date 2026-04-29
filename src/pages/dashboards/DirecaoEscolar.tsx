@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import RelatorioTurmaModal from "@/components/direcao/RelatorioTurmaModal";
+import RelatorioGeralModal from "@/components/direcao/RelatorioGeralModal";
+import RelatorioAlunoModal from "@/components/direcao/RelatorioAlunoModal";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
