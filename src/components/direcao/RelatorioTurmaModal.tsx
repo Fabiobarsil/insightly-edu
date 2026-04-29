@@ -52,14 +52,62 @@ export default function RelatorioTurmaModal({ open, onOpenChange, schoolId }: Pr
     },
   });
 
-  // Assignments da turma (para filtrar grades)
-  const { data: assignments = [] } = useQuery({
-    queryKey: ["rel-turma-assignments", schoolId, selectedClassId],
+  // 1) Média da turma — view v_class_avg
+  const { data: classAvgRow, isLoading: loadingClassAvg } = useQuery({
+    queryKey: ["rel-turma-v-class-avg", schoolId, selectedClassId],
     enabled: !!schoolId && !!selectedClassId,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("assignments")
-        .select("id, title, subject_id, class_id")
+      const { data, error } = await (supabase as any)
+        .from("v_class_avg")
+        .select("avg_grade")
+        .eq("school_id", schoolId!)
+        .eq("class_id", selectedClassId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // 2) Top alunos — view v_top_students
+  const { data: topStudents = [], isLoading: loadingTop } = useQuery({
+    queryKey: ["rel-turma-v-top-students", schoolId, selectedClassId],
+    enabled: !!schoolId && !!selectedClassId,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("v_top_students")
+        .select("student_id, full_name, avg_grade")
+        .eq("school_id", schoolId!)
+        .eq("class_id", selectedClassId)
+        .order("avg_grade", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // 3) Alunos em risco — view v_students_at_risk
+  const { data: atRisk = [], isLoading: loadingRisk } = useQuery({
+    queryKey: ["rel-turma-v-at-risk", schoolId, selectedClassId],
+    enabled: !!schoolId && !!selectedClassId,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("v_students_at_risk")
+        .select("student_id, full_name, avg_grade")
+        .eq("school_id", schoolId!)
+        .eq("class_id", selectedClassId)
+        .order("avg_grade", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // 4) Ranking de disciplinas — view v_subject_avg
+  const { data: subjectRows = [], isLoading: loadingSubjects } = useQuery({
+    queryKey: ["rel-turma-v-subject-avg", schoolId, selectedClassId],
+    enabled: !!schoolId && !!selectedClassId,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("v_subject_avg")
+        .select("assignment_id, avg_grade")
         .eq("school_id", schoolId!)
         .eq("class_id", selectedClassId);
       if (error) throw error;
@@ -67,107 +115,80 @@ export default function RelatorioTurmaModal({ open, onOpenChange, schoolId }: Pr
     },
   });
 
-  const assignmentIds = useMemo(() => assignments.map((a: any) => a.id), [assignments]);
-
-  // Grades da turma
-  const { data: grades = [], isLoading: loadingGrades } = useQuery({
-    queryKey: ["rel-turma-grades", schoolId, selectedClassId, assignmentIds.length],
-    enabled: !!schoolId && !!selectedClassId && assignmentIds.length > 0,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("grades")
-        .select("student_id, grade_value, assignment_id, enrollment_id")
-        .eq("school_id", schoolId!)
-        .in("assignment_id", assignmentIds);
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-
-  const studentIds = useMemo(
-    () => Array.from(new Set(grades.map((g: any) => g.student_id).filter(Boolean))),
-    [grades]
+  const assignmentIds = useMemo(
+    () => subjectRows.map((s: any) => s.assignment_id).filter(Boolean),
+    [subjectRows]
   );
 
-  // Nomes alunos
-  const { data: students = [] } = useQuery({
-    queryKey: ["rel-turma-students", schoolId, selectedClassId, studentIds.length],
-    enabled: !!schoolId && studentIds.length > 0,
+  // Títulos das avaliações para o ranking
+  const { data: assignments = [] } = useQuery({
+    queryKey: ["rel-turma-assignment-titles", schoolId, assignmentIds.length],
+    enabled: !!schoolId && assignmentIds.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("students")
-        .select("id, full_name")
+        .from("assignments")
+        .select("id, title")
         .eq("school_id", schoolId!)
-        .in("id", studentIds);
+        .in("id", assignmentIds);
       if (error) throw error;
       return data ?? [];
     },
   });
 
-  const studentNameMap = useMemo(() => {
-    const m = new Map<string, string>();
-    students.forEach((s: any) => m.set(s.id, s.full_name));
-    return m;
-  }, [students]);
-
   // Indicadores
-  const totalAlunos = studentIds.length;
-  const mediaTurma = useMemo(() => {
-    const valid = grades.filter((g: any) => g.grade_value != null);
-    if (!valid.length) return 0;
-    return valid.reduce((s: number, g: any) => s + Number(g.grade_value), 0) / valid.length;
-  }, [grades]);
+  const totalAlunos = useMemo(() => {
+    const ids = new Set<string>();
+    topStudents.forEach((s: any) => s.student_id && ids.add(s.student_id));
+    atRisk.forEach((s: any) => s.student_id && ids.add(s.student_id));
+    return ids.size;
+  }, [topStudents, atRisk]);
 
-  // Ranking disciplinas (por assignment_id)
+  const mediaTurma = Number(classAvgRow?.avg_grade ?? 0);
+
+  // Ranking disciplinas
   const rankingDisciplinas = useMemo(() => {
-    const map = new Map<string, { sum: number; n: number }>();
-    grades.forEach((g: any) => {
-      if (g.grade_value == null) return;
-      const cur = map.get(g.assignment_id) ?? { sum: 0, n: 0 };
-      cur.sum += Number(g.grade_value);
-      cur.n += 1;
-      map.set(g.assignment_id, cur);
-    });
     const aMap = new Map(assignments.map((a: any) => [a.id, a.title || "Avaliação"]));
-    return Array.from(map, ([id, v]) => ({
-      id,
-      title: (aMap.get(id) as string) || "Avaliação",
-      media: v.n ? v.sum / v.n : 0,
-    })).sort((a, b) => b.media - a.media);
-  }, [grades, assignments]);
+    return subjectRows
+      .map((r: any) => ({
+        id: r.assignment_id,
+        title: (aMap.get(r.assignment_id) as string) || "Avaliação",
+        media: Number(r.avg_grade ?? 0),
+      }))
+      .sort((a, b) => b.media - a.media);
+  }, [subjectRows, assignments]);
 
   const melhorDisc = rankingDisciplinas[0];
   const piorDisc = rankingDisciplinas[rankingDisciplinas.length - 1];
 
-  // Médias por aluno
-  const alunosMedia = useMemo(() => {
-    const map = new Map<string, { sum: number; n: number }>();
-    grades.forEach((g: any) => {
-      if (!g.student_id || g.grade_value == null) return;
-      const cur = map.get(g.student_id) ?? { sum: 0, n: 0 };
-      cur.sum += Number(g.grade_value);
-      cur.n += 1;
-      map.set(g.student_id, cur);
-    });
-    return Array.from(map, ([id, v]) => ({
-      id,
-      name: studentNameMap.get(id) || "Aluno",
-      media: v.n ? v.sum / v.n : 0,
-    }));
-  }, [grades, studentNameMap]);
-
+  // Top 3 alunos
   const top3 = useMemo(
-    () => [...alunosMedia].sort((a, b) => b.media - a.media).slice(0, 3),
-    [alunosMedia]
+    () =>
+      topStudents.slice(0, 3).map((s: any) => ({
+        id: s.student_id,
+        name: s.full_name || "Aluno",
+        media: Number(s.avg_grade ?? 0),
+      })),
+    [topStudents]
   );
 
+  // Alunos em atenção
   const atencao = useMemo(
-    () => alunosMedia.filter((a) => a.media < 6).sort((a, b) => a.media - b.media),
-    [alunosMedia]
+    () =>
+      atRisk.map((s: any) => ({
+        id: s.student_id,
+        name: s.full_name || "Aluno",
+        media: Number(s.avg_grade ?? 0),
+      })),
+    [atRisk]
   );
 
-  const loading = loadingClasses || (!!selectedClassId && loadingGrades);
-  const hasData = !!selectedClassId && grades.length > 0;
+  const loading =
+    loadingClasses ||
+    (!!selectedClassId && (loadingClassAvg || loadingTop || loadingRisk || loadingSubjects));
+  const hasData =
+    !!selectedClassId &&
+    !loading &&
+    (topStudents.length > 0 || atRisk.length > 0 || subjectRows.length > 0 || !!classAvgRow);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
