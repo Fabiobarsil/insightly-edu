@@ -343,65 +343,43 @@ const StudentRecord = () => {
 
               {/* ── Metric Cards ── */}
               <div className="flex flex-wrap gap-3">
-                <div className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl border shadow-sm",
-                  mediaColor === "destructive" ? "bg-destructive/10 border-destructive/20" :
-                  mediaColor === "warning" ? "bg-warning/10 border-warning/20" :
-                  "bg-secondary/10 border-secondary/20"
-                )}>
-                  <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center",
-                    mediaColor === "destructive" ? "bg-destructive/20" :
-                    mediaColor === "warning" ? "bg-warning/20" : "bg-secondary/20"
-                  )}>
-                    <i className={cn("ri-bar-chart-box-line text-lg",
-                      mediaColor === "destructive" ? "text-destructive" :
-                      mediaColor === "warning" ? "text-warning-foreground" : "text-secondary"
-                    )} />
+                <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white border border-slate-200 border-l-4 border-l-blue-500">
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-blue-100">
+                    <i className="ri-bar-chart-box-line text-lg text-blue-600" />
                   </div>
                   <div>
-                    <div className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Média Geral</div>
+                    <div className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Média Geral</div>
                     <div className={cn("text-xl font-bold",
-                      mediaColor === "destructive" ? "text-destructive" :
-                      mediaColor === "warning" ? "text-warning-foreground" : "text-secondary"
+                      mediaColor === "destructive" ? "text-red-700" :
+                      mediaColor === "warning" ? "text-amber-700" : "text-slate-900"
                     )}>
                       {gradeValues.length > 0 ? mediaGeral.toFixed(1) : "—"}
                     </div>
                   </div>
                 </div>
 
-                <div className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl border shadow-sm",
-                  freqColor === "destructive" ? "bg-destructive/10 border-destructive/20" :
-                  freqColor === "warning" ? "bg-warning/10 border-warning/20" :
-                  "bg-secondary/10 border-secondary/20"
-                )}>
-                  <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center",
-                    freqColor === "destructive" ? "bg-destructive/20" :
-                    freqColor === "warning" ? "bg-warning/20" : "bg-secondary/20"
-                  )}>
-                    <i className={cn("ri-calendar-check-line text-lg",
-                      freqColor === "destructive" ? "text-destructive" :
-                      freqColor === "warning" ? "text-warning-foreground" : "text-secondary"
-                    )} />
+                <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white border border-slate-200 border-l-4 border-l-red-500">
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-red-100">
+                    <i className="ri-calendar-check-line text-lg text-red-600" />
                   </div>
                   <div>
-                    <div className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Frequência</div>
+                    <div className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Frequência</div>
                     <div className={cn("text-xl font-bold",
-                      freqColor === "destructive" ? "text-destructive" :
-                      freqColor === "warning" ? "text-warning-foreground" : "text-secondary"
+                      freqColor === "destructive" ? "text-red-700" :
+                      freqColor === "warning" ? "text-amber-700" : "text-slate-900"
                     )}>
                       {totalAttendance > 0 ? `${freqPercent.toFixed(0)}%` : "—"}
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 px-4 py-3 rounded-xl border bg-muted/5 border-border/30 shadow-sm">
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-primary/10">
-                    <i className="ri-shield-check-line text-lg text-primary" />
+                <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white border border-slate-200 border-l-4 border-l-yellow-500">
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-yellow-100">
+                    <i className="ri-shield-check-line text-lg text-yellow-700" />
                   </div>
                   <div>
-                    <div className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Intervenções</div>
-                    <div className="text-xl font-bold text-primary">{interventions.length}</div>
+                    <div className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Intervenções</div>
+                    <div className="text-xl font-bold text-slate-900">{interventions.length}</div>
                   </div>
                 </div>
               </div>
