@@ -332,6 +332,21 @@ const ClassesEdit = () => {
                 <option key={o.id} value={o.id}>{o.name}</option>
               ))}
             </select>
+            {shifts.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {shifts.map((s) => (
+                  <div key={s.id} className="inline-flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-md px-2 py-1 text-xs">
+                    <span className="text-slate-700">{s.name}</span>
+                    <button type="button" className="text-slate-500 hover:text-blue-600" onClick={() => setEditShift({ id: s.id, name: s.name })} title="Editar">
+                      <Pencil className="h-3 w-3" />
+                    </button>
+                    <button type="button" className="text-slate-500 hover:text-red-600" onClick={() => setDeleteShiftId(s.id)} title="Excluir">
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <FormField label="Ano Letivo" type="number" placeholder="2024" value={String(form.academic_year)} onChange={set("academic_year")} />
