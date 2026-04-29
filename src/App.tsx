@@ -14,6 +14,7 @@ import SuperadminDashboard from "./pages/dashboards/SuperadminDashboard.tsx";
 import SchoolsList from "./pages/schools/SchoolsList.tsx";
 import AdminDashboard from "./pages/dashboards/AdminDashboard.tsx";
 import CoordinationDashboard from "./pages/dashboards/CoordinationDashboard.tsx";
+import DirecaoEscolar from "./pages/dashboards/DirecaoEscolar.tsx";
 import SecretariaDashboard from "./pages/dashboards/SecretariaDashboard.tsx";
 import ProfessorDashboard from "./pages/dashboards/ProfessorDashboard.tsx";
 
@@ -147,6 +148,7 @@ const App = () => (
             <Route path="/admin/documentos" element={<RoleRoute allowedRoles={["admin"]}><Documents /></RoleRoute>} />
             <Route path="/admin/comunicacao" element={<RoleRoute allowedRoles={["admin"]}><Communication /></RoleRoute>} />
             <Route path="/admin/coordenacao" element={<RoleRoute allowedRoles={["admin"]}><CoordinationDashboard /></RoleRoute>} />
+            <Route path="/admin/direcao" element={<RoleRoute allowedRoles={["admin"]}><DirecaoEscolar /></RoleRoute>} />
             <Route path="/admin/configuracoes" element={<RoleRoute allowedRoles={["admin"]}><Settings /></RoleRoute>} />
             <Route path="/admin/certificado-preview" element={<RoleRoute allowedRoles={["admin"]}><CertificadoPreview /></RoleRoute>} />
             <Route path="/admin/indicadores" element={<RoleRoute allowedRoles={["admin"]}><Indicadores /></RoleRoute>} />
