@@ -121,6 +121,7 @@ const fetchActions = async (
     action_type: r.action_type,
     from_status: r.from_status,
     to_status: r.to_status,
+    notes: r.notes ?? null,
     created_at: r.created_at,
     request_id: r.request_id,
     student_id: r.student_id,
@@ -155,7 +156,12 @@ const ActionItem = ({ row }: { row: ActionRow }) => {
           <span className="font-bold">{meta.label}</span>
           <span className="text-muted-foreground font-normal"> — {subject}</span>
         </p>
-        {row.student_name && row.request_title && (
+        {row.notes && (
+          <p className="text-[11px] text-muted-foreground italic truncate mt-0.5">
+            "{row.notes}"
+          </p>
+        )}
+        {row.student_name && row.request_title && !row.notes && (
           <p className="text-[11px] text-muted-foreground truncate">
             {row.student_name}
           </p>
