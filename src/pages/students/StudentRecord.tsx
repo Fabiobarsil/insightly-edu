@@ -676,45 +676,40 @@ ${interventionsHtml}
         </section>
 
         {/* ═══ 6. AÇÕES RECOMENDADAS ═════════════════════════════════ */}
-        <section className="bg-white border border-slate-200 rounded-lg p-6">
-          <h2 className="text-base font-bold text-primary mb-4 flex items-center gap-2">
-            <i className="ri-flashlight-line text-warning" /> Ações Recomendadas
+        <section className="bg-red-100 border border-red-300 rounded-lg p-6">
+          <h2 className="text-base font-bold text-red-800 mb-4 flex items-center gap-2">
+            <i className="ri-flashlight-line text-red-700" /> Ações Recomendadas
           </h2>
           <div className="space-y-3">
             {recommendations.map((r, i) => (
-              <div key={i} className={cn(
-                "flex items-center justify-between p-4 rounded-xl border",
-                r.urgency === "critico" ? "bg-destructive/5 border-destructive/20" :
-                r.urgency === "atencao" ? "bg-warning/5 border-warning/20" :
-                "bg-background/50 border-border/30"
-              )}>
+              <div key={i} className="flex items-center justify-between p-4 rounded-lg bg-white border border-slate-200">
                 <div className="flex items-start gap-3">
                   <i className={cn("text-lg mt-0.5",
-                    r.type === "secretaria" ? "ri-building-line text-primary" :
-                    r.type === "professor" ? "ri-user-star-line text-secondary" :
-                    r.type === "coordenacao" ? "ri-alarm-warning-line text-destructive" :
-                    "ri-checkbox-circle-line text-secondary"
+                    r.type === "secretaria" ? "ri-building-line text-blue-600" :
+                    r.type === "professor" ? "ri-user-star-line text-emerald-600" :
+                    r.type === "coordenacao" ? "ri-alarm-warning-line text-red-600" :
+                    "ri-checkbox-circle-line text-emerald-600"
                   )} />
                   <div>
-                    <span className="text-sm font-semibold text-primary block">{r.text}</span>
-                    <span className="text-[11px] text-muted-foreground">{r.detail}</span>
+                    <span className="text-sm font-semibold text-slate-900 block">{r.text}</span>
+                    <span className="text-[11px] text-slate-500">{r.detail}</span>
                   </div>
                 </div>
                 <div className="flex gap-2 shrink-0">
                   {r.type === "professor" && (
-                    <Button size="sm" variant="outline" className="text-xs gap-1" onClick={() => toast.success("Notificação enviada ao professor")}>
+                    <Button size="sm" variant="outline" className="text-xs gap-1 border border-slate-300 text-slate-700" onClick={() => toast.success("Notificação enviada ao professor")}>
                       <i className="ri-notification-line" /> Notificar
                     </Button>
                   )}
                   {r.type === "secretaria" && (
-                    <Button size="sm" variant="outline" className="text-xs gap-1" onClick={() => toast.success("Solicitação enviada à secretaria")}>
+                    <Button size="sm" variant="outline" className="text-xs gap-1 border border-slate-300 text-slate-700" onClick={() => toast.success("Solicitação enviada à secretaria")}>
                       <i className="ri-send-plane-line" /> Solicitar
                     </Button>
                   )}
                 </div>
               </div>
             ))}
-            <Button variant="outline" className="w-full gap-2 mt-2" onClick={() => setInterventionOpen(true)}>
+            <Button variant="outline" className="w-full gap-2 mt-2 bg-slate-900 text-white hover:bg-slate-800 border-slate-900" onClick={() => setInterventionOpen(true)}>
               <i className="ri-add-line" /> Registrar Nova Intervenção
             </Button>
           </div>
