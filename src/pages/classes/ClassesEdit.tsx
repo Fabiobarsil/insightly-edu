@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
@@ -41,6 +41,10 @@ const ClassesEdit = () => {
   const [gradeModalOpen, setGradeModalOpen] = useState(false);
   const [shiftModalOpen, setShiftModalOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [editGrade, setEditGrade] = useState<{ id: string; name: string } | null>(null);
+  const [editShift, setEditShift] = useState<{ id: string; name: string } | null>(null);
+  const [deleteGradeId, setDeleteGradeId] = useState<string | null>(null);
+  const [deleteShiftId, setDeleteShiftId] = useState<string | null>(null);
 
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
@@ -158,6 +162,60 @@ const ClassesEdit = () => {
     onError: (err: any) => toast.error(err.message?.includes("duplicate") ? "Turno já existe" : "Erro ao criar turno"),
   });
 
+  const updateGrade = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const { error } = await supabase.from("school_grades").update({ name }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["school-grades"] });
+      setEditGrade(null);
+      toast.success("Série atualizada!");
+    },
+    onError: (err: any) => toast.error(err.message || "Erro ao atualizar série"),
+  });
+
+  const deleteGrade = useMutation({
+    mutationFn: async (gradeId: string) => {
+      const { error } = await supabase.from("school_grades").delete().eq("id", gradeId);
+      if (error) throw error;
+    },
+    onSuccess: (_d, gradeId) => {
+      queryClient.invalidateQueries({ queryKey: ["school-grades"] });
+      if (form.grade_id === gradeId) setForm((p) => ({ ...p, grade_id: "" }));
+      setDeleteGradeId(null);
+      toast.success("Série excluída!");
+    },
+    onError: (err: any) => toast.error(err.message || "Erro ao excluir série"),
+  });
+
+  const updateShift = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const { error } = await supabase.from("school_shifts").update({ name }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["school-shifts"] });
+      setEditShift(null);
+      toast.success("Turno atualizado!");
+    },
+    onError: (err: any) => toast.error(err.message || "Erro ao atualizar turno"),
+  });
+
+  const deleteShift = useMutation({
+    mutationFn: async (shiftId: string) => {
+      const { error } = await supabase.from("school_shifts").delete().eq("id", shiftId);
+      if (error) throw error;
+    },
+    onSuccess: (_d, shiftId) => {
+      queryClient.invalidateQueries({ queryKey: ["school-shifts"] });
+      if (form.shift_id === shiftId) setForm((p) => ({ ...p, shift_id: "" }));
+      setDeleteShiftId(null);
+      toast.success("Turno excluído!");
+    },
+    onError: (err: any) => toast.error(err.message || "Erro ao excluir turno"),
+  });
+
   // Update class
   const updateMutation = useMutation({
     mutationFn: async () => {
@@ -239,6 +297,21 @@ const ClassesEdit = () => {
                 <option key={o.id} value={o.id}>{o.name}</option>
               ))}
             </select>
+            {grades.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {grades.map((g) => (
+                  <div key={g.id} className="inline-flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-md px-2 py-1 text-xs">
+                    <span className="text-slate-700">{g.name}</span>
+                    <button type="button" className="text-slate-500 hover:text-blue-600" onClick={() => setEditGrade({ id: g.id, name: g.name })} title="Editar">
+                      <Pencil className="h-3 w-3" />
+                    </button>
+                    <button type="button" className="text-slate-500 hover:text-red-600" onClick={() => setDeleteGradeId(g.id)} title="Excluir">
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
@@ -259,6 +332,21 @@ const ClassesEdit = () => {
                 <option key={o.id} value={o.id}>{o.name}</option>
               ))}
             </select>
+            {shifts.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {shifts.map((s) => (
+                  <div key={s.id} className="inline-flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-md px-2 py-1 text-xs">
+                    <span className="text-slate-700">{s.name}</span>
+                    <button type="button" className="text-slate-500 hover:text-blue-600" onClick={() => setEditShift({ id: s.id, name: s.name })} title="Editar">
+                      <Pencil className="h-3 w-3" />
+                    </button>
+                    <button type="button" className="text-slate-500 hover:text-red-600" onClick={() => setDeleteShiftId(s.id)} title="Excluir">
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <FormField label="Ano Letivo" type="number" placeholder="2024" value={String(form.academic_year)} onChange={set("academic_year")} />
@@ -316,6 +404,72 @@ const ClassesEdit = () => {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={() => deleteMutation.mutate()} className="bg-destructive hover:bg-destructive/90">
               {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Editar Série */}
+      <Dialog open={!!editGrade} onOpenChange={(o) => !o && setEditGrade(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Editar Série</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <Label>Nome da Série</Label>
+            <Input value={editGrade?.name || ""} onChange={(e) => setEditGrade((p) => p ? { ...p, name: e.target.value } : p)} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditGrade(null)}>Cancelar</Button>
+            <Button disabled={!editGrade?.name.trim() || updateGrade.isPending} onClick={() => editGrade && updateGrade.mutate({ id: editGrade.id, name: editGrade.name.trim() })}>
+              {updateGrade.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Editar Turno */}
+      <Dialog open={!!editShift} onOpenChange={(o) => !o && setEditShift(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Editar Turno</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <Label>Nome do Turno</Label>
+            <Input value={editShift?.name || ""} onChange={(e) => setEditShift((p) => p ? { ...p, name: e.target.value } : p)} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditShift(null)}>Cancelar</Button>
+            <Button disabled={!editShift?.name.trim() || updateShift.isPending} onClick={() => editShift && updateShift.mutate({ id: editShift.id, name: editShift.name.trim() })}>
+              {updateShift.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Excluir Série */}
+      <AlertDialog open={!!deleteGradeId} onOpenChange={(o) => !o && setDeleteGradeId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir série?</AlertDialogTitle>
+            <AlertDialogDescription>Turmas vinculadas a esta série podem ser afetadas.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => deleteGradeId && deleteGrade.mutate(deleteGradeId)} className="bg-destructive hover:bg-destructive/90">
+              {deleteGrade.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Excluir Turno */}
+      <AlertDialog open={!!deleteShiftId} onOpenChange={(o) => !o && setDeleteShiftId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir turno?</AlertDialogTitle>
+            <AlertDialogDescription>Turmas vinculadas a este turno podem ser afetadas.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => deleteShiftId && deleteShift.mutate(deleteShiftId)} className="bg-destructive hover:bg-destructive/90">
+              {deleteShift.isPending ? "Excluindo..." : "Excluir"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
