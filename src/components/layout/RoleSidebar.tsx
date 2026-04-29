@@ -7,6 +7,7 @@ interface NavItem {
   icon: string;
   label: string;
   to: string;
+  color?: string;
 }
 
 const menusByRole: Record<DashboardRole, NavItem[]> = {
