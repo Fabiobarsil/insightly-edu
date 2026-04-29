@@ -722,7 +722,7 @@ const CoordinationDashboard = () => {
 
         {/* ── INTERVENÇÕES — ABERTAS ── */}
         {openInterventions.length > 0 && (
-          <Card className="rounded-2xl border-warning/30">
+          <Card className="rounded-lg border border-amber-300 bg-white shadow-none">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-bold flex items-center gap-2">
                 <Clock className="h-4 w-4 text-warning-foreground" />
