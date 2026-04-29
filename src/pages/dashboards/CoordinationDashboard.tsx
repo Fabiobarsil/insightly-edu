@@ -842,7 +842,7 @@ const CoordinationDashboard = () => {
             <CardContent>
               <div className="flex flex-col gap-2">
                 {openCoordRequests.map((r) => (
-                  <div key={r.id} className="flex items-center gap-3 rounded-xl bg-muted/30 px-4 py-3">
+                  <div key={r.id} className="flex items-center gap-3 rounded-lg bg-white border border-slate-200 px-4 py-3">
                     <Clock className="h-4 w-4 text-primary" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">{r.student_name || "Sem aluno"}</p>
