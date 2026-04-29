@@ -244,7 +244,7 @@ const StudentsList = () => {
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
+                    <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
                       {hasFilter
                         ? "Nenhum aluno encontrado com os filtros aplicados."
                         : "Nenhum aluno cadastrado ainda."}
@@ -271,6 +271,7 @@ const StudentsList = () => {
                             <span className="font-medium text-foreground">{row.full_name}</span>
                           </div>
                         </td>
+                        <td className="px-4 py-3 font-mono text-xs text-foreground">{row.enrollment_code}</td>
                         <td className="px-4 py-3 text-foreground">{row.class_name}</td>
                         <td className="px-4 py-3 text-foreground">{row.grade}</td>
                         <td className="px-4 py-3 text-foreground">{row.shift}</td>
