@@ -25,6 +25,7 @@ const menusByRole: Record<DashboardRole, NavItem[]> = {
     { icon: "ri-booklet-line", label: "Disciplinas", to: "/admin/disciplinas" },
     { icon: "ri-user-star-line", label: "Professores", to: "/admin/professores" },
     { icon: "ri-compass-3-line", label: "Coordenação", to: "/admin/coordenacao" },
+    { icon: "ri-building-line", label: "Direção", to: "/admin/direcao" },
     { icon: "ri-file-text-line", label: "Documentos", to: "/admin/documentos" },
     { icon: "ri-chat-3-line", label: "Comunicação", to: "/admin/comunicacao" },
     { icon: "ri-award-line", label: "Preview Certificado", to: "/admin/certificado-preview" },
