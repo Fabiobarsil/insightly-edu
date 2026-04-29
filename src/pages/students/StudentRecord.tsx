@@ -460,11 +460,11 @@ ${interventionsHtml}
                   newWindow.document.close();
                   setTimeout(() => newWindow.print(), 250);
                 }
-              }} className="gap-2">
+              }}>
                 <i className="ri-file-chart-line" /> Gerar Relatório
               </Button>
               <Link to={`/admin/alunos/${id}`}>
-                <Button variant="outline" size="sm" className="gap-2 w-full">
+                <Button variant="outline" size="sm" className="gap-2 w-full border border-slate-300 text-slate-700">
                   <i className="ri-arrow-left-line" /> Voltar
                 </Button>
               </Link>
