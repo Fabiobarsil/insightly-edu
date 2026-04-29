@@ -387,7 +387,7 @@ const StudentRecord = () => {
 
             {/* Actions */}
             <div className="flex flex-col gap-2 shrink-0">
-              <Button size="sm" onClick={() => {
+              <Button size="sm" className="gap-2 bg-slate-900 text-white hover:bg-slate-800" onClick={() => {
                 // Generate HTML report in new tab for printing/PDF
                 const studentData = {
                   name: student.full_name,
