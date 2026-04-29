@@ -660,7 +660,7 @@ const CoordinationDashboard = () => {
         {/* 📊 4. INTERVENÇÕES + GRÁFICO — Mais compactos */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Resultado discreto */}
-          <div className="lg:col-span-1 rounded-lg border border-border/40 bg-muted/30 p-4">
+          <div className="lg:col-span-1 rounded-lg border border-slate-200 bg-white p-4">
             <p className="text-xs font-medium text-muted-foreground mb-3 flex items-center gap-1.5">
               <BarChart3 className="h-3.5 w-3.5" /> Resultado das Intervenções
             </p>
