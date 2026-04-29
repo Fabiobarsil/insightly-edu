@@ -40,11 +40,25 @@ const InternalPageHeader = ({ breadcrumbs }: InternalPageHeaderProps) => {
   const rootSegment = segments[0] || "admin";
   const lastSegment = segments[segments.length - 1];
   const isDashboard = lastSegment === "dashboard";
+  const isDirecao = lastSegment === "direcao";
 
-  if (isDashboard) return null;
+  if (isDashboard || isDirecao) return null;
 
-  const rootLabel = ROOT_LABELS[rootSegment] || "Secretaria";
-  const dashboardPath = rootSegment === "admin" ? "/admin/dashboard" : `/${rootSegment}/dashboard`;
+  // Página Indicadores acessada a partir da Direção
+  const fromDirecao =
+    rootSegment === "admin" && lastSegment === "indicadores";
+
+  const rootLabel = fromDirecao
+    ? "Direção"
+    : ROOT_LABELS[rootSegment] || "Secretaria";
+  const dashboardPath = fromDirecao
+    ? "/admin/direcao"
+    : rootSegment === "admin"
+      ? "/admin/dashboard"
+      : `/${rootSegment}/dashboard`;
+  const backLabel = fromDirecao
+    ? "Voltar para Direção"
+    : "Voltar para Secretaria Digital";
   const fallbackLabel = ROUTE_LABELS[lastSegment] || lastSegment;
   const trail = breadcrumbs && breadcrumbs.length > 0 ? breadcrumbs : [{ label: fallbackLabel }];
 
@@ -88,7 +102,7 @@ const InternalPageHeader = ({ breadcrumbs }: InternalPageHeaderProps) => {
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
       >
         <ChevronLeft className="h-4 w-4" />
-        Voltar para Dashboard
+        {backLabel}
       </button>
     </div>
   );
