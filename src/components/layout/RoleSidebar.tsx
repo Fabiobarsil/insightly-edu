@@ -74,7 +74,7 @@ const RoleSidebar = () => {
             className="w-full flex items-center gap-[10px] px-3 py-2 rounded-[12px] text-sidebar-foreground/55 mb-0.5 transition-all duration-200 text-left text-sm hover:bg-sidebar-foreground/5 hover:text-sidebar-foreground/85"
             activeClassName="bg-secondary/15 text-secondary"
           >
-            <i className={cn(item.icon, "text-lg")} />
+            <i className={cn(item.icon, "text-lg", item.color)} />
             {item.label}
           </NavLink>
         ))}
