@@ -201,9 +201,9 @@ const Documents = () => {
   const handleReasonChange = (v: string) => { setDeclReason(v); setShowDeclPreview(false); };
 
   const tabs: { id: Tab; label: string; icon: string }[] = [
-    { id: "documentos", label: "Checklist de Docs", icon: "ri-file-list-3-line" },
     { id: "oficiais", label: "Docs Oficiais", icon: "ri-file-text-line" },
     { id: "declaracoes", label: "Declarações", icon: "ri-draft-line" },
+    { id: "documentos", label: "Checklist de Docs", icon: "ri-file-list-3-line" },
   ];
 
   return (
