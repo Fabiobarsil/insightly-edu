@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import RoleLayout from "@/components/layout/RoleLayout";
@@ -11,12 +12,28 @@ import MomentoCertus from "@/components/admin-dashboard/MomentoCertus";
 import PerformancePanel from "@/components/admin-dashboard/PerformancePanel";
 import SecretaryActionsHistory from "@/components/admin-dashboard/SecretaryActionsHistory";
 import RequestFormModal from "@/components/secretaria/RequestFormModal";
+import AttendanceModal from "@/components/secretaria/AttendanceModal";
+import { useSecretariaKanban } from "@/hooks/useSecretariaKanban";
 
 const AdminDashboard = () => {
   const [context, setContext] = useState<string>("all");
   const [filter, setFilter] = useState<CounterFilter>("all");
   const [requestModalOpen, setRequestModalOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
+
+  // Reabrir modal Atender ao voltar da Ficha do Aluno (?attend=:request_id)
+  const { requests } = useSecretariaKanban();
+  const attendId = searchParams.get("attend");
+  const [attendOpen, setAttendOpen] = useState(false);
+
+  useEffect(() => {
+    if (attendId && requests.length > 0) {
+      setAttendOpen(true);
+    }
+  }, [attendId, requests.length]);
+
+  const attendRequest = attendId ? requests.find((r) => r.id === attendId) ?? null : null;
 
   return (
     <RoleLayout title="Secretaria Digital">
@@ -41,23 +58,22 @@ const AdminDashboard = () => {
         {/* Indicadores clicáveis (filtram a fila) */}
         <SecretaryCounters active={filter} onChange={setFilter} />
 
-        {/* Alertas críticos */}
+        {/* Prioridades do Dia (alertas críticos) */}
         <SecretaryAlertsBar />
 
-        {/* Fila operacional + Agenda lado a lado (~65% / 35%) */}
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,65fr)_minmax(0,35fr)] gap-6 items-start">
-          <div className="min-w-0" id="kanban-section">
-            <SecretaryKanban filter={filter} />
-          </div>
-
-          <aside className="min-w-0 flex flex-col gap-4" id="agenda-section">
-            <AdminAgenda />
-            <MomentoCertus />
-          </aside>
+        {/* Fila Operacional — bloco principal, ocupa toda a largura */}
+        <div id="kanban-section" className="min-w-0">
+          <SecretaryKanban filter={filter} />
         </div>
 
-        {/* Histórico de ações da Secretaria */}
+        {/* Histórico de ações */}
         <SecretaryActionsHistory />
+
+        {/* Áreas secundárias: Agenda + Momento Certus lado a lado */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+          <AdminAgenda />
+          <MomentoCertus />
+        </div>
 
         {/* Panorama de performance (rodapé) */}
         <PerformancePanel />
@@ -73,6 +89,20 @@ const AdminDashboard = () => {
           queryClient.invalidateQueries({ queryKey: ["secretary-alerts-bar"] });
           toast.success("Solicitação enviada para 'A Fazer'");
         }}
+      />
+
+      {/* Modal de atendimento reaberto via ?attend= */}
+      <AttendanceModal
+        open={attendOpen}
+        onOpenChange={(v) => {
+          setAttendOpen(v);
+          if (!v) {
+            const next = new URLSearchParams(searchParams);
+            next.delete("attend");
+            setSearchParams(next, { replace: true });
+          }
+        }}
+        request={attendRequest}
       />
     </RoleLayout>
   );
