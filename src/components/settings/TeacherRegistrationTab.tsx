@@ -63,11 +63,11 @@ const TeacherRegistrationTab = ({ schoolId }: Props) => {
     queryKey: ["teachers-by-type", schoolId, profType],
     queryFn: async () => {
       if (!schoolId) return [];
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("teachers")
-        .select("id, full_name, email, status, type_professional" as any)
+        .select("id, full_name, email, status, type_professional")
         .eq("school_id", schoolId)
-        .eq("type_professional" as any, profType)
+        .eq("type_professional", profType)
         .order("full_name");
       return (data ?? []) as any[];
     },
