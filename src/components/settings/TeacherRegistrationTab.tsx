@@ -184,7 +184,7 @@ const TeacherRegistrationTab = ({ schoolId }: Props) => {
                 : "bg-card border-border/60 text-muted-foreground hover:bg-accent"
             )}
           >
-            <i className={t.icon} /> {t.label}
+            <i className={cn(t.icon, "text-base", profType === t.id ? "" : t.color)} /> {t.label}
           </button>
         ))}
       </div>
