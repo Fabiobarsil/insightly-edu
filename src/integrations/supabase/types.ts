@@ -2228,6 +2228,7 @@ export type Database = {
           cpf: string | null
           district: string | null
           email: string | null
+          enrollment_code: string | null
           enrollment_number: string | null
           full_name: string
           id: string
@@ -2254,6 +2255,7 @@ export type Database = {
           cpf?: string | null
           district?: string | null
           email?: string | null
+          enrollment_code?: string | null
           enrollment_number?: string | null
           full_name: string
           id?: string
@@ -2280,6 +2282,7 @@ export type Database = {
           cpf?: string | null
           district?: string | null
           email?: string | null
+          enrollment_code?: string | null
           enrollment_number?: string | null
           full_name?: string
           id?: string
