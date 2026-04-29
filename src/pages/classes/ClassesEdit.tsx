@@ -41,6 +41,10 @@ const ClassesEdit = () => {
   const [gradeModalOpen, setGradeModalOpen] = useState(false);
   const [shiftModalOpen, setShiftModalOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [editGrade, setEditGrade] = useState<{ id: string; name: string } | null>(null);
+  const [editShift, setEditShift] = useState<{ id: string; name: string } | null>(null);
+  const [deleteGradeId, setDeleteGradeId] = useState<string | null>(null);
+  const [deleteShiftId, setDeleteShiftId] = useState<string | null>(null);
 
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
