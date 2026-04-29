@@ -567,7 +567,7 @@ ${interventionsHtml}
                   {subjectMap.map(s => (
                     <div key={s.name} className="flex items-center gap-3">
                       <span className="text-xs font-medium text-primary w-28 truncate">{s.name}</span>
-                      <div className="flex-1 h-2 rounded-full bg-muted/20 overflow-hidden">
+                      <div className="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
                         <div className={cn("h-full rounded-full", s.media >= 6 ? "bg-secondary" : "bg-destructive")} style={{ width: `${(s.media / 10) * 100}%` }} />
                       </div>
                       <span className={cn("text-xs font-bold w-8 text-right", s.media >= 6 ? "text-secondary" : "text-destructive")}>
