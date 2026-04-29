@@ -333,7 +333,7 @@ const StudentRecord = () => {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 flex-wrap mb-1">
                 <h1 className="text-2xl font-bold text-primary truncate">{student.full_name}</h1>
-                <span className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold", situation.bg, situation.color)}>
+                <span className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs", situation.badge)}>
                   <i className={situation.icon} /> {situation.label}
                 </span>
               </div>
