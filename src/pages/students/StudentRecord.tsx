@@ -37,29 +37,34 @@ type Intervention = {
 
 // ─── Behavior mock (local state, no new tables) ──────────────────────
 const BEHAVIOR_OPTIONS = [
-  { tag: "Participativo", color: "bg-secondary/15 text-secondary" },
-  { tag: "Distraído", color: "bg-warning/15 text-warning-foreground" },
-  { tag: "Evoluiu", color: "bg-secondary/15 text-secondary" },
-  { tag: "Indisciplinado", color: "bg-destructive/15 text-destructive" },
-  { tag: "Colaborativo", color: "bg-secondary/15 text-secondary" },
-  { tag: "Reservado", color: "bg-muted/20 text-muted-foreground" },
+  { tag: "Participativo", color: "bg-emerald-600 text-white" },
+  { tag: "Distraído", color: "bg-amber-100 text-amber-800 border-amber-300" },
+  { tag: "Evoluiu", color: "bg-emerald-600 text-white" },
+  { tag: "Indisciplinado", color: "bg-red-100 text-red-800 border-red-300" },
+  { tag: "Colaborativo", color: "bg-emerald-600 text-white" },
+  { tag: "Reservado", color: "bg-slate-100 text-slate-600 border-slate-300" },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 const severityLabel: Record<string, string> = { alta: "Alto", media: "Médio", baixa: "Baixo" };
 const severityColor: Record<string, string> = {
-  alta: "bg-destructive/15 text-destructive",
-  media: "bg-warning/15 text-warning-foreground",
-  baixa: "bg-secondary/15 text-secondary",
+  alta: "bg-red-100 text-red-800 border border-red-300",
+  media: "bg-amber-100 text-amber-800 border border-amber-300",
+  baixa: "bg-emerald-100 text-emerald-800 border border-emerald-300",
 };
 const impactLabel: Record<string, string> = { melhorou: "Melhorou", piorou: "Piorou", sem_mudanca: "Sem mudança" };
 const impactIcon: Record<string, string> = { melhorou: "ri-arrow-up-line", piorou: "ri-arrow-down-line", sem_mudanca: "ri-subtract-line" };
 const statusLabel: Record<string, string> = { aberto: "Aberto", em_andamento: "Em andamento", resolvido: "Resolvido" };
+const statusColor: Record<string, string> = {
+  aberto: "bg-amber-100 text-amber-800 border border-amber-300",
+  em_andamento: "bg-amber-100 text-amber-800 border border-amber-300",
+  resolvido: "bg-emerald-100 text-emerald-800 border border-emerald-300",
+};
 
 function getSituation(media: number, freq: number) {
-  if (media < 5 || freq < 60) return { label: "Em risco crítico", color: "text-destructive", bg: "bg-destructive/10", icon: "ri-alert-fill", level: "critico" };
-  if (media < 6 || freq < 75) return { label: "Em recuperação", color: "text-warning-foreground", bg: "bg-warning/10", icon: "ri-error-warning-line", level: "atencao" };
-  return { label: "Saudável", color: "text-secondary", bg: "bg-secondary/10", icon: "ri-heart-pulse-line", level: "saudavel" };
+  if (media < 5 || freq < 60) return { label: "Em risco crítico", color: "text-red-700 font-semibold", bg: "bg-red-100 border border-red-300", badge: "bg-red-200 text-red-800 font-semibold", icon: "ri-alert-fill", level: "critico" };
+  if (media < 6 || freq < 75) return { label: "Em recuperação", color: "text-amber-800 font-semibold", bg: "bg-amber-100 border border-amber-300", badge: "bg-amber-200 text-amber-800 font-semibold", icon: "ri-error-warning-line", level: "atencao" };
+  return { label: "Saudável", color: "text-emerald-800 font-semibold", bg: "bg-emerald-100 border border-emerald-300", badge: "bg-emerald-200 text-emerald-800 font-semibold", icon: "ri-heart-pulse-line", level: "saudavel" };
 }
 
 function generateHeroNarrative(name: string, media: number, freq: number, hasGrades: boolean, hasAttendance: boolean): string {
@@ -313,22 +318,22 @@ const StudentRecord = () => {
       <div className="space-y-8 max-w-5xl mx-auto">
 
         {/* ═══ 1. HERO ═══════════════════════════════════════════════ */}
-        <section className={cn("rounded-2xl border p-6 md:p-8 relative overflow-hidden", situation.bg, "border-border/40")}>
+        <section className={cn("rounded-lg p-6 md:p-8 relative overflow-hidden", situation.bg)}>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
             {/* Photo — destaque circular */}
             {student.photo_url ? (
               <img src={student.photo_url} alt={student.full_name}
-                className="w-24 h-24 rounded-full object-cover border-4 border-card shadow-xl ring-2 ring-border/20" />
+                className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-xl ring-2 ring-slate-200" />
             ) : (
-              <div className="w-24 h-24 rounded-full bg-card/80 border-4 border-card shadow-xl ring-2 ring-border/20 flex items-center justify-center">
-                <i className="ri-user-line text-4xl text-muted-foreground" />
+              <div className="w-24 h-24 rounded-full bg-white border-4 border-white shadow-xl ring-2 ring-slate-200 flex items-center justify-center">
+                <i className="ri-user-line text-4xl text-slate-400" />
               </div>
             )}
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 flex-wrap mb-1">
                 <h1 className="text-2xl font-bold text-primary truncate">{student.full_name}</h1>
-                <span className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold", situation.bg, situation.color)}>
+                <span className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs", situation.badge)}>
                   <i className={situation.icon} /> {situation.label}
                 </span>
               </div>
@@ -338,65 +343,43 @@ const StudentRecord = () => {
 
               {/* ── Metric Cards ── */}
               <div className="flex flex-wrap gap-3">
-                <div className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl border shadow-sm",
-                  mediaColor === "destructive" ? "bg-destructive/10 border-destructive/20" :
-                  mediaColor === "warning" ? "bg-warning/10 border-warning/20" :
-                  "bg-secondary/10 border-secondary/20"
-                )}>
-                  <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center",
-                    mediaColor === "destructive" ? "bg-destructive/20" :
-                    mediaColor === "warning" ? "bg-warning/20" : "bg-secondary/20"
-                  )}>
-                    <i className={cn("ri-bar-chart-box-line text-lg",
-                      mediaColor === "destructive" ? "text-destructive" :
-                      mediaColor === "warning" ? "text-warning-foreground" : "text-secondary"
-                    )} />
+                <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white border border-slate-200 border-l-4 border-l-blue-500">
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-blue-100">
+                    <i className="ri-bar-chart-box-line text-lg text-blue-600" />
                   </div>
                   <div>
-                    <div className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Média Geral</div>
+                    <div className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Média Geral</div>
                     <div className={cn("text-xl font-bold",
-                      mediaColor === "destructive" ? "text-destructive" :
-                      mediaColor === "warning" ? "text-warning-foreground" : "text-secondary"
+                      mediaColor === "destructive" ? "text-red-700" :
+                      mediaColor === "warning" ? "text-amber-700" : "text-slate-900"
                     )}>
                       {gradeValues.length > 0 ? mediaGeral.toFixed(1) : "—"}
                     </div>
                   </div>
                 </div>
 
-                <div className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl border shadow-sm",
-                  freqColor === "destructive" ? "bg-destructive/10 border-destructive/20" :
-                  freqColor === "warning" ? "bg-warning/10 border-warning/20" :
-                  "bg-secondary/10 border-secondary/20"
-                )}>
-                  <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center",
-                    freqColor === "destructive" ? "bg-destructive/20" :
-                    freqColor === "warning" ? "bg-warning/20" : "bg-secondary/20"
-                  )}>
-                    <i className={cn("ri-calendar-check-line text-lg",
-                      freqColor === "destructive" ? "text-destructive" :
-                      freqColor === "warning" ? "text-warning-foreground" : "text-secondary"
-                    )} />
+                <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white border border-slate-200 border-l-4 border-l-red-500">
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-red-100">
+                    <i className="ri-calendar-check-line text-lg text-red-600" />
                   </div>
                   <div>
-                    <div className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Frequência</div>
+                    <div className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Frequência</div>
                     <div className={cn("text-xl font-bold",
-                      freqColor === "destructive" ? "text-destructive" :
-                      freqColor === "warning" ? "text-warning-foreground" : "text-secondary"
+                      freqColor === "destructive" ? "text-red-700" :
+                      freqColor === "warning" ? "text-amber-700" : "text-slate-900"
                     )}>
                       {totalAttendance > 0 ? `${freqPercent.toFixed(0)}%` : "—"}
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 px-4 py-3 rounded-xl border bg-muted/5 border-border/30 shadow-sm">
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-primary/10">
-                    <i className="ri-shield-check-line text-lg text-primary" />
+                <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white border border-slate-200 border-l-4 border-l-yellow-500">
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-yellow-100">
+                    <i className="ri-shield-check-line text-lg text-yellow-700" />
                   </div>
                   <div>
-                    <div className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Intervenções</div>
-                    <div className="text-xl font-bold text-primary">{interventions.length}</div>
+                    <div className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Intervenções</div>
+                    <div className="text-xl font-bold text-slate-900">{interventions.length}</div>
                   </div>
                 </div>
               </div>
@@ -404,7 +387,7 @@ const StudentRecord = () => {
 
             {/* Actions */}
             <div className="flex flex-col gap-2 shrink-0">
-              <Button size="sm" onClick={() => {
+              <Button size="sm" className="gap-2 bg-slate-900 text-white hover:bg-slate-800" onClick={() => {
                 // Generate HTML report in new tab for printing/PDF
                 const studentData = {
                   name: student.full_name,
@@ -477,11 +460,11 @@ ${interventionsHtml}
                   newWindow.document.close();
                   setTimeout(() => newWindow.print(), 250);
                 }
-              }} className="gap-2">
+              }}>
                 <i className="ri-file-chart-line" /> Gerar Relatório
               </Button>
               <Link to={`/admin/alunos/${id}`}>
-                <Button variant="outline" size="sm" className="gap-2 w-full">
+                <Button variant="outline" size="sm" className="gap-2 w-full border border-slate-300 text-slate-700">
                   <i className="ri-arrow-left-line" /> Voltar
                 </Button>
               </Link>
@@ -489,7 +472,7 @@ ${interventionsHtml}
           </div>
 
           {/* Narrative sentence — humanized */}
-          <div className="mt-5 p-4 rounded-xl bg-card/70 border border-border/30">
+          <div className="mt-5 p-4 rounded-lg bg-white border border-slate-200">
             <p className="text-sm text-foreground leading-relaxed">
               <i className={cn("mr-2",
                 situation.level === "critico" ? "ri-alarm-warning-line text-destructive" :
@@ -503,7 +486,7 @@ ${interventionsHtml}
 
         {/* ═══ 2. TIMELINE ═══════════════════════════════════════════ */}
         {gradesByTerm.length >= 2 && (
-          <section className="bg-card rounded-2xl border border-border/40 p-6 shadow-sm">
+          <section className="bg-white border border-slate-200 rounded-lg p-6">
             <h2 className="text-base font-bold text-primary mb-4 flex items-center gap-2">
               <i className="ri-line-chart-line text-secondary" /> Linha do Tempo — Evolução Acadêmica
             </h2>
@@ -544,9 +527,9 @@ ${interventionsHtml}
         {/* ═══ 3. DIAGNÓSTICO + 4. RADAR ═════════════════════════════ */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Diagnóstico */}
-          <section className="bg-card rounded-2xl border border-border/40 p-6 shadow-sm">
-            <h2 className="text-base font-bold text-primary mb-4 flex items-center gap-2">
-              <i className="ri-stethoscope-line text-destructive" /> Diagnóstico
+          <section className="bg-white border border-slate-200 border-l-4 border-l-red-500 rounded-lg p-6">
+            <h2 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+              <i className="ri-stethoscope-line text-red-600" /> Diagnóstico
             </h2>
 
             {riskFactors.length > 0 ? (
@@ -554,24 +537,24 @@ ${interventionsHtml}
                 {riskFactors.map(f => (
                   <div key={f.label}>
                     <div className="flex justify-between text-xs font-bold mb-1">
-                      <span className="text-primary">{f.label}</span>
-                      <span className="text-muted-foreground">{f.percent}% impacto</span>
+                      <span className="text-slate-900">{f.label}</span>
+                      <span className="text-slate-500">{f.percent}% impacto</span>
                     </div>
-                    <div className="h-2 rounded-full bg-muted/20 overflow-hidden">
+                    <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
                       <div className={cn("h-full rounded-full transition-all", f.color)} style={{ width: `${f.percent}%` }} />
                     </div>
-                    <p className="text-[11px] text-muted-foreground mt-1">{f.description}</p>
+                    <p className="text-[11px] text-slate-500 mt-1">{f.description}</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground mb-5">Nenhum fator de risco identificado.</p>
+              <p className="text-sm text-slate-500 mb-5">Nenhum fator de risco identificado.</p>
             )}
 
             {/* Diagnostic insight */}
-            <div className="p-3 rounded-xl bg-muted/5 border border-border/20">
-              <p className="text-xs text-muted-foreground leading-relaxed italic">
-                <i className="ri-lightbulb-flash-line mr-1 text-warning" />
+            <div className="p-3 rounded-lg bg-white border border-slate-200">
+              <p className="text-xs text-slate-600 leading-relaxed italic">
+                <i className="ri-lightbulb-flash-line mr-1 text-amber-600" />
                 {diagnosticInsight}
               </p>
             </div>
@@ -584,7 +567,7 @@ ${interventionsHtml}
                   {subjectMap.map(s => (
                     <div key={s.name} className="flex items-center gap-3">
                       <span className="text-xs font-medium text-primary w-28 truncate">{s.name}</span>
-                      <div className="flex-1 h-2 rounded-full bg-muted/20 overflow-hidden">
+                      <div className="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
                         <div className={cn("h-full rounded-full", s.media >= 6 ? "bg-secondary" : "bg-destructive")} style={{ width: `${(s.media / 10) * 100}%` }} />
                       </div>
                       <span className={cn("text-xs font-bold w-8 text-right", s.media >= 6 ? "text-secondary" : "text-destructive")}>
@@ -598,7 +581,7 @@ ${interventionsHtml}
           </section>
 
           {/* Radar */}
-          <section className="bg-card rounded-2xl border border-border/40 p-6 shadow-sm">
+          <section className="bg-white border border-slate-200 rounded-lg p-6">
             <h2 className="text-base font-bold text-primary mb-4 flex items-center gap-2">
               <i className="ri-compass-3-line text-secondary" /> Radar de Competências
             </h2>
@@ -611,9 +594,9 @@ ${interventionsHtml}
               </RadarChart>
             </ResponsiveContainer>
             {/* Radar interpretation */}
-            <div className="mt-3 p-3 rounded-xl bg-muted/5 border border-border/20">
-              <p className="text-xs text-muted-foreground leading-relaxed italic">
-                <i className="ri-focus-3-line mr-1 text-secondary" />
+            <div className="mt-3 p-3 rounded-lg bg-white border border-slate-200">
+              <p className="text-xs text-slate-600 leading-relaxed italic">
+                <i className="ri-focus-3-line mr-1 text-emerald-600" />
                 {radarInsight}
               </p>
             </div>
@@ -621,7 +604,7 @@ ${interventionsHtml}
         </div>
 
         {/* ═══ 5. INTERVENÇÕES ═════════════════════════════════════════ */}
-        <section className="bg-card rounded-2xl border border-border/40 p-6 shadow-sm">
+        <section className="bg-white border border-slate-200 rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-bold text-primary flex items-center gap-2">
               <i className="ri-shield-check-line text-secondary" /> Intervenções Pedagógicas
@@ -655,35 +638,35 @@ ${interventionsHtml}
           ) : (
             <div className="space-y-3">
               {interventions.slice(0, 5).map(i => (
-                <div key={i.id} className="flex items-start gap-4 p-4 rounded-xl border border-border/30 bg-background/50">
+                <div key={i.id} className="flex items-start gap-4 p-4 rounded-lg border border-slate-200 bg-white">
                   <div className={cn("w-2 h-2 rounded-full mt-2 shrink-0",
-                    i.status === "resolvido" ? "bg-secondary" : i.status === "em_andamento" ? "bg-warning" : "bg-destructive"
+                    i.status === "resolvido" ? "bg-emerald-500" : i.status === "em_andamento" ? "bg-amber-500" : "bg-amber-500"
                   )} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className="text-sm font-bold text-primary">{i.reason}</span>
-                      <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", severityColor[i.severity] || "bg-muted/20 text-muted-foreground")}>
+                      <span className="text-sm font-bold text-slate-900">{i.reason}</span>
+                      <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", severityColor[i.severity] || "bg-slate-100 text-slate-600 border border-slate-300")}>
                         {severityLabel[i.severity] || i.severity}
                       </span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-muted/15 text-muted-foreground">
+                      <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", statusColor[i.status] || "bg-slate-100 text-slate-600 border border-slate-300")}>
                         {statusLabel[i.status] || i.status}
                       </span>
                     </div>
                     {i.teachers?.full_name && (
-                      <p className="text-[11px] text-muted-foreground">
+                      <p className="text-[11px] text-slate-500">
                         <i className="ri-user-star-line mr-1" /> Prof. {i.teachers.full_name}
                       </p>
                     )}
-                    {i.teacher_notes && <p className="text-xs text-muted-foreground mt-1 italic">"{i.teacher_notes}"</p>}
+                    {i.teacher_notes && <p className="text-xs text-slate-600 mt-1 italic">"{i.teacher_notes}"</p>}
                     {i.impact && (
                       <span className={cn("inline-flex items-center gap-1 text-xs font-bold mt-1",
-                        i.impact === "melhorou" ? "text-secondary" : i.impact === "piorou" ? "text-destructive" : "text-muted-foreground"
+                        i.impact === "melhorou" ? "text-emerald-700" : i.impact === "piorou" ? "text-red-700" : "text-slate-500"
                       )}>
                         <i className={impactIcon[i.impact] || ""} /> {impactLabel[i.impact] || i.impact}
                       </span>
                     )}
                   </div>
-                  <span className="text-[10px] text-muted-foreground shrink-0">
+                  <span className="text-[10px] text-slate-500 shrink-0">
                     {new Date(i.created_at).toLocaleDateString("pt-BR")}
                   </span>
                 </div>
@@ -693,52 +676,47 @@ ${interventionsHtml}
         </section>
 
         {/* ═══ 6. AÇÕES RECOMENDADAS ═════════════════════════════════ */}
-        <section className="bg-card rounded-2xl border border-border/40 p-6 shadow-sm">
-          <h2 className="text-base font-bold text-primary mb-4 flex items-center gap-2">
-            <i className="ri-flashlight-line text-warning" /> Ações Recomendadas
+        <section className="bg-red-100 border border-red-300 rounded-lg p-6">
+          <h2 className="text-base font-bold text-red-800 mb-4 flex items-center gap-2">
+            <i className="ri-flashlight-line text-red-700" /> Ações Recomendadas
           </h2>
           <div className="space-y-3">
             {recommendations.map((r, i) => (
-              <div key={i} className={cn(
-                "flex items-center justify-between p-4 rounded-xl border",
-                r.urgency === "critico" ? "bg-destructive/5 border-destructive/20" :
-                r.urgency === "atencao" ? "bg-warning/5 border-warning/20" :
-                "bg-background/50 border-border/30"
-              )}>
+              <div key={i} className="flex items-center justify-between p-4 rounded-lg bg-white border border-slate-200">
                 <div className="flex items-start gap-3">
                   <i className={cn("text-lg mt-0.5",
-                    r.type === "secretaria" ? "ri-building-line text-primary" :
-                    r.type === "professor" ? "ri-user-star-line text-secondary" :
-                    r.type === "coordenacao" ? "ri-alarm-warning-line text-destructive" :
-                    "ri-checkbox-circle-line text-secondary"
+                    r.type === "secretaria" ? "ri-building-line text-blue-600" :
+                    r.type === "professor" ? "ri-user-star-line text-emerald-600" :
+                    r.type === "coordenacao" ? "ri-alarm-warning-line text-red-600" :
+                    "ri-checkbox-circle-line text-emerald-600"
                   )} />
                   <div>
-                    <span className="text-sm font-semibold text-primary block">{r.text}</span>
-                    <span className="text-[11px] text-muted-foreground">{r.detail}</span>
+                    <span className="text-sm font-semibold text-slate-900 block">{r.text}</span>
+                    <span className="text-[11px] text-slate-500">{r.detail}</span>
                   </div>
                 </div>
                 <div className="flex gap-2 shrink-0">
                   {r.type === "professor" && (
-                    <Button size="sm" variant="outline" className="text-xs gap-1" onClick={() => toast.success("Notificação enviada ao professor")}>
+                    <Button size="sm" variant="outline" className="text-xs gap-1 border border-slate-300 text-slate-700" onClick={() => toast.success("Notificação enviada ao professor")}>
                       <i className="ri-notification-line" /> Notificar
                     </Button>
                   )}
                   {r.type === "secretaria" && (
-                    <Button size="sm" variant="outline" className="text-xs gap-1" onClick={() => toast.success("Solicitação enviada à secretaria")}>
+                    <Button size="sm" variant="outline" className="text-xs gap-1 border border-slate-300 text-slate-700" onClick={() => toast.success("Solicitação enviada à secretaria")}>
                       <i className="ri-send-plane-line" /> Solicitar
                     </Button>
                   )}
                 </div>
               </div>
             ))}
-            <Button variant="outline" className="w-full gap-2 mt-2" onClick={() => setInterventionOpen(true)}>
+            <Button variant="outline" className="w-full gap-2 mt-2 bg-slate-900 text-white hover:bg-slate-800 border-slate-900" onClick={() => setInterventionOpen(true)}>
               <i className="ri-add-line" /> Registrar Nova Intervenção
             </Button>
           </div>
         </section>
 
         {/* ═══ 7. COMPORTAMENTO ═══════════════════════════════════════ */}
-        <section className="bg-card rounded-2xl border border-border/40 p-6 shadow-sm">
+        <section className="bg-white border border-slate-200 rounded-lg p-6">
           <h2 className="text-base font-bold text-primary mb-4 flex items-center gap-2">
             <i className="ri-emotion-line text-secondary" /> Comportamento
           </h2>
@@ -752,7 +730,7 @@ ${interventionsHtml}
                   )}
                   className={cn(
                     "px-4 py-2 rounded-full text-xs font-bold transition-all border",
-                    active ? cn(b.color, "border-current") : "bg-muted/10 text-muted-foreground border-border/30 opacity-50 hover:opacity-80"
+                    active ? cn(b.color, "border") : "bg-slate-100 text-slate-500 border border-slate-300 opacity-60 hover:opacity-90"
                   )}
                 >
                   {b.tag}

@@ -435,60 +435,60 @@ const CoordinationDashboard = () => {
         {resolvedRequests.length > 0 && (
           <div className="flex flex-col gap-2">
             {resolvedRequests.map((r) => (
-              <div key={r.id} className="flex items-center gap-3 bg-secondary/10 border border-secondary/20 rounded-xl px-4 py-3">
-                <CheckCircle2 className="h-5 w-5 text-secondary shrink-0" />
+              <div key={r.id} className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3">
+                <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground">Solicitação Resolvida</p>
-                  <p className="text-xs text-muted-foreground">{r.request_type} — {r.student_name || "Sem aluno"}</p>
+                  <p className="text-sm font-semibold text-slate-900">Solicitação Resolvida</p>
+                  <p className="text-xs text-slate-500">{r.request_type} — {r.student_name || "Sem aluno"}</p>
                 </div>
-                <button onClick={() => dismissResolved.mutate(r.id)} className="text-xs font-semibold text-secondary hover:underline shrink-0">Dispensar</button>
+                <button onClick={() => dismissResolved.mutate(r.id)} className="text-xs font-semibold text-emerald-700 hover:underline shrink-0">Dispensar</button>
               </div>
             ))}
           </div>
         )}
 
         {/* 🔴 1. HERO — Compacto, foco em risco */}
-        <div className={`rounded-xl border bg-gradient-to-br ${heroColor} p-4`}>
+        <div className={`rounded-lg border bg-white border-slate-200 p-4`}>
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
               {heroIcon}
               <div>
-                <p className="text-sm font-bold text-foreground">
+                <p className="text-sm font-bold text-slate-900">
                   {trendDirection === "queda" ? "Em Queda" : trendDirection === "melhora" ? "Evoluindo" : "Estável"}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  Var: <span className={`font-semibold ${variation < 0 ? "text-destructive" : variation > 0 ? "text-secondary" : ""}`}>
+                <p className="text-xs text-slate-500">
+                  Var: <span className={`font-semibold ${variation < 0 ? "text-red-700" : variation > 0 ? "text-emerald-700" : ""}`}>
                     {variation >= 0 ? "+" : ""}{variation.toFixed(1)}
                   </span>
-                  {" · "}Média: <span className="text-muted-foreground">{avgGrade.toFixed(1)}</span>
+                  {" · "}Média: <span className="text-slate-700">{avgGrade.toFixed(1)}</span>
                 </p>
               </div>
             </div>
 
             <div className="flex gap-2 flex-wrap">
-              <div className="rounded-lg bg-card border border-border/50 px-3 py-2 text-center min-w-[70px]">
-                <p className="text-lg font-bold text-foreground">{totalStudents}</p>
-                <p className="text-[10px] text-muted-foreground">Ativos</p>
+              <div className="rounded-lg bg-white border border-slate-200 px-3 py-2 text-center min-w-[70px]">
+                <p className="text-lg font-bold text-slate-900">{totalStudents}</p>
+                <p className="text-[10px] text-slate-500">Ativos</p>
               </div>
-              <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-2 text-center min-w-[70px]">
-                <p className="text-lg font-bold text-destructive">{criticalCount}</p>
-                <p className="text-[10px] text-destructive font-medium">Crítico</p>
+              <div className="rounded-lg bg-red-100 border border-red-300 px-3 py-2 text-center min-w-[70px]">
+                <p className="text-lg font-bold text-red-700">{criticalCount}</p>
+                <p className="text-[10px] text-red-700 font-medium">Crítico</p>
               </div>
-              <div className="rounded-lg bg-warning/10 border border-warning/20 px-3 py-2 text-center min-w-[70px]">
-                <p className="text-lg font-bold text-warning-foreground">{atRiskList.length}</p>
-                <p className="text-[10px] text-warning-foreground font-medium">Em Risco</p>
+              <div className="rounded-lg bg-amber-100 border border-amber-300 px-3 py-2 text-center min-w-[70px]">
+                <p className="text-lg font-bold text-amber-800">{atRiskList.length}</p>
+                <p className="text-[10px] text-amber-800 font-medium">Em Risco</p>
               </div>
             </div>
           </div>
 
           <div className="flex gap-2 mt-3 flex-wrap">
-            <Button size="sm" className="text-xs gap-1.5 h-8" onClick={() => setFocusModalOpen(true)}>
+            <Button size="sm" className="text-xs gap-1.5 h-8 bg-slate-900 text-white hover:bg-slate-800" onClick={() => setFocusModalOpen(true)}>
               <Target className="h-3.5 w-3.5" /> Ações Recomendadas
             </Button>
-            <Button size="sm" variant="outline" className="text-xs gap-1.5 h-8" onClick={() => { resetForm(); setCreateModalOpen(true); }}>
+            <Button size="sm" variant="outline" className="text-xs gap-1.5 h-8 border border-slate-300 text-slate-700" onClick={() => { resetForm(); setCreateModalOpen(true); }}>
               <Plus className="h-3.5 w-3.5" /> Nova Intervenção
             </Button>
-            <Button size="sm" variant="ghost" className="text-xs gap-1.5 h-8" onClick={() => setRequestModalOpen(true)}>
+            <Button size="sm" variant="ghost" className="text-xs gap-1.5 h-8 text-slate-700" onClick={() => setRequestModalOpen(true)}>
               <FilePlus2 className="h-3.5 w-3.5" /> Solicitar Secretaria
             </Button>
           </div>
@@ -496,48 +496,48 @@ const CoordinationDashboard = () => {
 
         {/* 🧠 2. CAUSAS DE RISCO — Compacto */}
         <div className="grid grid-cols-3 gap-3">
-          <div className="rounded-lg border border-border/50 bg-card p-3">
+          <div className="rounded-lg border border-slate-200 bg-white border-l-4 border-l-red-500 p-3">
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-7 h-7 rounded-md bg-destructive/10 flex items-center justify-center">
-                <XCircle className="h-3.5 w-3.5 text-destructive" />
+              <div className="w-7 h-7 rounded-md bg-red-100 flex items-center justify-center">
+                <XCircle className="h-3.5 w-3.5 text-red-600" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-foreground">Frequência</p>
-                <p className="text-[10px] text-muted-foreground">{onlyFreq} alunos</p>
+                <p className="text-xs font-semibold text-slate-900">Frequência</p>
+                <p className="text-[10px] text-slate-500">{onlyFreq} alunos</p>
               </div>
             </div>
-            <p className="text-[10px] text-muted-foreground">{Math.round((onlyFreq / riskTotal) * 100)}% do risco</p>
+            <p className="text-[10px] text-slate-500">{Math.round((onlyFreq / riskTotal) * 100)}% do risco</p>
           </div>
 
-          <div className="rounded-lg border border-border/50 bg-card p-3">
+          <div className="rounded-lg border border-slate-200 bg-white border-l-4 border-l-yellow-500 p-3">
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-7 h-7 rounded-md bg-warning/10 flex items-center justify-center">
-                <TrendingDown className="h-3.5 w-3.5 text-warning-foreground" />
+              <div className="w-7 h-7 rounded-md bg-yellow-100 flex items-center justify-center">
+                <TrendingDown className="h-3.5 w-3.5 text-yellow-700" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-foreground">Notas</p>
-                <p className="text-[10px] text-muted-foreground">{onlyGrade} alunos</p>
+                <p className="text-xs font-semibold text-slate-900">Notas</p>
+                <p className="text-[10px] text-slate-500">{onlyGrade} alunos</p>
               </div>
             </div>
-            <p className="text-[10px] text-muted-foreground">{Math.round((onlyGrade / riskTotal) * 100)}% do risco</p>
+            <p className="text-[10px] text-slate-500">{Math.round((onlyGrade / riskTotal) * 100)}% do risco</p>
           </div>
 
-          <div className="rounded-lg border border-destructive/20 bg-destructive/[0.02] p-3">
+          <div className="rounded-lg border border-red-300 bg-red-100 border-l-4 border-l-red-600 p-3">
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-7 h-7 rounded-md bg-destructive/10 flex items-center justify-center">
-                <Flame className="h-3.5 w-3.5 text-destructive" />
+              <div className="w-7 h-7 rounded-md bg-red-200 flex items-center justify-center">
+                <Flame className="h-3.5 w-3.5 text-red-700" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-destructive">Dupla Causa</p>
-                <p className="text-[10px] text-muted-foreground">{bothCount} alunos</p>
+                <p className="text-xs font-semibold text-red-800">Dupla Causa</p>
+                <p className="text-[10px] text-red-700">{bothCount} alunos</p>
               </div>
             </div>
-            <p className="text-[10px] text-muted-foreground">{Math.round((bothCount / riskTotal) * 100)}% do risco</p>
+            <p className="text-[10px] text-red-700">{Math.round((bothCount / riskTotal) * 100)}% do risco</p>
           </div>
         </div>
 
         {/* 🎯 3. AÇÕES RECOMENDADAS — Destaque principal */}
-        <Card className="rounded-xl border-border/60 shadow-sm">
+        <Card className="rounded-lg border border-slate-200 bg-white shadow-none">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-bold flex items-center gap-2">
@@ -568,19 +568,19 @@ const CoordinationDashboard = () => {
                     (i) => i.student_id === s.id && (i.status === "aberto" || i.status === "em_andamento")
                   );
                   return (
-                    <div key={s.id} className={`rounded-lg border p-4 space-y-3 transition-colors ${
+                    <div key={s.id} className={`rounded-lg border p-4 space-y-3 ${
                       s.severity === "critica"
-                        ? "border-destructive/30 bg-destructive/[0.03]"
+                        ? "border-red-300 bg-red-50"
                         : s.severity === "alta"
-                          ? "border-warning/30 bg-warning/[0.02]"
-                          : "border-border/50"
+                          ? "border-amber-300 bg-amber-50"
+                          : "border-slate-200 bg-white"
                     }`}>
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
-                            s.severity === "critica" ? "bg-destructive/15 text-destructive"
-                              : s.severity === "alta" ? "bg-warning/15 text-warning-foreground"
-                                : "bg-muted/50 text-muted-foreground"
+                            s.severity === "critica" ? "bg-red-200 text-red-800"
+                              : s.severity === "alta" ? "bg-amber-200 text-amber-800"
+                                : "bg-slate-100 text-slate-600"
                           }`}>
                             {s.full_name.charAt(0)}
                           </div>
@@ -660,7 +660,7 @@ const CoordinationDashboard = () => {
         {/* 📊 4. INTERVENÇÕES + GRÁFICO — Mais compactos */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Resultado discreto */}
-          <div className="lg:col-span-1 rounded-lg border border-border/40 bg-muted/30 p-4">
+          <div className="lg:col-span-1 rounded-lg border border-slate-200 bg-white p-4">
             <p className="text-xs font-medium text-muted-foreground mb-3 flex items-center gap-1.5">
               <BarChart3 className="h-3.5 w-3.5" /> Resultado das Intervenções
             </p>
@@ -686,7 +686,7 @@ const CoordinationDashboard = () => {
           </div>
 
           {/* Gráfico compacto */}
-          <div className="lg:col-span-2 rounded-lg border border-border/40 bg-card p-4">
+          <div className="lg:col-span-2 rounded-lg border border-slate-200 bg-white p-4">
             <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
               <Activity className="h-3.5 w-3.5" /> Evolução do Desempenho
             </p>
@@ -722,7 +722,7 @@ const CoordinationDashboard = () => {
 
         {/* ── INTERVENÇÕES — ABERTAS ── */}
         {openInterventions.length > 0 && (
-          <Card className="rounded-2xl border-warning/30">
+          <Card className="rounded-lg border border-amber-300 bg-white shadow-none">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-bold flex items-center gap-2">
                 <Clock className="h-4 w-4 text-warning-foreground" />
@@ -735,14 +735,14 @@ const CoordinationDashboard = () => {
                   const student = students.find((st) => st.id === item.student_id);
                   const teacher = teachers.find((t) => t.id === item.teacher_id);
                   return (
-                    <div key={item.id} className="flex items-center gap-3 rounded-xl bg-warning/5 border border-warning/20 px-4 py-3">
-                      <Clock className="h-4 w-4 text-warning-foreground shrink-0" />
+                    <div key={item.id} className="flex items-center gap-3 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3">
+                      <Clock className="h-4 w-4 text-amber-700 shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{student?.full_name || "Aluno"}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{item.reason}</p>
-                        {teacher && <p className="text-[10px] text-primary">Prof. {teacher.full_name}</p>}
+                        <p className="text-sm font-medium text-slate-900 truncate">{student?.full_name || "Aluno"}</p>
+                        <p className="text-[10px] text-slate-500 truncate">{item.reason}</p>
+                        {teacher && <p className="text-[10px] text-slate-700">Prof. {teacher.full_name}</p>}
                       </div>
-                      <Badge variant="outline" className="text-[9px] shrink-0 border-warning/30 text-warning-foreground">
+                      <Badge variant="outline" className="text-[9px] shrink-0 bg-amber-100 border-amber-300 text-amber-800">
                         ⏳ Aguardando professor
                       </Badge>
                     </div>
@@ -755,7 +755,7 @@ const CoordinationDashboard = () => {
 
         {/* ── INTERVENÇÕES — EM ANDAMENTO ── */}
         {inProgressInterventions.length > 0 && (
-          <Card className="rounded-2xl border-primary/30">
+          <Card className="rounded-lg border border-slate-200 bg-white shadow-none">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-bold flex items-center gap-2">
                 <Activity className="h-4 w-4 text-primary" />
@@ -768,15 +768,15 @@ const CoordinationDashboard = () => {
                   const student = students.find((st) => st.id === item.student_id);
                   const teacher = teachers.find((t) => t.id === item.teacher_id);
                   return (
-                    <div key={item.id} className="flex items-center gap-3 rounded-xl bg-primary/5 border border-primary/20 px-4 py-3">
-                      <Activity className="h-4 w-4 text-primary shrink-0" />
+                    <div key={item.id} className="flex items-center gap-3 rounded-lg bg-white border border-slate-200 px-4 py-3">
+                      <Activity className="h-4 w-4 text-slate-700 shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{student?.full_name || "Aluno"}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{item.reason}</p>
-                        {teacher && <p className="text-[10px] text-primary">Prof. {teacher.full_name}</p>}
-                        {item.teacher_notes && <p className="text-[10px] text-foreground mt-1">📝 {item.teacher_notes}</p>}
+                        <p className="text-sm font-medium text-slate-900 truncate">{student?.full_name || "Aluno"}</p>
+                        <p className="text-[10px] text-slate-500 truncate">{item.reason}</p>
+                        {teacher && <p className="text-[10px] text-slate-700">Prof. {teacher.full_name}</p>}
+                        {item.teacher_notes && <p className="text-[10px] text-slate-700 mt-1">📝 {item.teacher_notes}</p>}
                       </div>
-                      <Badge variant="outline" className="text-[9px] shrink-0">🔄 Em Andamento</Badge>
+                      <Badge variant="outline" className="text-[9px] shrink-0 border-slate-300 text-slate-700">🔄 Em Andamento</Badge>
                     </div>
                   );
                 })}
@@ -787,7 +787,7 @@ const CoordinationDashboard = () => {
 
         {/* ── INTERVENÇÕES — RESOLVIDAS ── */}
         {resolvedInterventions.length > 0 && (
-          <Card className="rounded-2xl border-border/50">
+          <Card className="rounded-lg border border-slate-200 bg-white shadow-none">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-bold flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-secondary" />
@@ -800,7 +800,7 @@ const CoordinationDashboard = () => {
                   const student = students.find((st) => st.id === item.student_id);
                   const teacher = teachers.find((t) => t.id === item.teacher_id);
                   return (
-                    <div key={item.id} className="flex items-center gap-3 rounded-xl bg-muted/30 px-4 py-3">
+                    <div key={item.id} className="flex items-center gap-3 rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3">
                       <CheckCircle2 className="h-4 w-4 text-secondary shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{student?.full_name || "Aluno"}</p>
@@ -832,7 +832,7 @@ const CoordinationDashboard = () => {
 
         {/* Open coord requests to secretary */}
         {openCoordRequests.length > 0 && (
-          <Card className="rounded-2xl border-border/50">
+          <Card className="rounded-lg border border-slate-200 bg-white shadow-none">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-bold flex items-center gap-2">
                 <Bell className="h-4 w-4 text-primary" />
@@ -842,7 +842,7 @@ const CoordinationDashboard = () => {
             <CardContent>
               <div className="flex flex-col gap-2">
                 {openCoordRequests.map((r) => (
-                  <div key={r.id} className="flex items-center gap-3 rounded-xl bg-muted/30 px-4 py-3">
+                  <div key={r.id} className="flex items-center gap-3 rounded-lg bg-white border border-slate-200 px-4 py-3">
                     <Clock className="h-4 w-4 text-primary" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">{r.student_name || "Sem aluno"}</p>
@@ -873,13 +873,13 @@ const CoordinationDashboard = () => {
                   (i) => i.student_id === s.id && (i.status === "aberto" || i.status === "em_andamento")
                 );
                 return (
-                  <div key={s.id} className={`rounded-xl border p-4 space-y-2 ${
-                    s.severity === "critica" ? "border-destructive/30 bg-destructive/[0.03]" : "border-border/50"
+                  <div key={s.id} className={`rounded-lg border p-4 space-y-2 ${
+                    s.severity === "critica" ? "border-red-300 bg-red-50" : "border-slate-200 bg-white"
                   }`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
-                          s.severity === "critica" ? "bg-destructive/15 text-destructive" : "bg-muted/50 text-muted-foreground"
+                          s.severity === "critica" ? "bg-red-200 text-red-800" : "bg-slate-100 text-slate-600"
                         }`}>{s.full_name.charAt(0)}</div>
                         <span className="text-sm font-semibold text-foreground">{s.full_name}</span>
                       </div>
