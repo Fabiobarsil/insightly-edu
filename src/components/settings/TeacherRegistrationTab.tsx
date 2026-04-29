@@ -18,12 +18,12 @@ interface Props {
 }
 
 const PROF_TABS = [
-  { id: "diretor", label: "Direção", icon: "ri-briefcase-line" },
-  { id: "coordenador", label: "Coordenação", icon: "ri-compass-3-line" },
-  { id: "secretaria", label: "Secretaria", icon: "ri-archive-line" },
-  { id: "professor", label: "Professores", icon: "ri-user-star-line" },
-  { id: "psicologo", label: "Psicólogos", icon: "ri-mental-health-line" },
-  { id: "auxiliar", label: "Auxiliares", icon: "ri-team-line" },
+  { id: "diretor", label: "Direção", icon: "ri-shield-star-fill", color: "text-amber-500" },
+  { id: "coordenador", label: "Coordenação", icon: "ri-compass-3-fill", color: "text-blue-500" },
+  { id: "secretaria", label: "Secretaria", icon: "ri-mail-send-fill", color: "text-violet-500" },
+  { id: "professor", label: "Professores", icon: "ri-graduation-cap-fill", color: "text-emerald-500" },
+  { id: "psicologo", label: "Psicólogos", icon: "ri-mental-health-fill", color: "text-pink-500" },
+  { id: "auxiliar", label: "Auxiliares", icon: "ri-hand-heart-fill", color: "text-orange-500" },
 ] as const;
 
 type ProfType = typeof PROF_TABS[number]["id"];
@@ -184,7 +184,7 @@ const TeacherRegistrationTab = ({ schoolId }: Props) => {
                 : "bg-card border-border/60 text-muted-foreground hover:bg-accent"
             )}
           >
-            <i className={t.icon} /> {t.label}
+            <i className={cn(t.icon, "text-base", profType === t.id ? "" : t.color)} /> {t.label}
           </button>
         ))}
       </div>
@@ -193,7 +193,7 @@ const TeacherRegistrationTab = ({ schoolId }: Props) => {
       <div className="bg-card border border-border/60 rounded-xl certus-shadow p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-bold text-primary flex items-center gap-2">
-            <i className={currentTab.icon} /> {currentTab.label} Cadastrados
+            <i className={cn(currentTab.icon, "text-base", currentTab.color)} /> {currentTab.label} Cadastrados
           </h3>
           <button
             onClick={scrollToForm}
