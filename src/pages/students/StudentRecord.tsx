@@ -558,8 +558,6 @@ ${interventionsHtml}
                 {diagnosticInsight}
               </p>
             </div>
-              </p>
-            </div>
 
             {/* Subject performance */}
             {subjectMap.length > 0 && (
