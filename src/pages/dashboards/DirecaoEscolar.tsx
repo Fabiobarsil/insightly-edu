@@ -195,6 +195,8 @@ export default function DirecaoEscolar() {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </RoleLayout>
   );
 }
+
