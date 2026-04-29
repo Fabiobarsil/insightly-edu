@@ -71,23 +71,6 @@ const ClassesEdit = () => {
     }
   }, [classData]);
 
-  // Fallback: if class has grade/shift text but no id, match by name once lists load
-  useEffect(() => {
-    if (!classData) return;
-    if (!form.grade_id && classData.grade && grades.length > 0) {
-      const match = grades.find((g) => g.name?.toLowerCase() === String(classData.grade).toLowerCase());
-      if (match) setForm((prev) => ({ ...prev, grade_id: match.id }));
-    }
-  }, [classData, grades, form.grade_id]);
-
-  useEffect(() => {
-    if (!classData) return;
-    if (!form.shift_id && classData.shift && shifts.length > 0) {
-      const match = shifts.find((s) => s.name?.toLowerCase() === String(classData.shift).toLowerCase());
-      if (match) setForm((prev) => ({ ...prev, shift_id: match.id }));
-    }
-  }, [classData, shifts, form.shift_id]);
-
   // Fetch grades
   const { data: grades = [], isLoading: loadingGrades } = useQuery({
     queryKey: ["school-grades", schoolId],
@@ -117,6 +100,23 @@ const ClassesEdit = () => {
     },
     enabled: !!schoolId,
   });
+
+  // Fallback: if class has grade/shift text but no id, match by name once lists load
+  useEffect(() => {
+    if (!classData) return;
+    if (!form.grade_id && classData.grade && grades.length > 0) {
+      const match = grades.find((g) => g.name?.toLowerCase() === String(classData.grade).toLowerCase());
+      if (match) setForm((prev) => ({ ...prev, grade_id: match.id }));
+    }
+  }, [classData, grades, form.grade_id]);
+
+  useEffect(() => {
+    if (!classData) return;
+    if (!form.shift_id && classData.shift && shifts.length > 0) {
+      const match = shifts.find((s) => s.name?.toLowerCase() === String(classData.shift).toLowerCase());
+      if (match) setForm((prev) => ({ ...prev, shift_id: match.id }));
+    }
+  }, [classData, shifts, form.shift_id]);
 
   const createGrade = useMutation({
     mutationFn: async (name: string) => {
