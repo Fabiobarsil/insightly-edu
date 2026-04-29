@@ -297,6 +297,21 @@ const ClassesEdit = () => {
                 <option key={o.id} value={o.id}>{o.name}</option>
               ))}
             </select>
+            {grades.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {grades.map((g) => (
+                  <div key={g.id} className="inline-flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-md px-2 py-1 text-xs">
+                    <span className="text-slate-700">{g.name}</span>
+                    <button type="button" className="text-slate-500 hover:text-blue-600" onClick={() => setEditGrade({ id: g.id, name: g.name })} title="Editar">
+                      <Pencil className="h-3 w-3" />
+                    </button>
+                    <button type="button" className="text-slate-500 hover:text-red-600" onClick={() => setDeleteGradeId(g.id)} title="Excluir">
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
