@@ -408,6 +408,72 @@ const ClassesEdit = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Editar Série */}
+      <Dialog open={!!editGrade} onOpenChange={(o) => !o && setEditGrade(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Editar Série</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <Label>Nome da Série</Label>
+            <Input value={editGrade?.name || ""} onChange={(e) => setEditGrade((p) => p ? { ...p, name: e.target.value } : p)} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditGrade(null)}>Cancelar</Button>
+            <Button disabled={!editGrade?.name.trim() || updateGrade.isPending} onClick={() => editGrade && updateGrade.mutate({ id: editGrade.id, name: editGrade.name.trim() })}>
+              {updateGrade.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Editar Turno */}
+      <Dialog open={!!editShift} onOpenChange={(o) => !o && setEditShift(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Editar Turno</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <Label>Nome do Turno</Label>
+            <Input value={editShift?.name || ""} onChange={(e) => setEditShift((p) => p ? { ...p, name: e.target.value } : p)} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditShift(null)}>Cancelar</Button>
+            <Button disabled={!editShift?.name.trim() || updateShift.isPending} onClick={() => editShift && updateShift.mutate({ id: editShift.id, name: editShift.name.trim() })}>
+              {updateShift.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Excluir Série */}
+      <AlertDialog open={!!deleteGradeId} onOpenChange={(o) => !o && setDeleteGradeId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir série?</AlertDialogTitle>
+            <AlertDialogDescription>Turmas vinculadas a esta série podem ser afetadas.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => deleteGradeId && deleteGrade.mutate(deleteGradeId)} className="bg-destructive hover:bg-destructive/90">
+              {deleteGrade.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Excluir Turno */}
+      <AlertDialog open={!!deleteShiftId} onOpenChange={(o) => !o && setDeleteShiftId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir turno?</AlertDialogTitle>
+            <AlertDialogDescription>Turmas vinculadas a este turno podem ser afetadas.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => deleteShiftId && deleteShift.mutate(deleteShiftId)} className="bg-destructive hover:bg-destructive/90">
+              {deleteShift.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 };
