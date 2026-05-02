@@ -168,9 +168,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           });
         });
       } else {
-        console.log("Nenhum role encontrado — criando fallback");
-
-        setRole("owner"); // 👈 TEMPORÁRIO pra destravar
+        // Sem sessão → limpa o role
+        setRole(null);
         setLoading(false);
       }
     });
