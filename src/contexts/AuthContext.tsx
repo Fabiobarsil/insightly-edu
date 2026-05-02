@@ -2,17 +2,27 @@ import { createContext, useContext, useEffect, useState, useRef, ReactNode } fro
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppRole = "owner" | "admin" | "secretaria" | "coordenador" | "professor" | "auxiliar";
+export type AppRole =
+  | "owner"
+  | "admin"
+  | "secretaria"
+  | "coordenador"
+  | "diretor"
+  | "professor"
+  | "psicologo"
+  | "auxiliar";
 
-export type DashboardRole = "superadmin" | "admin" | "secretaria" | "professor";
+export type DashboardRole = "superadmin" | "admin" | "secretaria" | "professor" | "psicologo";
 
 const roleToDashboard: Record<AppRole, DashboardRole> = {
-  owner: "superadmin",
+  owner: "admin",
   admin: "admin",
+  diretor: "admin",
   coordenador: "admin",
   secretaria: "secretaria",
   auxiliar: "secretaria",
   professor: "professor",
+  psicologo: "psicologo",
 };
 
 export const getDashboardPath = (role: DashboardRole) => {
@@ -21,6 +31,7 @@ export const getDashboardPath = (role: DashboardRole) => {
     admin: "/admin/dashboard",
     secretaria: "/admin/dashboard",
     professor: "/professor/dashboard",
+    psicologo: "/psicologia/dashboard",
   };
   return paths[role];
 };
