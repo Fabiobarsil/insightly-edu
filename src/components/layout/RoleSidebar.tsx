@@ -67,7 +67,22 @@ const menusByRole: Record<DashboardRole, NavItem[]> = {
 
 const RoleSidebar = () => {
   const { dashboardRole, signOut } = useAuth();
-  const items = dashboardRole ? menusByRole[dashboardRole] : [];
+  const { access } = useUserAccess();
+
+  const baseItems = dashboardRole ? menusByRole[dashboardRole] : [];
+
+  // Filtra com base na role retornada por get_user_access().
+  // Se não houver access definido, mantém comportamento atual (baseItems).
+  const accessRole = access?.role?.toLowerCase();
+  let items = baseItems;
+  if (accessRole !== undefined) {
+    const rule = visibilityByAccessRole[accessRole];
+    if (!rule) {
+      items = []; // role desconhecida → não mostra nada
+    } else if (rule !== "all") {
+      items = baseItems.filter((it) => rule.some((frag) => it.to.includes(frag)));
+    }
+  }
 
   return (
     <aside className="fixed left-0 top-0 w-60 h-screen bg-primary flex flex-col z-10 max-[900px]:static max-[900px]:w-full max-[900px]:h-auto">
