@@ -73,7 +73,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!mountedRef.current) return;
 
       if (profile?.role === "superadmin") {
-        setRole("owner"); // mapeado para DashboardRole "superadmin"
+        setRole("superadmin"); // visão SaaS global
         return;
       }
 
