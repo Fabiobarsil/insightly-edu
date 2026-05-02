@@ -18,6 +18,7 @@ import CoordinationDashboard from "./pages/dashboards/CoordinationDashboard.tsx"
 import DirecaoEscolar from "./pages/dashboards/DirecaoEscolar.tsx";
 import SecretariaDashboard from "./pages/dashboards/SecretariaDashboard.tsx";
 import ProfessorDashboard from "./pages/dashboards/ProfessorDashboard.tsx";
+import PsicologiaDashboard from "./pages/dashboards/PsicologiaDashboard.tsx";
 
 import StudentsList from "./pages/students/StudentsList.tsx";
 import StudentsCreate from "./pages/students/StudentsCreate.tsx";
@@ -94,6 +95,7 @@ const LegacyRedirect = ({ path }: { path: string }) => {
     : dashboardRole === "admin" ? "/admin"
     : dashboardRole === "secretaria" ? "/secretaria"
     : dashboardRole === "professor" ? "/professor"
+    : dashboardRole === "psicologo" ? "/psicologia"
     : "";
 
   return <Navigate to={`${prefix}${path}`} replace />;
@@ -171,6 +173,9 @@ const App = () => (
             <Route path="/professor/disciplinas" element={<RoleRoute allowedRoles={["professor"]}><SubjectsList /></RoleRoute>} />
             <Route path="/professor/notas" element={<RoleRoute allowedRoles={["professor"]}><GradeEntry /></RoleRoute>} />
             <Route path="/professor/frequencia" element={<RoleRoute allowedRoles={["professor"]}><AttendanceRecord /></RoleRoute>} />
+
+            {/* Psicologia */}
+            <Route path="/psicologia/dashboard" element={<RoleRoute allowedRoles={["psicologo"]}><PsicologiaDashboard /></RoleRoute>} />
 
             {/* Certificado */}
             <Route path="/certificado" element={<ProtectedRoute><CertificadoPage /></ProtectedRoute>} />

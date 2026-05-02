@@ -4,32 +4,6 @@ import { useAuth, DashboardRole } from "@/contexts/AuthContext";
 import { useUserAccess } from "@/hooks/useUserAccess";
 import logoCertus from "@/assets/logo-certus.png";
 
-/**
- * Mapeamento de visibilidade por role retornada por get_user_access().
- * Usa substrings de `to` para casar itens dos menus existentes.
- *
- * Regras:
- * - superadmin: vê tudo (incluindo /assinaturas)
- * - owner:      vê tudo, EXCETO /assinaturas
- * - secretaria: dashboard, alunos, documentos, agenda, solicitações
- * - coordenador: dashboard, prontuário, intervenções, relatórios
- * - diretor:    dashboard, relatórios, indicadores
- * - professor:  sala dos professores, notas, frequência
- * - psicologo:  psicologia, prontuário
- * - role null:  fallback seguro → mostra tudo
- */
-type Visibility = "all" | { include?: string[]; exclude?: string[] };
-
-const visibilityByAccessRole: Record<string, Visibility> = {
-  superadmin: "all",
-  owner: { exclude: ["/assinaturas"] },
-  secretaria: { include: ["/dashboard", "/alunos", "/documentos", "/agenda", "/solicitacoes", "/secretaria"] },
-  coordenador: { include: ["/dashboard", "/prontuario", "/intervencoes", "/relatorios", "/coordenacao"] },
-  diretor: { include: ["/dashboard", "/relatorios", "/indicadores", "/direcao"] },
-  professor: { include: ["/professor", "/notas", "/frequencia"] },
-  psicologo: { include: ["/psicologia", "/prontuario"] },
-};
-
 interface NavItem {
   icon: string;
   label: string;
@@ -37,7 +11,20 @@ interface NavItem {
   color?: string;
 }
 
-const menusByRole: Record<DashboardRole, NavItem[]> = {
+/**
+ * Menus por role do `account_members` (fonte oficial via get_user_access()).
+ * Cada lista é montada estaticamente — nada de filtro hardcoded espalhado.
+ *
+ * Mapeamento (spec):
+ * - superadmin       → painel SaaS
+ * - owner            → tudo da escola, exceto /assinaturas (SaaS-only)
+ * - secretaria       → CORE operacional completo
+ * - diretor          → estratégico (dashboard, indicadores, comunicação)
+ * - coordenador      → coordenação + prontuário + intervenções
+ * - professor        → sala dos professores (turmas, notas, frequência)
+ * - psicologo        → psicologia + prontuário filtrado
+ */
+const menusByAccessRole: Record<string, NavItem[]> = {
   superadmin: [
     { icon: "ri-dashboard-3-line", label: "Dashboard", to: "/superadmin/dashboard" },
     { icon: "ri-building-2-line", label: "Escolas", to: "/superadmin/escolas" },
@@ -46,7 +33,7 @@ const menusByRole: Record<DashboardRole, NavItem[]> = {
     { icon: "ri-file-list-3-line", label: "Logs", to: "/superadmin/logs" },
     { icon: "ri-settings-3-line", label: "Administração", to: "/superadmin/configuracoes" },
   ],
-  admin: [
+  owner: [
     { icon: "ri-home-smile-2-fill", label: "Secretaria", to: "/admin/dashboard", color: "text-emerald-400" },
     { icon: "ri-team-fill", label: "Alunos", to: "/admin/alunos", color: "text-sky-400" },
     { icon: "ri-book-2-fill", label: "Turmas", to: "/admin/turmas", color: "text-indigo-400" },
@@ -56,47 +43,63 @@ const menusByRole: Record<DashboardRole, NavItem[]> = {
     { icon: "ri-shield-star-fill", label: "Direção", to: "/admin/direcao", color: "text-amber-400" },
     { icon: "ri-file-text-fill", label: "Documentos", to: "/admin/documentos", color: "text-rose-400" },
     { icon: "ri-chat-smile-3-fill", label: "Comunicação", to: "/admin/comunicacao", color: "text-cyan-400" },
-    { icon: "ri-medal-2-fill", label: "Preview Certificado", to: "/admin/certificado-preview", color: "text-yellow-400" },
     { icon: "ri-settings-4-fill", label: "Administração", to: "/admin/configuracoes", color: "text-violet-400" },
   ],
   secretaria: [
-    { icon: "ri-dashboard-3-line", label: "Dashboard", to: "/admin/dashboard" },
-    { icon: "ri-group-line", label: "Alunos", to: "/secretaria/alunos" },
-    { icon: "ri-book-open-line", label: "Turmas", to: "/secretaria/turmas" },
-    { icon: "ri-booklet-line", label: "Disciplinas", to: "/secretaria/disciplinas" },
-    { icon: "ri-user-star-line", label: "Professores", to: "/secretaria/professores" },
-    { icon: "ri-file-text-line", label: "Documentos", to: "/secretaria/documentos" },
+    { icon: "ri-home-smile-2-fill", label: "Secretaria", to: "/admin/dashboard", color: "text-emerald-400" },
+    { icon: "ri-team-fill", label: "Alunos", to: "/admin/alunos", color: "text-sky-400" },
+    { icon: "ri-book-2-fill", label: "Turmas", to: "/admin/turmas", color: "text-indigo-400" },
+    { icon: "ri-booklet-fill", label: "Disciplinas", to: "/admin/disciplinas", color: "text-fuchsia-400" },
+    { icon: "ri-graduation-cap-fill", label: "Professores", to: "/admin/professores", color: "text-emerald-400" },
+    { icon: "ri-file-text-fill", label: "Documentos", to: "/admin/documentos", color: "text-rose-400" },
+    { icon: "ri-chat-smile-3-fill", label: "Comunicação", to: "/admin/comunicacao", color: "text-cyan-400" },
+    { icon: "ri-settings-4-fill", label: "Administração", to: "/admin/configuracoes", color: "text-violet-400" },
+  ],
+  diretor: [
+    { icon: "ri-shield-star-fill", label: "Dashboard", to: "/admin/direcao", color: "text-amber-400" },
+    { icon: "ri-bar-chart-2-line", label: "Indicadores", to: "/admin/indicadores", color: "text-blue-400" },
+    { icon: "ri-chat-smile-3-fill", label: "Comunicação", to: "/admin/comunicacao", color: "text-cyan-400" },
+  ],
+  coordenador: [
+    { icon: "ri-compass-3-fill", label: "Coordenação", to: "/admin/coordenacao", color: "text-blue-400" },
+    { icon: "ri-team-fill", label: "Alunos", to: "/admin/alunos", color: "text-sky-400" },
+    { icon: "ri-bar-chart-2-line", label: "Indicadores", to: "/admin/indicadores", color: "text-blue-400" },
   ],
   professor: [
-    { icon: "ri-dashboard-3-line", label: "Dashboard", to: "/professor/dashboard" },
+    { icon: "ri-dashboard-3-line", label: "Sala dos Professores", to: "/professor/dashboard" },
     { icon: "ri-book-open-line", label: "Minhas Turmas", to: "/professor/turmas" },
-    { icon: "ri-booklet-line", label: "Disciplinas", to: "/professor/disciplinas" },
     { icon: "ri-bar-chart-box-line", label: "Lançar Notas", to: "/professor/notas" },
     { icon: "ri-calendar-check-line", label: "Frequência", to: "/professor/frequencia" },
   ],
+  psicologo: [
+    { icon: "ri-mental-health-line", label: "Psicologia", to: "/psicologia/dashboard" },
+    { icon: "ri-team-fill", label: "Alunos", to: "/admin/alunos", color: "text-sky-400" },
+  ],
+};
+
+/**
+ * Fallback: quando ainda não há registro em account_members, usa o menu
+ * derivado do AuthContext (school_memberships/profiles) para não bloquear
+ * usuários legados.
+ */
+const fallbackMenusByDashboardRole: Record<DashboardRole, NavItem[]> = {
+  superadmin: menusByAccessRole.superadmin,
+  admin: menusByAccessRole.owner,
+  secretaria: menusByAccessRole.secretaria,
+  professor: menusByAccessRole.professor,
+  psicologo: menusByAccessRole.psicologo,
 };
 
 const RoleSidebar = () => {
   const { dashboardRole, signOut } = useAuth();
   const { access } = useUserAccess();
 
-  const baseItems = dashboardRole ? menusByRole[dashboardRole] : [];
-
-  // Filtra com base na role retornada por get_user_access().
-  // Fallback seguro: se role for null/desconhecida, mostra tudo.
   const accessRole = access?.role?.toLowerCase() ?? null;
-  let items = baseItems;
-  if (accessRole) {
-    const rule = visibilityByAccessRole[accessRole];
-    if (rule && rule !== "all") {
-      items = baseItems.filter((it) => {
-        if (rule.exclude?.some((frag) => it.to.includes(frag))) return false;
-        if (rule.include) return rule.include.some((frag) => it.to.includes(frag));
-        return true;
-      });
-    }
-    // rule undefined ou "all" → mantém baseItems (mostra tudo do menu da role do AuthContext)
-  }
+  const items: NavItem[] =
+    (accessRole && menusByAccessRole[accessRole]) ||
+    (dashboardRole && fallbackMenusByDashboardRole[dashboardRole]) ||
+    [];
+
   return (
     <aside className="fixed left-0 top-0 w-60 h-screen bg-primary flex flex-col z-10 max-[900px]:static max-[900px]:w-full max-[900px]:h-auto">
       <div className="p-5 border-b border-sidebar-border">

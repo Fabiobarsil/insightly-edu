@@ -1,22 +1,26 @@
+import { usePermission } from "@/hooks/usePermission";
 import { useUserAccess } from "@/hooks/useUserAccess";
 
 /**
- * Permissões de gestão de alunos baseadas na role retornada por get_user_access().
+ * Permissões de gestão de alunos. Agora delega para `has_permission` no
+ * banco (via usePermission), centralizando a regra no backend.
  *
- * Regras:
- * - Criar aluno:  secretaria, owner
- * - Editar aluno: secretaria, owner
- * - Excluir aluno: owner
- * - Professor: nenhuma ação de gestão
- * - Coordenador: somente visualizar
+ * - canCreate → student.create
+ * - canEdit   → student.update
+ * - canDelete → owner exclusivo (não há ação `student.delete` no has_permission)
  */
 export const useStudentPermissions = () => {
-  const { access, loading } = useUserAccess();
+  const { access, loading: accessLoading } = useUserAccess();
   const role = access?.role?.toLowerCase() ?? null;
 
-  const canCreate = role === "owner" || role === "secretaria";
-  const canEdit = role === "owner" || role === "secretaria";
-  const canDelete = role === "owner";
+  const create = usePermission("student.create");
+  const update = usePermission("student.update");
 
-  return { role, loading, canCreate, canEdit, canDelete };
+  return {
+    role,
+    loading: accessLoading || create.loading || update.loading,
+    canCreate: create.allowed,
+    canEdit: update.allowed,
+    canDelete: role === "owner",
+  };
 };

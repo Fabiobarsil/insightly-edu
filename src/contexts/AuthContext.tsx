@@ -2,17 +2,29 @@ import { createContext, useContext, useEffect, useState, useRef, ReactNode } fro
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppRole = "owner" | "admin" | "secretaria" | "coordenador" | "professor" | "auxiliar";
+export type AppRole =
+  | "superadmin"
+  | "owner"
+  | "admin"
+  | "secretaria"
+  | "coordenador"
+  | "diretor"
+  | "professor"
+  | "psicologo"
+  | "auxiliar";
 
-export type DashboardRole = "superadmin" | "admin" | "secretaria" | "professor";
+export type DashboardRole = "superadmin" | "admin" | "secretaria" | "professor" | "psicologo";
 
 const roleToDashboard: Record<AppRole, DashboardRole> = {
-  owner: "superadmin",
+  superadmin: "superadmin",
+  owner: "admin",
   admin: "admin",
+  diretor: "admin",
   coordenador: "admin",
   secretaria: "secretaria",
   auxiliar: "secretaria",
   professor: "professor",
+  psicologo: "psicologo",
 };
 
 export const getDashboardPath = (role: DashboardRole) => {
@@ -21,6 +33,7 @@ export const getDashboardPath = (role: DashboardRole) => {
     admin: "/admin/dashboard",
     secretaria: "/admin/dashboard",
     professor: "/professor/dashboard",
+    psicologo: "/psicologia/dashboard",
   };
   return paths[role];
 };
@@ -54,25 +67,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Standalone function that fetches role - called OUTSIDE of auth lock
   const fetchRole = async (userId: string) => {
     try {
+      // 1) Superadmin global vem de profiles.role (visão SaaS, fora da escola)
       const { data: profile } = await supabase.from("profiles").select("role").eq("id", userId).maybeSingle();
-
-      console.log("[Auth] profile for", userId, ":", profile);
 
       if (!mountedRef.current) return;
 
       if (profile?.role === "superadmin") {
-        setRole("owner");
+        setRole("superadmin"); // visão SaaS global
         return;
       }
 
+      // 2) Fonte oficial da escola: account_members (alimenta get_user_access())
+      const { data: accountMember } = await supabase
+        .from("account_members")
+        .select("role")
+        .eq("user_id", userId)
+        .limit(1)
+        .maybeSingle();
+
+      if (!mountedRef.current) return;
+
+      if (accountMember?.role) {
+        const r = accountMember.role.toLowerCase();
+        const known = ["owner", "admin", "secretaria", "coordenador", "diretor", "professor", "psicologo", "auxiliar"];
+        if (known.includes(r)) {
+          setRole(r as AppRole);
+          return;
+        }
+      }
+
+      // 3) Fallback legado: school_memberships.role
       const { data: membership } = await supabase
         .from("school_memberships")
         .select("role")
         .eq("user_id", userId)
         .limit(1)
         .maybeSingle();
-
-      console.log("[Auth] membership for", userId, ":", membership);
 
       if (!mountedRef.current) return;
       setRole(membership?.role ? (membership.role as AppRole) : null);
@@ -138,9 +168,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           });
         });
       } else {
-        console.log("Nenhum role encontrado — criando fallback");
-
-        setRole("owner"); // 👈 TEMPORÁRIO pra destravar
+        // Sem sessão → limpa o role
+        setRole(null);
         setLoading(false);
       }
     });
