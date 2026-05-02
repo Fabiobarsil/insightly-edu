@@ -87,6 +87,7 @@ const fallbackMenusByDashboardRole: Record<DashboardRole, NavItem[]> = {
   admin: menusByAccessRole.owner,
   secretaria: menusByAccessRole.secretaria,
   professor: menusByAccessRole.professor,
+  psicologo: menusByAccessRole.psicologo,
 };
 
 const RoleSidebar = () => {
