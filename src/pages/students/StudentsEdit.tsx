@@ -165,8 +165,9 @@ const StudentsEdit = () => {
     onError: (err: any) => toast.error(err?.message || "Erro ao salvar"),
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!(await ensurePermission("student.update"))) return;
     mutation.mutate();
   };
 
