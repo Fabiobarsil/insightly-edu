@@ -266,6 +266,9 @@ const StudentsDetail = () => {
 
   const unlinkGuardianMutation = useMutation({
     mutationFn: async (guardianId: string) => {
+      if (!(await ensurePermission("student.update"))) {
+        throw new Error("__permission_denied__");
+      }
       const { error } = await supabase
         .from("student_guardians")
         .delete()
