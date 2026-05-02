@@ -75,6 +75,7 @@ const InfoRow = ({ label, value }: { label: string; value: string }) => (
 const StudentsDetail = () => {
   const { id } = useParams();
   const { schoolId } = useSchoolId();
+  const { canEdit } = useStudentPermissions();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(() => {
