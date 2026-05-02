@@ -3,6 +3,7 @@ import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 export type AppRole =
+  | "superadmin"
   | "owner"
   | "admin"
   | "secretaria"
@@ -15,6 +16,7 @@ export type AppRole =
 export type DashboardRole = "superadmin" | "admin" | "secretaria" | "professor" | "psicologo";
 
 const roleToDashboard: Record<AppRole, DashboardRole> = {
+  superadmin: "superadmin",
   owner: "admin",
   admin: "admin",
   diretor: "admin",
