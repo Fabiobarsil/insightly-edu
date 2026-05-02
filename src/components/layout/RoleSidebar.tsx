@@ -7,16 +7,27 @@ import logoCertus from "@/assets/logo-certus.png";
 /**
  * Mapeamento de visibilidade por role retornada por get_user_access().
  * Usa substrings de `to` para casar itens dos menus existentes.
- * - owner: vê tudo
- * - sem role: não vê nada
+ *
+ * Regras:
+ * - superadmin: vê tudo (incluindo /assinaturas)
+ * - owner:      vê tudo, EXCETO /assinaturas
+ * - secretaria: dashboard, alunos, documentos, agenda, solicitações
+ * - coordenador: dashboard, prontuário, intervenções, relatórios
+ * - diretor:    dashboard, relatórios, indicadores
+ * - professor:  sala dos professores, notas, frequência
+ * - psicologo:  psicologia, prontuário
+ * - role null:  fallback seguro → mostra tudo
  */
-const visibilityByAccessRole: Record<string, string[] | "all"> = {
-  owner: "all",
-  diretor: ["/dashboard", "/direcao", "/indicadores", "/relatorios"],
-  coordenador: ["/coordenacao", "/prontuario"],
-  secretaria: ["/secretaria", "/alunos", "/documentos", "/usuarios", "/agenda", "/dashboard"],
-  professor: ["/professor"],
-  psicologo: ["/psicologia"],
+type Visibility = "all" | { include?: string[]; exclude?: string[] };
+
+const visibilityByAccessRole: Record<string, Visibility> = {
+  superadmin: "all",
+  owner: { exclude: ["/assinaturas"] },
+  secretaria: { include: ["/dashboard", "/alunos", "/documentos", "/agenda", "/solicitacoes", "/secretaria"] },
+  coordenador: { include: ["/dashboard", "/prontuario", "/intervencoes", "/relatorios", "/coordenacao"] },
+  diretor: { include: ["/dashboard", "/relatorios", "/indicadores", "/direcao"] },
+  professor: { include: ["/professor", "/notas", "/frequencia"] },
+  psicologo: { include: ["/psicologia", "/prontuario"] },
 };
 
 interface NavItem {
