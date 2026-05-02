@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import GuardianFormModal from "@/components/guardians/GuardianFormModal";
 import { useStudentPermissions } from "@/hooks/useStudentPermissions";
+import { ensurePermission } from "@/lib/permissions";
 
 const tabs = [
   { id: "pessoal", label: "Dados Pessoais", icon: "ri-user-line" },
