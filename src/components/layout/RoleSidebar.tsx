@@ -1,7 +1,23 @@
 import { cn } from "@/lib/utils";
 import { NavLink } from "@/components/NavLink";
 import { useAuth, DashboardRole } from "@/contexts/AuthContext";
+import { useUserAccess } from "@/hooks/useUserAccess";
 import logoCertus from "@/assets/logo-certus.png";
+
+/**
+ * Mapeamento de visibilidade por role retornada por get_user_access().
+ * Usa substrings de `to` para casar itens dos menus existentes.
+ * - owner: vê tudo
+ * - sem role: não vê nada
+ */
+const visibilityByAccessRole: Record<string, string[] | "all"> = {
+  owner: "all",
+  diretor: ["/dashboard", "/direcao", "/indicadores", "/relatorios"],
+  coordenador: ["/coordenacao", "/prontuario"],
+  secretaria: ["/secretaria", "/alunos", "/documentos", "/usuarios", "/agenda", "/dashboard"],
+  professor: ["/professor"],
+  psicologo: ["/psicologia"],
+};
 
 interface NavItem {
   icon: string;
@@ -51,7 +67,22 @@ const menusByRole: Record<DashboardRole, NavItem[]> = {
 
 const RoleSidebar = () => {
   const { dashboardRole, signOut } = useAuth();
-  const items = dashboardRole ? menusByRole[dashboardRole] : [];
+  const { access } = useUserAccess();
+
+  const baseItems = dashboardRole ? menusByRole[dashboardRole] : [];
+
+  // Filtra com base na role retornada por get_user_access().
+  // Se não houver access definido, mantém comportamento atual (baseItems).
+  const accessRole = access?.role?.toLowerCase();
+  let items = baseItems;
+  if (accessRole !== undefined) {
+    const rule = visibilityByAccessRole[accessRole];
+    if (!rule) {
+      items = []; // role desconhecida → não mostra nada
+    } else if (rule !== "all") {
+      items = baseItems.filter((it) => rule.some((frag) => it.to.includes(frag)));
+    }
+  }
 
   return (
     <aside className="fixed left-0 top-0 w-60 h-screen bg-primary flex flex-col z-10 max-[900px]:static max-[900px]:w-full max-[900px]:h-auto">
