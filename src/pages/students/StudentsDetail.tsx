@@ -280,7 +280,10 @@ const StudentsDetail = () => {
       queryClient.invalidateQueries({ queryKey: ["student-guardians", id] });
       toast.success("Vínculo removido!");
     },
-    onError: (err: any) => toast.error(err.message || "Erro ao remover vínculo"),
+    onError: (err: any) => {
+      if (err?.message === "__permission_denied__") return; // toast já exibido
+      toast.error(err.message || "Erro ao remover vínculo");
+    },
   });
 
   const uploadDocMutation = useMutation({
