@@ -83,18 +83,20 @@ const RoleSidebar = () => {
   const baseItems = dashboardRole ? menusByRole[dashboardRole] : [];
 
   // Filtra com base na role retornada por get_user_access().
-  // Se não houver access definido, mantém comportamento atual (baseItems).
-  const accessRole = access?.role?.toLowerCase();
+  // Fallback seguro: se role for null/desconhecida, mostra tudo.
+  const accessRole = access?.role?.toLowerCase() ?? null;
   let items = baseItems;
-  if (accessRole !== undefined) {
+  if (accessRole) {
     const rule = visibilityByAccessRole[accessRole];
-    if (!rule) {
-      items = []; // role desconhecida → não mostra nada
-    } else if (rule !== "all") {
-      items = baseItems.filter((it) => rule.some((frag) => it.to.includes(frag)));
+    if (rule && rule !== "all") {
+      items = baseItems.filter((it) => {
+        if (rule.exclude?.some((frag) => it.to.includes(frag))) return false;
+        if (rule.include) return rule.include.some((frag) => it.to.includes(frag));
+        return true;
+      });
     }
+    // rule undefined ou "all" → mantém baseItems (mostra tudo do menu da role do AuthContext)
   }
-
   return (
     <aside className="fixed left-0 top-0 w-60 h-screen bg-primary flex flex-col z-10 max-[900px]:static max-[900px]:w-full max-[900px]:h-auto">
       <div className="p-5 border-b border-sidebar-border">
