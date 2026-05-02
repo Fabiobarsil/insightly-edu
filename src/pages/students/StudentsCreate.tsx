@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import GuardianFormModal from "@/components/guardians/GuardianFormModal";
 import { fetchAddressByCEP } from "@/utils/cep";
 import { applyMask } from "@/utils/formatters";
+import { ensurePermission } from "@/lib/permissions";
 
 const maritalOptions = [
   { value: "solteiro", label: "Solteiro(a)" },
@@ -520,6 +521,11 @@ const StudentsCreate = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
+
+    // Valida permissão antes de qualquer chamada ao banco
+    const action = isEdit ? "student.update" : "student.create";
+    if (!(await ensurePermission(action))) return;
+
     setLoading(true);
     try {
       await mutation.mutateAsync();

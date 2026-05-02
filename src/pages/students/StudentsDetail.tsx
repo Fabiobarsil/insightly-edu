@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import GuardianFormModal from "@/components/guardians/GuardianFormModal";
 import { useStudentPermissions } from "@/hooks/useStudentPermissions";
+import { ensurePermission } from "@/lib/permissions";
 
 const tabs = [
   { id: "pessoal", label: "Dados Pessoais", icon: "ri-user-line" },
@@ -265,6 +266,9 @@ const StudentsDetail = () => {
 
   const unlinkGuardianMutation = useMutation({
     mutationFn: async (guardianId: string) => {
+      if (!(await ensurePermission("student.update"))) {
+        throw new Error("__permission_denied__");
+      }
       const { error } = await supabase
         .from("student_guardians")
         .delete()
@@ -276,7 +280,10 @@ const StudentsDetail = () => {
       queryClient.invalidateQueries({ queryKey: ["student-guardians", id] });
       toast.success("Vínculo removido!");
     },
-    onError: (err: any) => toast.error(err.message || "Erro ao remover vínculo"),
+    onError: (err: any) => {
+      if (err?.message === "__permission_denied__") return; // toast já exibido
+      toast.error(err.message || "Erro ao remover vínculo");
+    },
   });
 
   const uploadDocMutation = useMutation({

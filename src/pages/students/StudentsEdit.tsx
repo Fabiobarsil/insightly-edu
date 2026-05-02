@@ -7,6 +7,7 @@ import PageHeader from "@/components/shared/PageHeader";
 import FormField from "@/components/shared/FormField";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
+import { ensurePermission } from "@/lib/permissions";
 
 /**
  * StudentsEdit
@@ -164,8 +165,9 @@ const StudentsEdit = () => {
     onError: (err: any) => toast.error(err?.message || "Erro ao salvar"),
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!(await ensurePermission("student.update"))) return;
     mutation.mutate();
   };
 
