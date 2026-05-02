@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import GuardianFormModal from "@/components/guardians/GuardianFormModal";
 import { fetchAddressByCEP } from "@/utils/cep";
 import { applyMask } from "@/utils/formatters";
+import { ensurePermission } from "@/lib/permissions";
 
 const maritalOptions = [
   { value: "solteiro", label: "Solteiro(a)" },
