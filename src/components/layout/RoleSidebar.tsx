@@ -1,7 +1,23 @@
 import { cn } from "@/lib/utils";
 import { NavLink } from "@/components/NavLink";
 import { useAuth, DashboardRole } from "@/contexts/AuthContext";
+import { useUserAccess } from "@/hooks/useUserAccess";
 import logoCertus from "@/assets/logo-certus.png";
+
+/**
+ * Mapeamento de visibilidade por role retornada por get_user_access().
+ * Usa substrings de `to` para casar itens dos menus existentes.
+ * - owner: vê tudo
+ * - sem role: não vê nada
+ */
+const visibilityByAccessRole: Record<string, string[] | "all"> = {
+  owner: "all",
+  diretor: ["/dashboard", "/direcao", "/indicadores", "/relatorios"],
+  coordenador: ["/coordenacao", "/prontuario"],
+  secretaria: ["/secretaria", "/alunos", "/documentos", "/usuarios", "/agenda", "/dashboard"],
+  professor: ["/professor"],
+  psicologo: ["/psicologia"],
+};
 
 interface NavItem {
   icon: string;
