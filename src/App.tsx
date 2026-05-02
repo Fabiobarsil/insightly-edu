@@ -95,6 +95,7 @@ const LegacyRedirect = ({ path }: { path: string }) => {
     : dashboardRole === "admin" ? "/admin"
     : dashboardRole === "secretaria" ? "/secretaria"
     : dashboardRole === "professor" ? "/professor"
+    : dashboardRole === "psicologo" ? "/psicologia"
     : "";
 
   return <Navigate to={`${prefix}${path}`} replace />;
