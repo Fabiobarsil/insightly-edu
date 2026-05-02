@@ -65,7 +65,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Standalone function that fetches role - called OUTSIDE of auth lock
   const fetchRole = async (userId: string) => {
     try {
-      // 1) Fonte oficial: account_members (alimenta get_user_access())
+      // 1) Superadmin global vem de profiles.role (visão SaaS, fora da escola)
+      const { data: profile } = await supabase.from("profiles").select("role").eq("id", userId).maybeSingle();
+
+      if (!mountedRef.current) return;
+
+      if (profile?.role === "superadmin") {
+        setRole("owner"); // mapeado para DashboardRole "superadmin"
+        return;
+      }
+
+      // 2) Fonte oficial da escola: account_members (alimenta get_user_access())
       const { data: accountMember } = await supabase
         .from("account_members")
         .select("role")
@@ -77,11 +87,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (accountMember?.role) {
         const r = accountMember.role.toLowerCase();
-        if (r === "superadmin") {
-          setRole("owner");
-          return;
-        }
-        // roles conhecidas viram AppRole; demais caem no fallback abaixo
         const known = ["owner", "admin", "secretaria", "coordenador", "diretor", "professor", "psicologo", "auxiliar"];
         if (known.includes(r)) {
           setRole(r as AppRole);
@@ -89,26 +94,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
 
-      // 2) Fallback legado: profiles.role + school_memberships.role
-      const { data: profile } = await supabase.from("profiles").select("role").eq("id", userId).maybeSingle();
-
-      console.log("[Auth] profile for", userId, ":", profile);
-
-      if (!mountedRef.current) return;
-
-      if (profile?.role === "superadmin") {
-        setRole("owner");
-        return;
-      }
-
+      // 3) Fallback legado: school_memberships.role
       const { data: membership } = await supabase
         .from("school_memberships")
         .select("role")
         .eq("user_id", userId)
         .limit(1)
         .maybeSingle();
-
-      console.log("[Auth] membership for", userId, ":", membership);
 
       if (!mountedRef.current) return;
       setRole(membership?.role ? (membership.role as AppRole) : null);
