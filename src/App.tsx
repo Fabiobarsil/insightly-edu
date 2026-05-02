@@ -173,6 +173,9 @@ const App = () => (
             <Route path="/professor/notas" element={<RoleRoute allowedRoles={["professor"]}><GradeEntry /></RoleRoute>} />
             <Route path="/professor/frequencia" element={<RoleRoute allowedRoles={["professor"]}><AttendanceRecord /></RoleRoute>} />
 
+            {/* Psicologia */}
+            <Route path="/psicologia/dashboard" element={<RoleRoute allowedRoles={["psicologo"]}><PsicologiaDashboard /></RoleRoute>} />
+
             {/* Certificado */}
             <Route path="/certificado" element={<ProtectedRoute><CertificadoPage /></ProtectedRoute>} />
 
