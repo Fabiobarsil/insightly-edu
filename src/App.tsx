@@ -18,6 +18,7 @@ import CoordinationDashboard from "./pages/dashboards/CoordinationDashboard.tsx"
 import DirecaoEscolar from "./pages/dashboards/DirecaoEscolar.tsx";
 import SecretariaDashboard from "./pages/dashboards/SecretariaDashboard.tsx";
 import ProfessorDashboard from "./pages/dashboards/ProfessorDashboard.tsx";
+import PsicologiaDashboard from "./pages/dashboards/PsicologiaDashboard.tsx";
 
 import StudentsList from "./pages/students/StudentsList.tsx";
 import StudentsCreate from "./pages/students/StudentsCreate.tsx";
