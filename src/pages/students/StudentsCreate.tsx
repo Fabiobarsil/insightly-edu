@@ -521,6 +521,11 @@ const StudentsCreate = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
+
+    // Valida permissão antes de qualquer chamada ao banco
+    const action = isEdit ? "student.update" : "student.create";
+    if (!(await ensurePermission(action))) return;
+
     setLoading(true);
     try {
       await mutation.mutateAsync();
