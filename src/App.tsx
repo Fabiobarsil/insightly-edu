@@ -8,6 +8,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import RoleRoute from "@/components/auth/RoleRoute";
 
 import Login from "./pages/auth/Login.tsx";
+import NoAccess from "./pages/auth/NoAccess.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 import SuperadminDashboard from "./pages/dashboards/SuperadminDashboard.tsx";
@@ -113,6 +114,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/sem-acesso" element={<NoAccess />} />
             <Route path="/" element={<RootRedirect />} />
 
             {/* Superadmin routes */}

@@ -1,10 +1,24 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserAccess } from "@/hooks/useUserAccess";
 
-export default function RoleRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles: string[] }) {
-  const { dashboardRole, loading } = useAuth();
+/**
+ * Protege rotas validando:
+ * 1. Sessão ativa (caso contrário → /login)
+ * 2. Acesso via get_user_access() OU role do AuthContext (fallback)
+ * 3. Role pertence a allowedRoles (caso contrário → /sem-acesso)
+ */
+export default function RoleRoute({
+  children,
+  allowedRoles,
+}: {
+  children: React.ReactNode;
+  allowedRoles: string[];
+}) {
+  const { dashboardRole, loading: authLoading, session } = useAuth();
+  const { access, loading: accessLoading } = useUserAccess();
 
-  console.log("ROLE ROUTE:", { dashboardRole, loading });
+  const loading = authLoading || accessLoading;
 
   if (loading) {
     return (
@@ -14,8 +28,20 @@ export default function RoleRoute({ children, allowedRoles }: { children: React.
     );
   }
 
-  if (!dashboardRole || !allowedRoles.includes(dashboardRole)) {
+  // Sem sessão → login
+  if (!session) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Sem acesso de fonte alguma → /sem-acesso
+  if (!access && !dashboardRole) {
+    return <Navigate to="/sem-acesso" replace />;
+  }
+
+  // Valida se a role atual está autorizada
+  const effectiveRole = dashboardRole;
+  if (!effectiveRole || !allowedRoles.includes(effectiveRole)) {
+    return <Navigate to="/sem-acesso" replace />;
   }
 
   return <>{children}</>;
