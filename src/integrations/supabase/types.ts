@@ -50,6 +50,7 @@ export type Database = {
           access_type: string
           account_id: string
           created_at: string
+          department: string | null
           id: string
           invited_by: string | null
           role: string
@@ -61,6 +62,7 @@ export type Database = {
           access_type?: string
           account_id: string
           created_at?: string
+          department?: string | null
           id?: string
           invited_by?: string | null
           role: string
@@ -72,6 +74,7 @@ export type Database = {
           access_type?: string
           account_id?: string
           created_at?: string
+          department?: string | null
           id?: string
           invited_by?: string | null
           role?: string
@@ -2341,6 +2344,69 @@ export type Database = {
           },
         ]
       }
+      subscriptions: {
+        Row: {
+          account_id: string | null
+          billing_cycle: string | null
+          created_at: string | null
+          id: string
+          plan: string | null
+          status: string | null
+          system_id: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          billing_cycle?: string | null
+          created_at?: string | null
+          id?: string
+          plan?: string | null
+          status?: string | null
+          system_id?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          billing_cycle?: string | null
+          created_at?: string | null
+          id?: string
+          plan?: string | null
+          status?: string | null
+          system_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_system_id_fkey"
+            columns: ["system_id"]
+            isOneToOne: false
+            referencedRelation: "systems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      systems: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       teacher_assignments: {
         Row: {
           class_id: string | null
@@ -3174,7 +3240,15 @@ export type Database = {
           }
       get_effective_role: { Args: never; Returns: string }
       get_student_historico: { Args: { student_uuid: string }; Returns: Json }
+      get_user_access: {
+        Args: never
+        Returns: {
+          department: string
+          role: string
+        }[]
+      }
       is_member_of_school: { Args: { _school_id: string }; Returns: boolean }
+      is_superadmin: { Args: never; Returns: boolean }
       process_rematricula: { Args: { p_year: number }; Returns: number }
       process_rematricula_with_class: {
         Args: { p_year: number }
