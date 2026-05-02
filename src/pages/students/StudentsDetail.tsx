@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import GuardianFormModal from "@/components/guardians/GuardianFormModal";
+import { useStudentPermissions } from "@/hooks/useStudentPermissions";
 
 const tabs = [
   { id: "pessoal", label: "Dados Pessoais", icon: "ri-user-line" },
