@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import GuardianFormModal from "@/components/guardians/GuardianFormModal";
+import { useStudentPermissions } from "@/hooks/useStudentPermissions";
 
 const tabs = [
   { id: "pessoal", label: "Dados Pessoais", icon: "ri-user-line" },
@@ -74,6 +75,7 @@ const InfoRow = ({ label, value }: { label: string; value: string }) => (
 const StudentsDetail = () => {
   const { id } = useParams();
   const { schoolId } = useSchoolId();
+  const { canEdit } = useStudentPermissions();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(() => {
@@ -485,12 +487,14 @@ const StudentsDetail = () => {
         </div>
         <div className="flex items-center gap-3">
           <StatusBadge {...mapped} />
-          <Link
-            to={`/admin/alunos/${id}/editar`}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-[12px] bg-card border border-border text-primary text-sm font-bold hover:bg-accent transition-colors"
-          >
-            <i className="ri-edit-line" /> Editar
-          </Link>
+          {canEdit && (
+            <Link
+              to={`/admin/alunos/${id}/editar`}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-[12px] bg-card border border-border text-primary text-sm font-bold hover:bg-accent transition-colors"
+            >
+              <i className="ri-edit-line" /> Editar
+            </Link>
+          )}
           <Link
             to={`/admin/alunos/${id}/prontuario`}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-[12px] bg-secondary text-secondary-foreground text-sm font-bold hover:bg-secondary/90 transition-colors"
