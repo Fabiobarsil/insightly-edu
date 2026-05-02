@@ -3247,6 +3247,7 @@ export type Database = {
           role: string
         }[]
       }
+      has_permission: { Args: { action: string }; Returns: boolean }
       is_member_of_school: { Args: { _school_id: string }; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
       process_rematricula: { Args: { p_year: number }; Returns: number }
