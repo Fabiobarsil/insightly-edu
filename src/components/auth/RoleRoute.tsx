@@ -6,7 +6,8 @@ import { useUserAccess } from "@/hooks/useUserAccess";
  * Protege rotas validando:
  * 1. Sessão ativa (caso contrário → /login)
  * 2. Acesso via get_user_access() OU role do AuthContext (fallback)
- * 3. Role pertence a allowedRoles (caso contrário → /sem-acesso)
+ * 3. A role autorizada bate com o `dashboardRole` OU com o role efetivo
+ *    em `account_members` (caso contrário → /sem-acesso)
  */
 export default function RoleRoute({
   children,
@@ -28,19 +29,23 @@ export default function RoleRoute({
     );
   }
 
-  // Sem sessão → login
   if (!session) {
     return <Navigate to="/login" replace />;
   }
 
-  // Sem acesso de fonte alguma → /sem-acesso
-  if (!access && !dashboardRole) {
+  const accessRole = access?.role?.toLowerCase() ?? null;
+
+  // Sem fonte de role alguma → /sem-acesso
+  if (!accessRole && !dashboardRole) {
     return <Navigate to="/sem-acesso" replace />;
   }
 
-  // Valida se a role atual está autorizada
-  const effectiveRole = dashboardRole;
-  if (!effectiveRole || !allowedRoles.includes(effectiveRole)) {
+  // Aceita match por dashboardRole (legado) OU pelo role oficial em account_members.
+  const isAllowed =
+    (dashboardRole && allowedRoles.includes(dashboardRole)) ||
+    (accessRole && allowedRoles.includes(accessRole));
+
+  if (!isAllowed) {
     return <Navigate to="/sem-acesso" replace />;
   }
 
