@@ -65,6 +65,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Standalone function that fetches role - called OUTSIDE of auth lock
   const fetchRole = async (userId: string) => {
     try {
+      // 1) Fonte oficial: account_members (alimenta get_user_access())
+      const { data: accountMember } = await supabase
+        .from("account_members")
+        .select("role")
+        .eq("user_id", userId)
+        .limit(1)
+        .maybeSingle();
+
+      if (!mountedRef.current) return;
+
+      if (accountMember?.role) {
+        const r = accountMember.role.toLowerCase();
+        if (r === "superadmin") {
+          setRole("owner");
+          return;
+        }
+        // roles conhecidas viram AppRole; demais caem no fallback abaixo
+        const known = ["owner", "admin", "secretaria", "coordenador", "diretor", "professor", "psicologo", "auxiliar"];
+        if (known.includes(r)) {
+          setRole(r as AppRole);
+          return;
+        }
+      }
+
+      // 2) Fallback legado: profiles.role + school_memberships.role
       const { data: profile } = await supabase.from("profiles").select("role").eq("id", userId).maybeSingle();
 
       console.log("[Auth] profile for", userId, ":", profile);
