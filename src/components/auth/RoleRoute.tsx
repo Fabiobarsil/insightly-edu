@@ -49,10 +49,11 @@ export default function RoleRoute({
 
   // Aceita match por dashboardRole (legado) OU pelo role oficial em account_members.
   // Roles full-access passam em qualquer rota (admin, secretaria, etc).
+  // Roles full-access podem entrar em QUALQUER rota do sistema (inclui professor/psicologo).
   const isAllowed =
+    hasFullAccess ||
     (dashboardRole && allowedRoles.includes(dashboardRole)) ||
-    (accessRole && allowedRoles.includes(accessRole)) ||
-    (hasFullAccess && (allowedRoles.includes("admin") || allowedRoles.includes("secretaria")));
+    (accessRole && allowedRoles.includes(accessRole));
 
   if (!isAllowed) {
     return <Navigate to="/sem-acesso" replace />;
