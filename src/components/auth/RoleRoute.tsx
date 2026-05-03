@@ -40,10 +40,18 @@ export default function RoleRoute({
     return <Navigate to="/sem-acesso" replace />;
   }
 
+  // Roles administrativos têm acesso FULL ao sistema (equivalentes a "admin").
+  const FULL_ACCESS_ROLES = ["owner", "admin", "diretor", "coordenador", "administracao"];
+  const hasFullAccess =
+    (accessRole && FULL_ACCESS_ROLES.includes(accessRole)) ||
+    (dashboardRole === "admin");
+
   // Aceita match por dashboardRole (legado) OU pelo role oficial em account_members.
+  // Roles full-access passam em qualquer rota que aceite "admin".
   const isAllowed =
     (dashboardRole && allowedRoles.includes(dashboardRole)) ||
-    (accessRole && allowedRoles.includes(accessRole));
+    (accessRole && allowedRoles.includes(accessRole)) ||
+    (hasFullAccess && allowedRoles.includes("admin"));
 
   if (!isAllowed) {
     return <Navigate to="/sem-acesso" replace />;
