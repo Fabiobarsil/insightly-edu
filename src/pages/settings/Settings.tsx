@@ -211,14 +211,18 @@ const Settings = () => {
   };
 
   // --- Users tab ---
+  const { role: currentRole } = useAuth();
+  const canManageAccess = ["owner", "admin", "secretaria"].includes((currentRole || "").toLowerCase());
+
   const { data: members = [], isLoading: membersLoading } = useQuery({
-    queryKey: ["account-members"],
+    queryKey: ["account-members-enriched"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("account_members").select("*").order("created_at", { ascending: true });
+      const { data, error } = await supabase.functions.invoke("list-members", { body: {} });
       if (error) throw error;
-      return (data || []) as MemberRow[];
+      if (data?.error) throw new Error(data.error);
+      return (data?.members || []) as MemberRow[];
     },
-    enabled: tab === "usuarios",
+    enabled: tab === "usuarios" && canManageAccess,
   });
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -229,30 +233,40 @@ const Settings = () => {
   const openCreate = () => { setEditingMember(null); setUserForm(emptyForm); setModalOpen(true); };
   const openEdit = (m: MemberRow) => {
     setEditingMember(m);
-    setUserForm({ email: "", role: m.role, access_type: m.access_type, access_expires_at: m.access_expires_at?.slice(0, 10) || "" });
+    setUserForm({
+      name: m.full_name || "",
+      email: m.email || "",
+      role: m.role,
+      department: m.department || "",
+      access_type: m.access_type,
+      access_expires_at: m.access_expires_at?.slice(0, 10) || "",
+    });
     setModalOpen(true);
   };
 
   const handleCreateUser = async () => {
     if (!userForm.email.trim()) { toast.error("Informe o e-mail"); return; }
+    if (!userForm.role) { toast.error("Selecione um nível de acesso"); return; }
     if (userForm.access_type === "temporary" && !userForm.access_expires_at) { toast.error("Informe a data de expiração"); return; }
     setSaving(true);
     try {
       const { data, error } = await supabase.functions.invoke("create-user", {
         body: {
+          name: userForm.name.trim() || null,
           email: userForm.email.trim(),
           role: userForm.role,
+          department: userForm.department.trim() || null,
           access_type: userForm.access_type,
           access_expires_at: userForm.access_type === "temporary" ? userForm.access_expires_at : null,
         },
       });
       if (error) throw error;
       if (data?.error) { toast.error(data.error); setSaving(false); return; }
-      toast.success(data?.message || "Usuário criado!");
+      toast.success(data?.message || "Convite enviado!");
       setModalOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["account-members"] });
+      queryClient.invalidateQueries({ queryKey: ["account-members-enriched"] });
     } catch (err: any) {
-      toast.error(err.message || "Erro ao criar usuário");
+      toast.error(err.message || "Erro ao enviar convite");
     } finally { setSaving(false); }
   };
 
@@ -263,13 +277,14 @@ const Settings = () => {
     try {
       const { error } = await supabase.from("account_members").update({
         role: userForm.role,
+        department: userForm.department.trim() || null,
         access_type: userForm.access_type,
         access_expires_at: userForm.access_type === "temporary" ? userForm.access_expires_at : null,
       }).eq("id", editingMember.id);
       if (error) throw error;
-      toast.success("Usuário atualizado!");
+      toast.success("Acesso atualizado!");
       setModalOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["account-members"] });
+      queryClient.invalidateQueries({ queryKey: ["account-members-enriched"] });
     } catch (err: any) {
       toast.error(err.message || "Erro ao atualizar");
     } finally { setSaving(false); }
@@ -278,6 +293,7 @@ const Settings = () => {
   const handleUserFormChange = (field: keyof UserFormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setUserForm((prev) => ({ ...prev, [field]: e.target.value }));
   };
+
 
   const formatDate = (d: string | null) => {
     if (!d) return "—";
