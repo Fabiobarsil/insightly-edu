@@ -211,7 +211,9 @@ const AcceptInvite = () => {
           </div>
           <h1 className="text-xl font-bold text-foreground mb-2">Link inválido ou expirado</h1>
           <p className="text-sm text-muted-foreground mb-6">
-            Peça ao administrador para reenviar o convite e abra o link diretamente do seu e-mail.
+            {linkError
+              ? linkError
+              : "Peça ao administrador para reenviar o convite e abra o link diretamente do seu e-mail."}
           </p>
           <button
             onClick={() => navigate("/login")}
