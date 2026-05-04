@@ -43,9 +43,20 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const body = await req.json();
-    const { email, name, role, department, access_type, access_expires_at } = body;
-    console.log("[create-user] payload:", { email, name, role, department, access_type });
+    let body: any = {};
+    try {
+      const raw = await req.text();
+      body = raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      console.error("[create-user] invalid JSON body:", e);
+      return new Response(
+        JSON.stringify({ error: "Body inválido. Envie JSON com email, name, role." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const { email, name, full_name, role, department, access_type, access_expires_at } = body;
+    const userName = name || full_name || null;
+    console.log("[create-user] payload:", { email, name: userName, role, department, access_type });
 
     if (!email || !role) {
       return new Response(
@@ -131,7 +142,7 @@ Deno.serve(async (req) => {
     } else {
       const { data: invited, error: inviteErr } = await adminClient.auth.admin.inviteUserByEmail(
         email,
-        { data: name ? { full_name: name } : undefined }
+        { data: userName ? { full_name: userName } : undefined }
       );
 
       if (invited?.user) {
@@ -145,7 +156,7 @@ Deno.serve(async (req) => {
           email,
           password: tempPassword,
           email_confirm: true,
-          user_metadata: name ? { full_name: name } : undefined,
+          user_metadata: userName ? { full_name: userName } : undefined,
         });
         if (createErr || !created?.user) {
           console.error("[create-user] createUser fallback failed:", createErr);
@@ -213,8 +224,8 @@ Deno.serve(async (req) => {
     }
 
     // Best-effort: update profile name
-    if (name) {
-      await adminClient.from("profiles").update({ full_name: name }).eq("id", userId);
+    if (userName) {
+      await adminClient.from("profiles").update({ full_name: userName }).eq("id", userId);
     }
 
     return new Response(
