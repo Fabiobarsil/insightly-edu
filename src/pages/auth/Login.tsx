@@ -59,10 +59,10 @@ const Login = () => {
     );
   }
 
-  if (session && !dashboardRole) {
-    navigate("/sem-acesso", { replace: true });
-    return null;
-  }
+ // if (session && !dashboardRole) {
+   // navigate("/sem-acesso", { replace: true });
+   // return null;
+ // }
 
   return (
     <div className="min-h-screen flex bg-background">
