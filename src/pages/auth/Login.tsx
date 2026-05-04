@@ -14,8 +14,11 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && session && dashboardRole) {
-      navigate(getDashboardPath(dashboardRole), { replace: true });
+   useEffect(() => {
+  if (!authLoading && session) {
+    navigate("/", { replace: true });
+  }
+}, [authLoading, session, navigate]);
     }
   }, [authLoading, session, dashboardRole, navigate]);
 
