@@ -218,7 +218,12 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, message: "Convite enviado com sucesso", user_id: userId }),
+      JSON.stringify({
+        success: true,
+        message: inviteWarning || "Convite enviado com sucesso",
+        warning: inviteWarning,
+        user_id: userId,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
