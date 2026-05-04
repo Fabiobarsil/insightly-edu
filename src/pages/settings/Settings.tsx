@@ -305,8 +305,22 @@ const Settings = () => {
     if (!m.email) { toast.error("Membro sem e-mail cadastrado"); return; }
     setResendingId(m.id);
     try {
+      // Garante token de sessão válido (evita 401 "Token inválido ou expirado")
+      const { data: sessionData } = await supabase.auth.getSession();
+      let accessToken = sessionData.session?.access_token;
+      const expiresAt = sessionData.session?.expires_at ?? 0;
+      if (!accessToken || expiresAt * 1000 < Date.now() + 60_000) {
+        const { data: refreshed, error: refreshErr } = await supabase.auth.refreshSession();
+        if (refreshErr || !refreshed.session) {
+          toast.error("Sessão expirada. Faça login novamente.");
+          return;
+        }
+        accessToken = refreshed.session.access_token;
+      }
+
       const { data, error } = await supabase.functions.invoke("resend-invite", {
         body: { email: m.email },
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (error) throw error;
       if (data?.error) { toast.error(data.error); return; }
