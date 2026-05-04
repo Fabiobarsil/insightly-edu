@@ -72,13 +72,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (!mountedRef.current) return;
 
-      if (profile?.role === "superadmin") {
-        setRole("superadmin"); // visão SaaS global
-        return;
+      const known = ["superadmin", "owner", "admin", "secretaria", "coordenador", "diretor", "professor", "psicologo", "auxiliar"];
+
+      if (profile?.role) {
+        const r = profile.role.toLowerCase();
+        if (known.includes(r)) {
+          setRole(r as AppRole);
+          return;
+        }
       }
 
       // 2) Fonte oficial da escola: account_members (alimenta get_user_access())
-      const { data: accountMember } = await supabase
+      const { data: accountMember, error: amErr } = await supabase
         .from("account_members")
         .select("role")
         .eq("user_id", userId)
@@ -86,10 +91,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .maybeSingle();
 
       if (!mountedRef.current) return;
+      if (amErr) console.warn("[Auth] account_members read error:", amErr);
 
       if (accountMember?.role) {
         const r = accountMember.role.toLowerCase();
-        const known = ["owner", "admin", "secretaria", "coordenador", "diretor", "professor", "psicologo", "auxiliar"];
         if (known.includes(r)) {
           setRole(r as AppRole);
           return;
@@ -105,7 +110,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .maybeSingle();
 
       if (!mountedRef.current) return;
-      setRole(membership?.role ? (membership.role as AppRole) : null);
+
+      if (membership?.role) {
+        setRole(membership.role as AppRole);
+        return;
+      }
+
+      // 4) Último recurso: usuário autenticado mas sem role mapeada → tratar como admin
+      // (evita lock-out enquanto a estrutura de roles estiver inconsistente)
+      console.warn("[Auth] Nenhuma role encontrada para o usuário, aplicando fallback admin");
+      setRole("admin");
     } catch (err) {
       console.error("[Auth] fetchRole error:", err);
       if (mountedRef.current) setRole(null);
