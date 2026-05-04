@@ -96,21 +96,32 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fallback: user already confirmed → send a recovery (password reset) link
-    console.warn("[resend-invite] invite failed, falling back to recovery:", inviteErr.message);
-    const { data: linkData, error: linkErr } = await adminClient.auth.admin.generateLink({
-      type: "recovery",
-      email,
-      options: { redirectTo },
+    // Fallback: user already confirmed → trigger a real password-recovery email
+    // NOTE: admin.generateLink() only generates the link, it does NOT send the email.
+    // We must use the public auth client's resetPasswordForEmail() to actually dispatch it.
+    console.warn("[resend-invite] invite failed, falling back to resetPasswordForEmail:", inviteErr.message);
+
+    const publicClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!
+    );
+
+    const { error: resetErr } = await publicClient.auth.resetPasswordForEmail(email, {
+      redirectTo,
     });
 
-    if (linkErr) {
-      console.error("[resend-invite] generateLink failed:", linkErr);
+    if (resetErr) {
+      console.error("[resend-invite] resetPasswordForEmail failed:", resetErr);
       return new Response(
-        JSON.stringify({ error: `Erro ao reenviar: ${linkErr.message}` }),
+        JSON.stringify({ error: `Erro ao reenviar: ${resetErr.message}` }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    return new Response(
+      JSON.stringify({ success: true, message: "E-mail de acesso reenviado com sucesso" }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
 
     return new Response(
       JSON.stringify({
