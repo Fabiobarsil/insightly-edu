@@ -90,10 +90,12 @@ const RoleSidebar = () => {
   const { access } = useUserAccess();
 
   const accessRole = access?.role?.toLowerCase() ?? null;
-  const items: NavItem[] =
-    (accessRole && menusByAccessRole[accessRole]) ||
-    (dashboardRole && fallbackMenusByDashboardRole[dashboardRole]) ||
-    [];
+  const isSuperadmin = dashboardRole === "superadmin";
+  const items: NavItem[] = isSuperadmin
+    ? menusByAccessRole.superadmin
+    : (accessRole && menusByAccessRole[accessRole]) ||
+      (dashboardRole && fallbackMenusByDashboardRole[dashboardRole]) ||
+      [];
 
   return (
     <aside className="fixed left-0 top-0 w-60 h-screen bg-primary flex flex-col z-10 max-[900px]:static max-[900px]:w-full max-[900px]:h-auto">
