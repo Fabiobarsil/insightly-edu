@@ -294,6 +294,25 @@ const Settings = () => {
     setUserForm((prev) => ({ ...prev, [field]: e.target.value }));
   };
 
+  const [resendingId, setResendingId] = useState<string | null>(null);
+  const handleResendInvite = async (m: MemberRow) => {
+    if (!m.email) { toast.error("Membro sem e-mail cadastrado"); return; }
+    setResendingId(m.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("resend-invite", {
+        body: { email: m.email },
+      });
+      if (error) throw error;
+      if (data?.error) { toast.error(data.error); return; }
+      toast.success(data?.message || "Convite reenviado!");
+    } catch (err: any) {
+      console.error("[resend-invite] error:", err);
+      toast.error(err.message || "Erro ao reenviar convite");
+    } finally {
+      setResendingId(null);
+    }
+  };
+
 
   const formatDate = (d: string | null) => {
     if (!d) return "—";
@@ -531,9 +550,19 @@ const Settings = () => {
                             )}
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <button onClick={() => openEdit(m)} className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent transition-colors" title="Editar">
-                              <i className="ri-pencil-line" />
-                            </button>
+                            <div className="inline-flex items-center gap-1">
+                              <button
+                                onClick={() => handleResendInvite(m)}
+                                disabled={resendingId === m.id}
+                                className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent transition-colors disabled:opacity-50"
+                                title="Reenviar convite"
+                              >
+                                <i className={resendingId === m.id ? "ri-loader-4-line animate-spin" : "ri-mail-send-line"} />
+                              </button>
+                              <button onClick={() => openEdit(m)} className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent transition-colors" title="Editar">
+                                <i className="ri-pencil-line" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
