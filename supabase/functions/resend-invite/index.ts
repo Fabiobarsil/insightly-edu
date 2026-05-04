@@ -122,15 +122,6 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: true, message: "E-mail de acesso reenviado com sucesso" }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Convite reenviado com sucesso",
-        action_link: linkData?.properties?.action_link || null,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
   } catch (err) {
     return new Response(
       JSON.stringify({ error: `Erro interno: ${(err as Error).message}` }),
