@@ -471,92 +471,114 @@ const Settings = () => {
         <SignaturesTab schoolId={schoolId} />
       )}
 
-      {/* ========== USUÁRIOS ========== */}
+      {/* ========== GESTÃO DE ACESSOS ========== */}
       {tab === "usuarios" && (
         <>
-          <div className="bg-card border border-border/60 rounded-xl certus-shadow">
-            <div className="p-4 border-b border-border/40 flex items-center justify-between">
-              <span className="text-sm font-bold text-primary">Usuários do Sistema</span>
-              <button onClick={openCreate} className="px-3 py-1.5 rounded-lg bg-secondary text-secondary-foreground text-xs font-bold hover:opacity-90 transition-opacity">
-                <i className="ri-add-line mr-1" /> Novo Usuário
-              </button>
+          {!canManageAccess ? (
+            <div className="bg-card border border-border/60 rounded-xl certus-shadow p-8 text-center">
+              <i className="ri-lock-2-line text-3xl text-muted-foreground mb-2 block" />
+              <p className="text-sm text-muted-foreground">
+                Apenas <strong>Proprietário</strong> e <strong>Secretaria</strong> podem gerenciar acessos.
+              </p>
             </div>
-
-            {membersLoading ? (
-              <div className="p-8 text-center text-muted-foreground text-sm">Carregando...</div>
-            ) : members.length === 0 ? (
-              <div className="p-8 text-center text-muted-foreground text-sm">Nenhum usuário encontrado</div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border/40">
-                      <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">User ID</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Papel</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Tipo de Acesso</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Expira em</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Criado em</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Status</th>
-                      <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {members.map((m) => (
-                      <tr key={m.id} className="border-b border-border/20 hover:bg-accent/40 transition-colors">
-                        <td className="px-4 py-3 font-mono text-xs text-foreground">{m.user_id.slice(0, 8)}…</td>
-                        <td className="px-4 py-3">
-                          <span className="text-xs font-bold bg-accent px-2.5 py-1 rounded-full text-primary">
-                            {roleLabels[m.role] || m.role}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-xs text-foreground">{accessLabels[m.access_type] || m.access_type}</td>
-                        <td className="px-4 py-3 text-xs text-foreground">{formatDate(m.access_expires_at)}</td>
-                        <td className="px-4 py-3 text-xs text-foreground">{formatDate(m.created_at)}</td>
-                        <td className="px-4 py-3">
-                          {isExpired(m) ? (
-                            <StatusBadge status="inactive" label="Expirado" />
-                          ) : (
-                            <StatusBadge status="active" label="Ativo" />
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <button onClick={() => openEdit(m)} className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent transition-colors" title="Editar">
-                            <i className="ri-pencil-line" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+          ) : (
+            <div className="bg-card border border-border/60 rounded-xl certus-shadow">
+              <div className="p-4 border-b border-border/40 flex items-center justify-between">
+                <div>
+                  <span className="text-sm font-bold text-primary">Gestão de Acessos</span>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Convide membros da equipe e defina o nível de acesso de cada um.</p>
+                </div>
+                <button onClick={openCreate} className="px-3 py-1.5 rounded-lg bg-secondary text-secondary-foreground text-xs font-bold hover:opacity-90 transition-opacity">
+                  <i className="ri-mail-send-line mr-1" /> Convidar Usuário
+                </button>
               </div>
-            )}
 
-            <div className="p-4 border-t border-border/40 text-xs text-muted-foreground">
-              {members.length} usuário(s)
+              {membersLoading ? (
+                <div className="p-8 text-center text-muted-foreground text-sm">Carregando...</div>
+              ) : members.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground text-sm">Nenhum usuário encontrado</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border/40">
+                        <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Nome</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Email</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Nível de Acesso</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Área</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Tipo</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Status</th>
+                        <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {members.map((m) => (
+                        <tr key={m.id} className="border-b border-border/20 hover:bg-accent/40 transition-colors">
+                          <td className="px-4 py-3 text-xs text-foreground font-medium">{m.full_name || "—"}</td>
+                          <td className="px-4 py-3 text-xs text-foreground">{m.email || "—"}</td>
+                          <td className="px-4 py-3">
+                            <span className="text-xs font-bold bg-accent px-2.5 py-1 rounded-full text-primary">
+                              {roleLabels[m.role] || m.role}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-xs text-foreground">{m.department || "—"}</td>
+                          <td className="px-4 py-3 text-xs text-foreground">{accessLabels[m.access_type] || m.access_type}</td>
+                          <td className="px-4 py-3">
+                            {isExpired(m) ? (
+                              <StatusBadge status="inactive" label="Expirado" />
+                            ) : (
+                              <StatusBadge status="active" label="Ativo" />
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <button onClick={() => openEdit(m)} className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent transition-colors" title="Editar">
+                              <i className="ri-pencil-line" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              <div className="p-4 border-t border-border/40 text-xs text-muted-foreground">
+                {members.length} usuário(s)
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Modal Criar / Editar */}
+          {/* Modal Convidar / Editar */}
           <Dialog open={modalOpen} onOpenChange={setModalOpen}>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>{editingMember ? "Editar Usuário" : "Novo Usuário"}</DialogTitle>
+                <DialogTitle>{editingMember ? "Editar Acesso" : "Convidar Usuário"}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 mt-2">
                 {!editingMember && (
-                  <div>
-                    <label className="block text-xs font-bold text-muted-foreground mb-1.5">E-mail</label>
-                    <input type="email" value={userForm.email} onChange={handleUserFormChange("email")} placeholder="usuario@email.com" className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
-                  </div>
+                  <>
+                    <div>
+                      <label className="block text-xs font-bold text-muted-foreground mb-1.5">Nome</label>
+                      <input value={userForm.name} onChange={handleUserFormChange("name")} placeholder="Nome completo" className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-muted-foreground mb-1.5">E-mail</label>
+                      <input type="email" value={userForm.email} onChange={handleUserFormChange("email")} placeholder="usuario@email.com" className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+                      <p className="text-[11px] text-muted-foreground mt-1">Um e-mail de convite será enviado ao usuário para definir a senha.</p>
+                    </div>
+                  </>
                 )}
                 <div>
-                  <label className="block text-xs font-bold text-muted-foreground mb-1.5">Papel</label>
+                  <label className="block text-xs font-bold text-muted-foreground mb-1.5">Nível de Acesso</label>
                   <select value={userForm.role} onChange={handleUserFormChange("role")} className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors">
-                    <option value="owner">Proprietário</option>
-                    <option value="admin">Administrador</option>
-                    <option value="editor">Editor</option>
-                    <option value="viewer">Visualizador</option>
+                    {ROLE_OPTIONS.map((r) => (
+                      <option key={r.value} value={r.value}>{r.label}</option>
+                    ))}
                   </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-muted-foreground mb-1.5">Área / Departamento</label>
+                  <input value={userForm.department} onChange={handleUserFormChange("department")} placeholder="Ex: Pedagógico, Financeiro, Direção..." className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-muted-foreground mb-1.5">Tipo de Acesso</label>
@@ -572,7 +594,7 @@ const Settings = () => {
                   </div>
                 )}
                 <button onClick={editingMember ? handleUpdateMember : handleCreateUser} disabled={saving} className="w-full py-2.5 rounded-[12px] bg-secondary text-secondary-foreground text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50">
-                  {saving ? "Salvando..." : editingMember ? "Salvar Alterações" : "Criar Usuário"}
+                  {saving ? "Enviando..." : editingMember ? "Salvar Alterações" : "Enviar Convite"}
                 </button>
               </div>
             </DialogContent>
