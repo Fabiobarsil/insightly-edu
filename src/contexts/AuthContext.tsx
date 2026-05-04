@@ -67,6 +67,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Standalone function that fetches role - called OUTSIDE of auth lock
   const fetchRole = async (userId: string) => {
     try {
+      // 1) Superadmin global vem de profiles.role (visão SaaS, fora da escola)
+      const { data: profile } = await supabase.from("profiles").select("role").eq("id", userId).maybeSingle();
+
+      if (!mountedRef.current) return;
+
       const known = [
         "superadmin",
         "owner",
@@ -78,41 +83,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         "psicologo",
         "auxiliar",
       ];
-
-      // Lê profiles e account_members em paralelo
-      const [profileRes, accountRes] = await Promise.all([
-        supabase.from("profiles").select("role").eq("id", userId).maybeSingle(),
-        supabase.from("account_members").select("role").eq("user_id", userId).limit(1).maybeSingle(),
-      ]);
-
-      if (!mountedRef.current) return;
-
-      const profileRole = profileRes.data?.role?.toLowerCase();
-      const accountRole = accountRes.data?.role?.toLowerCase();
-
-      if (accountRes.error) console.warn("[Auth] account_members read error:", accountRes.error);
-
-      console.log("[Auth] profiles.role:", profileRole, "| account_members.role:", accountRole);
-
-      // 1) superadmin SEMPRE vence (visão global SaaS)
-      if (profileRole === "superadmin") {
+      //ALTERADO EM 04 MAIO 2026
+      // 🔥 SUPERADMIN TEM PRIORIDADE MÁXIMA
+      if (profile?.role?.toLowerCase() === "superadmin") {
+        console.log("[Auth] SUPERADMIN DETECTADO");
         setRole("superadmin");
         return;
       }
+      /** if (profile?.role) {
+        const r = profile.role.toLowerCase();
+        if (known.includes(r)) {
+          setRole(r as AppRole);
+          return;
+        }
+      }*/
 
-      // 2) account_members é a fonte oficial de role da escola (owner/secretaria/etc)
-      if (accountRole && known.includes(accountRole)) {
-        setRole(accountRole as AppRole);
-        return;
+      // 2) Fonte oficial da escola: account_members (alimenta get_user_access())
+      const { data: accountMember, error: amErr } = await supabase
+        .from("account_members")
+        .select("role")
+        .eq("user_id", userId)
+        .limit(1)
+        .maybeSingle();
+
+      if (!mountedRef.current) return;
+      if (amErr) console.warn("[Auth] account_members read error:", amErr);
+
+      if (accountMember?.role) {
+        const r = accountMember.role.toLowerCase();
+        if (known.includes(r)) {
+          setRole(r as AppRole);
+          return;
+        }
       }
 
-      // 3) Fallback para profiles.role (admin, diretor, coordenador legado)
-      if (profileRole && known.includes(profileRole)) {
-        setRole(profileRole as AppRole);
-        return;
-      }
-
-      // 4) Último fallback: school_memberships
+      // 3) Fallback legado: school_memberships.role
       const { data: membership } = await supabase
         .from("school_memberships")
         .select("role")
@@ -127,8 +132,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      // 5) Usuário autenticado sem role mapeada → fallback admin (evita lock-out)
-      console.warn("[Auth] Nenhuma role encontrada, aplicando fallback admin");
+      // 4) Último recurso: usuário autenticado mas sem role mapeada → tratar como admin
+      // (evita lock-out enquanto a estrutura de roles estiver inconsistente)
+      console.warn("[Auth] Nenhuma role encontrada para o usuário, aplicando fallback admin");
       setRole("admin");
     } catch (err) {
       console.error("[Auth] fetchRole error:", err);

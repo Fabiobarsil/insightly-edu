@@ -60,7 +60,8 @@ import Indicadores from "./pages/admin/Indicadores.tsx";
 
 const queryClient = new QueryClient();
 
-const RootRedirect = () => {
+//ALTERADO 
+//**const RootRedirect = () => {
   const { session, loading, dashboardRole } = useAuth();
 
   if (loading) {
@@ -77,6 +78,27 @@ const RootRedirect = () => {
   /**if (!session) return <Navigate to="/login" replace />;
   if (dashboardRole) return <Navigate to={getDashboardPath(dashboardRole)} replace />;
   return <Navigate to="/login" replace />;*/
+};
+
+const RootRedirect = () => {
+  const { session, loading, dashboardRole } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  if (!session) return <Navigate to="/login" replace />;
+
+  // 🔥 REDIRECIONAMENTO CORRETO POR ROLE
+  if (dashboardRole) {
+    return <Navigate to={getDashboardPath(dashboardRole)} replace />;
+  }
+
+  return <Navigate to="/login" replace />;
 };
 
 /** Redirects legacy paths to the user's role-prefixed equivalent */
