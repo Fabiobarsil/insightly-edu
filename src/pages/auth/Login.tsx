@@ -14,13 +14,10 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-   useEffect(() => {
-  if (!authLoading && session) {
-    navigate("/", { replace: true });
-  }
-}, [authLoading, session, navigate]);
+    if (!authLoading && session) {
+      navigate("/", { replace: true });
     }
-  }, [authLoading, session, dashboardRole, navigate]);
+  }, [authLoading, session, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +38,7 @@ const Login = () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: "https://certusedu.lovable.app",
+        redirectTo: `${window.location.origin}/`,
       },
     });
 
