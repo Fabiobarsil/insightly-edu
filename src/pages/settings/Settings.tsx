@@ -54,15 +54,29 @@ const tabs = [
   { id: "templates", label: "Mensagens e Templates", icon: "ri-chat-3-line" },
   { id: "documentos", label: "Cabeçalho Oficial", icon: "ri-draft-line" },
   { id: "assinaturas", label: "Assinaturas", icon: "ri-quill-pen-line" },
-  { id: "usuarios", label: "Usuários e Papéis", icon: "ri-shield-user-line" },
+  { id: "usuarios", label: "Gestão de Acessos", icon: "ri-shield-user-line" },
 ];
 
 const roleLabels: Record<string, string> = {
   owner: "Proprietário",
   admin: "Administrador",
+  diretor: "Diretor",
+  coordenador: "Coordenador",
+  secretaria: "Secretaria",
+  professor: "Professor",
+  psicologo: "Psicólogo",
   editor: "Editor",
   viewer: "Visualizador",
 };
+
+const ROLE_OPTIONS = [
+  { value: "owner", label: "Proprietário" },
+  { value: "diretor", label: "Diretor" },
+  { value: "coordenador", label: "Coordenador" },
+  { value: "secretaria", label: "Secretaria" },
+  { value: "professor", label: "Professor" },
+  { value: "psicologo", label: "Psicólogo" },
+];
 
 const accessLabels: Record<string, string> = {
   permanent: "Permanente",
@@ -73,19 +87,24 @@ interface MemberRow {
   id: string;
   user_id: string;
   role: string;
+  department: string | null;
   access_type: string;
   access_expires_at: string | null;
   created_at: string;
+  email?: string | null;
+  full_name?: string | null;
 }
 
 interface UserFormData {
+  name: string;
   email: string;
   role: string;
+  department: string;
   access_type: string;
   access_expires_at: string;
 }
 
-const emptyForm: UserFormData = { email: "", role: "editor", access_type: "permanent", access_expires_at: "" };
+const emptyForm: UserFormData = { name: "", email: "", role: "secretaria", department: "", access_type: "permanent", access_expires_at: "" };
 
 const Settings = () => {
   const [tab, setTab] = useState("escola");
