@@ -89,14 +89,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log("[Auth] SUPERADMIN DETECTADO");
         setRole("superadmin");
         return;
-      }
-      /** if (profile?.role) {
-        const r = profile.role.toLowerCase();
-        if (known.includes(r)) {
-          setRole(r as AppRole);
-          return;
-        }
-      }*/
+      
 
       // 2) Fonte oficial da escola: account_members (alimenta get_user_access())
       const { data: accountMember, error: amErr } = await supabase
