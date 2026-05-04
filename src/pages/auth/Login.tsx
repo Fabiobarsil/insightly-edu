@@ -38,7 +38,7 @@ const Login = () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: "https://certusedu.lovable.app",
+        redirectTo: `${window.location.origin}/`,
       },
     });
 
