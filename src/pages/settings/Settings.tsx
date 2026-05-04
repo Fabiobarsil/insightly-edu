@@ -294,6 +294,25 @@ const Settings = () => {
     setUserForm((prev) => ({ ...prev, [field]: e.target.value }));
   };
 
+  const [resendingId, setResendingId] = useState<string | null>(null);
+  const handleResendInvite = async (m: MemberRow) => {
+    if (!m.email) { toast.error("Membro sem e-mail cadastrado"); return; }
+    setResendingId(m.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("resend-invite", {
+        body: { email: m.email },
+      });
+      if (error) throw error;
+      if (data?.error) { toast.error(data.error); return; }
+      toast.success(data?.message || "Convite reenviado!");
+    } catch (err: any) {
+      console.error("[resend-invite] error:", err);
+      toast.error(err.message || "Erro ao reenviar convite");
+    } finally {
+      setResendingId(null);
+    }
+  };
+
 
   const formatDate = (d: string | null) => {
     if (!d) return "—";
