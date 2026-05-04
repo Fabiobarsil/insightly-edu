@@ -43,26 +43,11 @@ const Login = () => {
   }
 
   if (session && !dashboardRole) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-        <div className="w-full max-w-md bg-card border border-border/60 rounded-2xl shadow-lg p-8 text-center">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-500/10 flex items-center justify-center mb-4">
-            <i className="ri-error-warning-line text-2xl text-amber-500" />
-          </div>
-          <h1 className="text-lg font-bold text-foreground mb-2">Sessão sem permissão</h1>
-          <p className="text-sm text-muted-foreground mb-6">
-            Sua conta está autenticada mas ainda não possui um papel atribuído.
-            Entre em contato com o administrador da escola.
-          </p>
-          <button
-            onClick={() => supabase.auth.signOut()}
-            className="w-full bg-primary text-primary-foreground py-2.5 rounded-xl font-bold text-sm hover:opacity-90 transition-opacity"
-          >
-            Fazer logout
-          </button>
-        </div>
-      </div>
-    );
+    console.warn("Usuário sem role detectado — aplicando fallback");
+
+    navigate("/admin/dashboard", { replace: true });
+
+    return null;
   }
 
   return (
@@ -93,8 +78,8 @@ const Login = () => {
               <span className="text-secondary">inteligente</span> e completa.
             </h2>
             <p className="text-base text-primary-foreground/70 leading-relaxed">
-              Centralize secretaria, pedagógico, documentos e comunicação em uma única
-              plataforma feita para escolas que querem crescer.
+              Centralize secretaria, pedagógico, documentos e comunicação em uma única plataforma feita para escolas que
+              querem crescer.
             </p>
 
             <div className="grid grid-cols-2 gap-4 pt-4">
@@ -137,9 +122,7 @@ const Login = () => {
             </div>
           </div>
 
-          <p className="text-xs text-primary-foreground/45">
-            © 2026 CertusEdu • Uma solução do ecossistema Certus
-          </p>
+          <p className="text-xs text-primary-foreground/45">© 2026 CertusEdu • Uma solução do ecossistema Certus</p>
         </div>
       </aside>
 
@@ -152,24 +135,18 @@ const Login = () => {
               <img src={logoCertus} alt="CertusEdu" className="h-10 w-auto" />
               <span className="text-2xl font-bold text-primary">CertusEdu</span>
             </div>
-            <p className="text-sm text-muted-foreground text-center">
-              Sistema de Gestão Escolar Inteligente
-            </p>
+            <p className="text-sm text-muted-foreground text-center">Sistema de Gestão Escolar Inteligente</p>
           </div>
 
           <div className="bg-card border border-border/60 rounded-2xl shadow-sm p-8">
             <div className="mb-6">
               <h1 className="text-2xl font-bold text-foreground mb-1">Bem-vindo de volta</h1>
-              <p className="text-sm text-muted-foreground">
-                Acesse sua conta para continuar.
-              </p>
+              <p className="text-sm text-muted-foreground">Acesse sua conta para continuar.</p>
             </div>
 
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-muted-foreground mb-1.5">
-                  Email
-                </label>
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5">Email</label>
                 <div className="relative">
                   <i className="ri-mail-line absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-base" />
                   <input
@@ -185,9 +162,7 @@ const Login = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-muted-foreground mb-1.5">
-                  Senha
-                </label>
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5">Senha</label>
                 <div className="relative">
                   <i className="ri-lock-2-line absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-base" />
                   <input
