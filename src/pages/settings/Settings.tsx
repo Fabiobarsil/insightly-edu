@@ -307,7 +307,7 @@ const Settings = () => {
       <PageHeader title="Administração" description="Configure os dados institucionais e identidade oficial da escola" />
 
       <div className="flex gap-2 mb-6 flex-wrap">
-        {tabs.map((t) => (
+        {tabs.filter((t) => t.id !== "usuarios" || canManageAccess).map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)} className={cn(
             "flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-bold transition-colors border",
             tab === t.id ? "bg-secondary border-secondary text-secondary-foreground" : "bg-card border-border/60 text-muted hover:bg-accent"
