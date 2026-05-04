@@ -550,9 +550,19 @@ const Settings = () => {
                             )}
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <button onClick={() => openEdit(m)} className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent transition-colors" title="Editar">
-                              <i className="ri-pencil-line" />
-                            </button>
+                            <div className="inline-flex items-center gap-1">
+                              <button
+                                onClick={() => handleResendInvite(m)}
+                                disabled={resendingId === m.id}
+                                className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent transition-colors disabled:opacity-50"
+                                title="Reenviar convite"
+                              >
+                                <i className={resendingId === m.id ? "ri-loader-4-line animate-spin" : "ri-mail-send-line"} />
+                              </button>
+                              <button onClick={() => openEdit(m)} className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent transition-colors" title="Editar">
+                                <i className="ri-pencil-line" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
