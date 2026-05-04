@@ -140,9 +140,17 @@ Deno.serve(async (req) => {
       userId = existingUser.id;
       console.log("[create-user] user already exists:", userId);
     } else {
+      const origin = req.headers.get("origin") || req.headers.get("referer") || "";
+      const cleanOrigin = origin.replace(/\/$/, "").replace(/\/[^/]*$/, (m) => (m.includes(".") ? m : ""));
+      const redirectBase = (origin.match(/^https?:\/\/[^/]+/)?.[0]) || "";
+      const redirectTo = redirectBase ? `${redirectBase}/aceitar-convite` : undefined;
+      console.log("[create-user] inviteUserByEmail redirectTo:", redirectTo);
       const { data: invited, error: inviteErr } = await adminClient.auth.admin.inviteUserByEmail(
         email,
-        { data: userName ? { full_name: userName } : undefined }
+        {
+          data: userName ? { full_name: userName } : undefined,
+          redirectTo,
+        }
       );
 
       if (invited?.user) {

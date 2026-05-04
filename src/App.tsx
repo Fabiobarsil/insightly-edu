@@ -9,6 +9,7 @@ import RoleRoute from "@/components/auth/RoleRoute";
 
 import Login from "./pages/auth/Login.tsx";
 import NoAccess from "./pages/auth/NoAccess.tsx";
+import AcceptInvite from "./pages/auth/AcceptInvite.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 import SuperadminDashboard from "./pages/dashboards/SuperadminDashboard.tsx";
@@ -126,6 +127,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/aceitar-convite" element={<AcceptInvite />} />
             <Route path="/sem-acesso" element={<NoAccess />} />
             <Route path="/" element={<RootRedirect />} />
 

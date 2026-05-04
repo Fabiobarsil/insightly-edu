@@ -77,16 +77,37 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Generate a recovery (password reset) link — works for both invited and active users
+    // Build redirect URL pointing to the accept-invite page
+    const origin = req.headers.get("origin") || req.headers.get("referer") || "";
+    const redirectBase = origin.match(/^https?:\/\/[^/]+/)?.[0] || "";
+    const redirectTo = redirectBase ? `${redirectBase}/aceitar-convite` : undefined;
+    console.log("[resend-invite] redirectTo:", redirectTo);
+
+    // Try to re-send the invite email (works for users who haven't completed signup)
+    const { error: inviteErr } = await adminClient.auth.admin.inviteUserByEmail(
+      email,
+      { redirectTo }
+    );
+
+    if (!inviteErr) {
+      return new Response(
+        JSON.stringify({ success: true, message: "Convite reenviado com sucesso" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Fallback: user already confirmed → send a recovery (password reset) link
+    console.warn("[resend-invite] invite failed, falling back to recovery:", inviteErr.message);
     const { data: linkData, error: linkErr } = await adminClient.auth.admin.generateLink({
       type: "recovery",
       email,
+      options: { redirectTo },
     });
 
     if (linkErr) {
       console.error("[resend-invite] generateLink failed:", linkErr);
       return new Response(
-        JSON.stringify({ error: `Erro ao gerar link: ${linkErr.message}` }),
+        JSON.stringify({ error: `Erro ao reenviar: ${linkErr.message}` }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
