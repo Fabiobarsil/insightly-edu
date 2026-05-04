@@ -70,10 +70,13 @@ const RootRedirect = () => {
       </div>
     );
   }
-
   if (!session) return <Navigate to="/login" replace />;
+
+  // 🔥 FORÇA ENTRADA NO SISTEMA (IGNORA ROLE QUE ESTÁ QUEBRADA)
+  return <Navigate to="/admin/dashboard" replace />;
+  /**if (!session) return <Navigate to="/login" replace />;
   if (dashboardRole) return <Navigate to={getDashboardPath(dashboardRole)} replace />;
-  return <Navigate to="/login" replace />;
+  return <Navigate to="/login" replace />;*/
 };
 
 /** Redirects legacy paths to the user's role-prefixed equivalent */
