@@ -15,7 +15,7 @@ const Login = () => {
 
   useEffect(() => {
     if (!authLoading && session) {
-      navigate("/", { replace: true });
+      navigate("/admin/dashboard", { replace: true });
     }
   }, [authLoading, session, navigate]);
 
@@ -56,10 +56,10 @@ const Login = () => {
     );
   }
 
- // if (session && !dashboardRole) {
-   // navigate("/sem-acesso", { replace: true });
-   // return null;
- // }
+  // if (session && !dashboardRole) {
+  // navigate("/sem-acesso", { replace: true });
+  // return null;
+  // }
 
   return (
     <div className="min-h-screen flex bg-background">
