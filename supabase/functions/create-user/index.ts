@@ -205,6 +205,7 @@ Deno.serve(async (req) => {
       });
 
     if (insertErr) {
+      console.error("[create-user] insert account_members failed:", insertErr);
       return new Response(
         JSON.stringify({ error: `Erro ao inserir membro: ${insertErr.message}` }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
