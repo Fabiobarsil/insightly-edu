@@ -45,6 +45,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const { email, name, role, department, access_type, access_expires_at } = body;
+    console.log("[create-user] payload:", { email, name, role, department, access_type });
 
     if (!email || !role) {
       return new Response(
@@ -61,29 +62,44 @@ Deno.serve(async (req) => {
     }
 
     // Caller's account_id + role check
-    const { data: callerMember } = await adminClient
+    const { data: callerMember, error: callerErr } = await adminClient
       .from("account_members")
       .select("account_id, role")
       .eq("user_id", callerId)
       .limit(1)
       .maybeSingle();
+    console.log("[create-user] callerMember:", callerMember, "err:", callerErr);
 
-    if (!callerMember?.account_id) {
+    let accountId = callerMember?.account_id as string | undefined;
+    let callerRole = (callerMember?.role || "").toLowerCase();
+
+    // Fallback: superadmin/admin via profiles
+    if (!callerRole || !accountId) {
+      const { data: profile } = await adminClient
+        .from("profiles")
+        .select("role")
+        .eq("id", callerId)
+        .maybeSingle();
+      console.log("[create-user] profile fallback:", profile);
+      if (profile?.role && ["superadmin", "admin"].includes(profile.role)) {
+        callerRole = callerRole || profile.role;
+      }
+    }
+
+    if (!accountId) {
       return new Response(
         JSON.stringify({ error: "Conta não encontrada para o usuário logado" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const allowedInviters = ["owner", "admin", "secretaria"];
-    if (!allowedInviters.includes((callerMember.role || "").toLowerCase())) {
+    const allowedInviters = ["owner", "admin", "secretaria", "superadmin"];
+    if (!allowedInviters.includes(callerRole)) {
       return new Response(
         JSON.stringify({ error: "Você não tem permissão para convidar usuários" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    const accountId = callerMember.account_id;
 
     // Owner limit: only one owner per account
     if (role === "owner") {
@@ -107,25 +123,40 @@ Deno.serve(async (req) => {
     );
 
     let userId: string;
+    let inviteWarning: string | null = null;
 
     if (existingUser) {
       userId = existingUser.id;
+      console.log("[create-user] user already exists:", userId);
     } else {
-      // SaaS invite flow → user receives email and sets own password
       const { data: invited, error: inviteErr } = await adminClient.auth.admin.inviteUserByEmail(
         email,
-        {
-          data: name ? { full_name: name } : undefined,
-        }
+        { data: name ? { full_name: name } : undefined }
       );
 
-      if (inviteErr || !invited?.user) {
-        return new Response(
-          JSON.stringify({ error: `Erro ao enviar convite: ${inviteErr?.message}` }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+      if (invited?.user) {
+        userId = invited.user.id;
+        console.log("[create-user] invited new user:", userId);
+      } else {
+        console.warn("[create-user] inviteUserByEmail failed:", inviteErr?.message);
+        // Fallback: create user with temp password (no email needed)
+        const tempPassword = crypto.randomUUID() + "Aa1!";
+        const { data: created, error: createErr } = await adminClient.auth.admin.createUser({
+          email,
+          password: tempPassword,
+          email_confirm: true,
+          user_metadata: name ? { full_name: name } : undefined,
+        });
+        if (createErr || !created?.user) {
+          console.error("[create-user] createUser fallback failed:", createErr);
+          return new Response(
+            JSON.stringify({ error: `Erro ao criar usuário: ${createErr?.message || inviteErr?.message || "desconhecido"}` }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        userId = created.user.id;
+        inviteWarning = "Usuário criado. O envio do e-mail falhou — peça para o usuário usar 'Esqueci a senha' na tela de login.";
       }
-      userId = invited.user.id;
     }
 
     // Already a member of this account?
@@ -174,6 +205,7 @@ Deno.serve(async (req) => {
       });
 
     if (insertErr) {
+      console.error("[create-user] insert account_members failed:", insertErr);
       return new Response(
         JSON.stringify({ error: `Erro ao inserir membro: ${insertErr.message}` }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -186,7 +218,12 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, message: "Convite enviado com sucesso", user_id: userId }),
+      JSON.stringify({
+        success: true,
+        message: inviteWarning || "Convite enviado com sucesso",
+        warning: inviteWarning,
+        user_id: userId,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
