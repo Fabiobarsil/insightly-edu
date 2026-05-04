@@ -1252,6 +1252,7 @@ export type Database = {
           full_name: string | null
           id: string
           is_superadmin: boolean | null
+          phone: string | null
           role: string | null
           school_id: string | null
           status: string | null
@@ -1262,6 +1263,7 @@ export type Database = {
           full_name?: string | null
           id: string
           is_superadmin?: boolean | null
+          phone?: string | null
           role?: string | null
           school_id?: string | null
           status?: string | null
@@ -1272,6 +1274,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_superadmin?: boolean | null
+          phone?: string | null
           role?: string | null
           school_id?: string | null
           status?: string | null
