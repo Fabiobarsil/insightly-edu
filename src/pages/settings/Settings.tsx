@@ -250,15 +250,21 @@ const Settings = () => {
     if (userForm.access_type === "temporary" && !userForm.access_expires_at) { toast.error("Informe a data de expiração"); return; }
     setSaving(true);
     try {
+      const { data: authData } = await supabase.auth.getUser();
+      const invited_by = authData?.user?.id ?? null;
+      const payload = {
+        email: userForm.email.trim(),
+        full_name: userForm.name.trim() || null,
+        name: userForm.name.trim() || null,
+        role: userForm.role,
+        department: userForm.department.trim() || null,
+        access_type: userForm.access_type,
+        access_expires_at: userForm.access_type === "temporary" ? userForm.access_expires_at : null,
+        invited_by,
+      };
+      console.log("[create-user] invoking with payload:", payload);
       const { data, error } = await supabase.functions.invoke("create-user", {
-        body: {
-          name: userForm.name.trim() || null,
-          email: userForm.email.trim(),
-          role: userForm.role,
-          department: userForm.department.trim() || null,
-          access_type: userForm.access_type,
-          access_expires_at: userForm.access_type === "temporary" ? userForm.access_expires_at : null,
-        },
+        body: payload,
       });
       if (error) throw error;
       if (data?.error) { toast.error(data.error); setSaving(false); return; }
