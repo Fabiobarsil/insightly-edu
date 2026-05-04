@@ -52,7 +52,6 @@ import AttendanceReports from "./pages/attendance/AttendanceReports.tsx";
 
 import Documents from "./pages/documents/Documents.tsx";
 
-
 import Communication from "./pages/communication/Communication.tsx";
 import Settings from "./pages/settings/Settings.tsx";
 import CertificadoPage from "./pages/certificates/CertificadoPage.tsx";
@@ -91,12 +90,18 @@ const LegacyRedirect = ({ path }: { path: string }) => {
 
   if (!session) return <Navigate to="/login" replace />;
 
-  const prefix = dashboardRole === "superadmin" ? "/superadmin"
-    : dashboardRole === "admin" ? "/admin"
-    : dashboardRole === "secretaria" ? "/secretaria"
-    : dashboardRole === "professor" ? "/professor"
-    : dashboardRole === "psicologo" ? "/psicologia"
-    : "";
+  const prefix =
+    dashboardRole === "superadmin"
+      ? "/superadmin"
+      : dashboardRole === "admin"
+        ? "/admin"
+        : dashboardRole === "secretaria"
+          ? "/secretaria"
+          : dashboardRole === "professor"
+            ? "/professor"
+            : dashboardRole === "psicologo"
+              ? "/psicologia"
+              : "";
 
   return <Navigate to={`${prefix}${path}`} replace />;
 };
@@ -120,65 +125,387 @@ const App = () => (
             <Route path="/" element={<RootRedirect />} />
 
             {/* Superadmin routes */}
-            <Route path="/superadmin/dashboard" element={<RoleRoute allowedRoles={["superadmin"]}><SuperadminDashboard /></RoleRoute>} />
-            <Route path="/superadmin/escolas" element={<RoleRoute allowedRoles={["superadmin"]}><SchoolsList /></RoleRoute>} />
+            <Route
+              path="/superadmin/dashboard"
+              element={
+                <RoleRoute allowedRoles={["superadmin"]}>
+                  <SuperadminDashboard />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/superadmin/escolas"
+              element={
+                <RoleRoute allowedRoles={["superadmin"]}>
+                  <SchoolsList />
+                </RoleRoute>
+              }
+            />
 
             {/* Admin routes */}
-            <Route path="/admin/dashboard" element={<RoleRoute allowedRoles={["admin"]}><AdminDashboard /></RoleRoute>} />
-            <Route path="/admin/alunos" element={<RoleRoute allowedRoles={["admin"]}><StudentsList /></RoleRoute>} />
-            <Route path="/admin/alunos/novo" element={<RoleRoute allowedRoles={["admin"]}><StudentsCreate /></RoleRoute>} />
-            <Route path="/admin/alunos/:id" element={<RoleRoute allowedRoles={["admin"]}><StudentsDetail /></RoleRoute>} />
+            <Route
+              path="/admin/dashboard"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin", "diretor", "coordenador", "secretaria"]}>
+                  <AdminDashboard />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/alunos"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin", "diretor", "coordenador", "secretaria"]}>
+                  <StudentsList />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/alunos/novo"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin", "diretor", "coordenador", "secretaria"]}>
+                  <StudentsCreate />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/alunos/:id"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin", "diretor", "coordenador", "secretaria"]}>
+                  <StudentsDetail />
+                </RoleRoute>
+              }
+            />
             {/* Edição centralizada na Secretaria — redireciona */}
             <Route path="/admin/alunos/:id/editar" element={<StudentEditRedirect />} />
-            <Route path="/admin/alunos/:id/prontuario" element={<RoleRoute allowedRoles={["admin"]}><StudentRecord /></RoleRoute>} />
-            <Route path="/admin/alunos/:id/entrega-documentos" element={<RoleRoute allowedRoles={["admin", "secretaria"]}><StudentsDocuments /></RoleRoute>} />
-            <Route path="/secretaria/alunos/:id/entrega-documentos" element={<RoleRoute allowedRoles={["admin", "secretaria"]}><StudentsDocuments /></RoleRoute>} />
-            <Route path="/admin/responsaveis" element={<RoleRoute allowedRoles={["admin"]}><GuardiansList /></RoleRoute>} />
-            <Route path="/admin/responsaveis/novo" element={<RoleRoute allowedRoles={["admin"]}><GuardiansCreate /></RoleRoute>} />
-            <Route path="/admin/responsaveis/:id" element={<RoleRoute allowedRoles={["admin"]}><GuardiansDetail /></RoleRoute>} />
-            <Route path="/admin/responsaveis/:id/editar" element={<RoleRoute allowedRoles={["admin"]}><GuardiansEdit /></RoleRoute>} />
-            <Route path="/admin/turmas" element={<RoleRoute allowedRoles={["admin"]}><ClassesList /></RoleRoute>} />
-            <Route path="/admin/turmas/novo" element={<RoleRoute allowedRoles={["admin"]}><ClassesCreate /></RoleRoute>} />
-            <Route path="/admin/turmas/:id/editar" element={<RoleRoute allowedRoles={["admin"]}><ClassesEdit /></RoleRoute>} />
-            <Route path="/secretaria/turmas/:id/editar" element={<RoleRoute allowedRoles={["secretaria", "admin"]}><ClassesEdit /></RoleRoute>} />
-            <Route path="/admin/professores" element={<RoleRoute allowedRoles={["admin"]}><TeachersList /></RoleRoute>} />
-            <Route path="/admin/professores/novo" element={<RoleRoute allowedRoles={["admin"]}><TeachersCreate /></RoleRoute>} />
-            <Route path="/admin/professores/:id" element={<RoleRoute allowedRoles={["admin"]}><TeachersDetail /></RoleRoute>} />
-            <Route path="/admin/professores/:id/editar" element={<RoleRoute allowedRoles={["admin"]}><TeachersEdit /></RoleRoute>} />
-            <Route path="/admin/disciplinas" element={<RoleRoute allowedRoles={["admin"]}><SubjectsList /></RoleRoute>} />
-            <Route path="/admin/notas" element={<RoleRoute allowedRoles={["admin"]}><GradeEntry /></RoleRoute>} />
-            <Route path="/admin/notas/historico" element={<RoleRoute allowedRoles={["admin"]}><GradeHistory /></RoleRoute>} />
-            <Route path="/admin/frequencia" element={<RoleRoute allowedRoles={["admin"]}><AttendanceRecord /></RoleRoute>} />
-            <Route path="/admin/documentos" element={<RoleRoute allowedRoles={["admin"]}><Documents /></RoleRoute>} />
-            <Route path="/admin/comunicacao" element={<RoleRoute allowedRoles={["admin"]}><Communication /></RoleRoute>} />
-            <Route path="/admin/coordenacao" element={<RoleRoute allowedRoles={["admin"]}><CoordinationDashboard /></RoleRoute>} />
-            <Route path="/admin/direcao" element={<RoleRoute allowedRoles={["admin"]}><DirecaoEscolar /></RoleRoute>} />
-            <Route path="/admin/configuracoes" element={<RoleRoute allowedRoles={["admin"]}><Settings /></RoleRoute>} />
-            <Route path="/admin/certificado-preview" element={<RoleRoute allowedRoles={["admin"]}><CertificadoPreview /></RoleRoute>} />
-            <Route path="/admin/indicadores" element={<RoleRoute allowedRoles={["admin"]}><Indicadores /></RoleRoute>} />
+            <Route
+              path="/admin/alunos/:id/prontuario"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin", "diretor", "coordenador", "secretaria"]}>
+                  <StudentRecord />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/alunos/:id/entrega-documentos"
+              element={
+                <RoleRoute allowedRoles={["admin", "secretaria"]}>
+                  <StudentsDocuments />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/secretaria/alunos/:id/entrega-documentos"
+              element={
+                <RoleRoute allowedRoles={["admin", "secretaria"]}>
+                  <StudentsDocuments />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/responsaveis"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin", "diretor", "coordenador", "secretaria"]}>
+                  <GuardiansList />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/responsaveis/novo"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin", "diretor", "coordenador", "secretaria"]}>
+                  <GuardiansCreate />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/responsaveis/:id"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin", "diretor", "coordenador", "secretaria"]}>
+                  <GuardiansDetail />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/responsaveis/:id/editar"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin", "diretor", "coordenador", "secretaria"]}>
+                  <GuardiansEdit />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/turmas"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin", "diretor", "coordenador", "secretaria"]}>
+                  <ClassesList />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/turmas/novo"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin", "diretor", "coordenador", "secretaria"]}>
+                  <ClassesCreate />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/turmas/:id/editar"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin", "diretor", "coordenador", "secretaria"]}>
+                  <ClassesEdit />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/secretaria/turmas/:id/editar"
+              element={
+                <RoleRoute allowedRoles={["secretaria", "admin"]}>
+                  <ClassesEdit />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/professores"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin", "diretor", "coordenador", "secretaria"]}>
+                  <TeachersList />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/professores/novo"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin", "diretor", "coordenador", "secretaria"]}>
+                  <TeachersCreate />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/professores/:id"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin", "diretor", "coordenador", "secretaria"]}>
+                  <TeachersDetail />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/professores/:id/editar"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin", "diretor", "coordenador", "secretaria"]}>
+                  <TeachersEdit />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/disciplinas"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin", "diretor", "coordenador", "secretaria"]}>
+                  <SubjectsList />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/notas"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin", "diretor", "coordenador", "secretaria"]}>
+                  <GradeEntry />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/notas/historico"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin", "diretor", "coordenador", "secretaria"]}>
+                  <GradeHistory />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/frequencia"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin", "diretor", "coordenador", "secretaria"]}>
+                  <AttendanceRecord />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/documentos"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin", "diretor", "coordenador", "secretaria"]}>
+                  <Documents />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/comunicacao"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin", "diretor", "coordenador", "secretaria"]}>
+                  <Communication />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/coordenacao"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin", "diretor", "coordenador", "secretaria"]}>
+                  <CoordinationDashboard />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/direcao"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin", "diretor", "coordenador", "secretaria"]}>
+                  <DirecaoEscolar />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/configuracoes"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin", "diretor", "coordenador", "secretaria"]}>
+                  <Settings />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/certificado-preview"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin", "diretor", "coordenador", "secretaria"]}>
+                  <CertificadoPreview />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/admin/indicadores"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin", "diretor", "coordenador", "secretaria"]}>
+                  <Indicadores />
+                </RoleRoute>
+              }
+            />
 
             {/* Secretaria routes */}
             <Route path="/secretaria/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="/secretaria/alunos" element={<RoleRoute allowedRoles={["secretaria"]}><StudentsList /></RoleRoute>} />
-            <Route path="/secretaria/matricula/:id" element={<RoleRoute allowedRoles={["admin", "secretaria"]}><StudentsCreate /></RoleRoute>} />
-            <Route path="/secretaria/responsaveis" element={<RoleRoute allowedRoles={["secretaria"]}><GuardiansList /></RoleRoute>} />
-            <Route path="/secretaria/turmas" element={<RoleRoute allowedRoles={["secretaria"]}><ClassesList /></RoleRoute>} />
-            <Route path="/secretaria/professores" element={<RoleRoute allowedRoles={["secretaria"]}><TeachersList /></RoleRoute>} />
-            <Route path="/secretaria/disciplinas" element={<RoleRoute allowedRoles={["secretaria"]}><SubjectsList /></RoleRoute>} />
-            <Route path="/secretaria/documentos" element={<RoleRoute allowedRoles={["secretaria"]}><Documents /></RoleRoute>} />
+            <Route
+              path="/secretaria/alunos"
+              element={
+                <RoleRoute allowedRoles={["secretaria"]}>
+                  <StudentsList />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/secretaria/matricula/:id"
+              element={
+                <RoleRoute allowedRoles={["admin", "secretaria"]}>
+                  <StudentsCreate />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/secretaria/responsaveis"
+              element={
+                <RoleRoute allowedRoles={["secretaria"]}>
+                  <GuardiansList />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/secretaria/turmas"
+              element={
+                <RoleRoute allowedRoles={["secretaria"]}>
+                  <ClassesList />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/secretaria/professores"
+              element={
+                <RoleRoute allowedRoles={["secretaria"]}>
+                  <TeachersList />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/secretaria/disciplinas"
+              element={
+                <RoleRoute allowedRoles={["secretaria"]}>
+                  <SubjectsList />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/secretaria/documentos"
+              element={
+                <RoleRoute allowedRoles={["secretaria"]}>
+                  <Documents />
+                </RoleRoute>
+              }
+            />
 
             {/* Professor routes */}
-            <Route path="/professor/dashboard" element={<RoleRoute allowedRoles={["professor"]}><ProfessorDashboard /></RoleRoute>} />
-            <Route path="/professor/turmas" element={<RoleRoute allowedRoles={["professor"]}><ClassesList /></RoleRoute>} />
-            <Route path="/professor/disciplinas" element={<RoleRoute allowedRoles={["professor"]}><SubjectsList /></RoleRoute>} />
-            <Route path="/professor/notas" element={<RoleRoute allowedRoles={["professor"]}><GradeEntry /></RoleRoute>} />
-            <Route path="/professor/frequencia" element={<RoleRoute allowedRoles={["professor"]}><AttendanceRecord /></RoleRoute>} />
+            <Route
+              path="/professor/dashboard"
+              element={
+                <RoleRoute allowedRoles={["professor"]}>
+                  <ProfessorDashboard />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/professor/turmas"
+              element={
+                <RoleRoute allowedRoles={["professor"]}>
+                  <ClassesList />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/professor/disciplinas"
+              element={
+                <RoleRoute allowedRoles={["professor"]}>
+                  <SubjectsList />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/professor/notas"
+              element={
+                <RoleRoute allowedRoles={["professor"]}>
+                  <GradeEntry />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/professor/frequencia"
+              element={
+                <RoleRoute allowedRoles={["professor"]}>
+                  <AttendanceRecord />
+                </RoleRoute>
+              }
+            />
 
             {/* Psicologia */}
-            <Route path="/psicologia/dashboard" element={<RoleRoute allowedRoles={["psicologo"]}><PsicologiaDashboard /></RoleRoute>} />
+            <Route
+              path="/psicologia/dashboard"
+              element={
+                <RoleRoute allowedRoles={["psicologo"]}>
+                  <PsicologiaDashboard />
+                </RoleRoute>
+              }
+            />
 
             {/* Certificado */}
-            <Route path="/certificado" element={<ProtectedRoute><CertificadoPage /></ProtectedRoute>} />
+            <Route
+              path="/certificado"
+              element={
+                <ProtectedRoute>
+                  <CertificadoPage />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Legacy route redirects - redirect to role-prefixed paths */}
             <Route path="/alunos" element={<LegacyRedirect path="/alunos" />} />
