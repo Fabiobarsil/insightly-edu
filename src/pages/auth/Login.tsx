@@ -34,6 +34,20 @@ const Login = () => {
     toast.success("Login realizado com sucesso!");
   };
 
+  const handleGoogleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/`,
+      },
+    });
+
+    if (error) {
+      console.error("[Login Google] erro:", error);
+      toast.error(error.message || "Erro ao entrar com Google");
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -43,10 +57,7 @@ const Login = () => {
   }
 
   if (session && !dashboardRole) {
-    console.warn("Usuário sem role detectado — aplicando fallback");
-
-    navigate("/admin/dashboard", { replace: true });
-
+    navigate("/sem-acesso", { replace: true });
     return null;
   }
 
