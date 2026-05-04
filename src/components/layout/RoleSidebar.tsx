@@ -28,10 +28,6 @@ const menusByAccessRole: Record<string, NavItem[]> = {
   superadmin: [
     { icon: "ri-dashboard-3-line", label: "Dashboard", to: "/superadmin/dashboard" },
     { icon: "ri-building-2-line", label: "Escolas", to: "/superadmin/escolas" },
-    { icon: "ri-vip-crown-line", label: "Assinaturas", to: "/superadmin/assinaturas" },
-    { icon: "ri-group-line", label: "Usuários", to: "/superadmin/usuarios" },
-    { icon: "ri-file-list-3-line", label: "Logs", to: "/superadmin/logs" },
-    { icon: "ri-settings-3-line", label: "Administração", to: "/superadmin/configuracoes" },
   ],
   owner: [
     { icon: "ri-home-smile-2-fill", label: "Secretaria", to: "/admin/dashboard", color: "text-emerald-400" },
@@ -94,10 +90,12 @@ const RoleSidebar = () => {
   const { access } = useUserAccess();
 
   const accessRole = access?.role?.toLowerCase() ?? null;
-  const items: NavItem[] =
-    (accessRole && menusByAccessRole[accessRole]) ||
-    (dashboardRole && fallbackMenusByDashboardRole[dashboardRole]) ||
-    [];
+  const isSuperadmin = dashboardRole === "superadmin";
+  const items: NavItem[] = isSuperadmin
+    ? menusByAccessRole.superadmin
+    : (accessRole && menusByAccessRole[accessRole]) ||
+      (dashboardRole && fallbackMenusByDashboardRole[dashboardRole]) ||
+      [];
 
   return (
     <aside className="fixed left-0 top-0 w-60 h-screen bg-primary flex flex-col z-10 max-[900px]:static max-[900px]:w-full max-[900px]:h-auto">
