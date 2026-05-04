@@ -66,7 +66,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchRole = async (userId: string) => {
     try {
-      const { data: profile } = await supabase.from("profiles").select("role").eq("id", userId).maybeSingle();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role, is_superadmin, status")
+        .eq("id", userId)
+        .maybeSingle();
 
       if (!mountedRef.current) return;
 
@@ -82,17 +86,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         "auxiliar",
       ];
 
-      // 🔥 PRIORIDADE MÁXIMA: SUPERADMIN
+      // 🔥 SUPERADMIN
+      if (profile?.is_superadmin || profile?.role?.toLowerCase() === "superadmin") {
+        console.log("[Auth] SUPERADMIN DETECTADO");
+        setRole("superadmin");
+        return;
+      }
+
       if (profile?.role) {
         const r = profile.role.toLowerCase();
-
-        if (r === "superadmin") {
-          console.log("[Auth] SUPERADMIN DETECTADO");
-          setRole("superadmin");
-          return;
-        }
-
-        // ✅ fallback normal de profiles
         if (known.includes(r)) {
           setRole(r as AppRole);
           return;
@@ -100,7 +102,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       // 🔹 account_members
-      const { data: accountMember } = await supabase
+      const { data: accountMember, error: accountMemberError } = await supabase
         .from("account_members")
         .select("role")
         .eq("user_id", userId)
@@ -108,6 +110,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .maybeSingle();
 
       if (!mountedRef.current) return;
+
+      if (accountMemberError) {
+        console.warn("[Auth] erro ao buscar account_members:", accountMemberError);
+      }
 
       if (accountMember?.role) {
         const r = accountMember.role.toLowerCase();
@@ -117,7 +123,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
 
-      // 🔹 school_memberships
+      // 🔹 school_memberships (compat)
       const { data: membership } = await supabase
         .from("school_memberships")
         .select("role")
@@ -128,13 +134,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!mountedRef.current) return;
 
       if (membership?.role) {
-        setRole(membership.role as AppRole);
-        return;
+        const r = (membership.role as string).toLowerCase();
+        if (known.includes(r)) {
+          setRole(r as AppRole);
+          return;
+        }
       }
 
-      // 🔹 fallback final
-      console.warn("[Auth] Nenhuma role encontrada → fallback admin");
-      setRole("admin");
+      console.warn("[Auth] usuário autenticado, mas sem permissão no sistema");
+      setRole(null);
     } catch (err) {
       console.error("[Auth] fetchRole error:", err);
       if (mountedRef.current) setRole(null);
