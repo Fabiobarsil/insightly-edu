@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
     }
     const { email, name, full_name, role, department, access_type, access_expires_at } = body;
     const userName = name || full_name || null;
-    console.log("[create-user] payload:", { email, name, role, department, access_type });
+    console.log("[create-user] payload:", { email, name: userName, role, department, access_type });
 
     if (!email || !role) {
       return new Response(
@@ -142,7 +142,7 @@ Deno.serve(async (req) => {
     } else {
       const { data: invited, error: inviteErr } = await adminClient.auth.admin.inviteUserByEmail(
         email,
-        { data: name ? { full_name: name } : undefined }
+        { data: userName ? { full_name: userName } : undefined }
       );
 
       if (invited?.user) {
@@ -156,7 +156,7 @@ Deno.serve(async (req) => {
           email,
           password: tempPassword,
           email_confirm: true,
-          user_metadata: name ? { full_name: name } : undefined,
+          user_metadata: userName ? { full_name: userName } : undefined,
         });
         if (createErr || !created?.user) {
           console.error("[create-user] createUser fallback failed:", createErr);
@@ -224,8 +224,8 @@ Deno.serve(async (req) => {
     }
 
     // Best-effort: update profile name
-    if (name) {
-      await adminClient.from("profiles").update({ full_name: name }).eq("id", userId);
+    if (userName) {
+      await adminClient.from("profiles").update({ full_name: userName }).eq("id", userId);
     }
 
     return new Response(
