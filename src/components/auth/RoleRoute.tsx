@@ -48,7 +48,8 @@ export default function RoleRoute({
   if (!session) {
     return <Navigate to="/login" replace />;
   }
-
+console.log("ROLE:", role);
+console.log("DASHBOARD ROLE:", dashboardRole);
   const effectiveRole = (role ?? dashboardRole ?? "").toLowerCase();
 
   // 3. Sem role identificada → /sem-acesso
