@@ -43,8 +43,19 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const body = await req.json();
-    const { email, name, role, department, access_type, access_expires_at } = body;
+    let body: any = {};
+    try {
+      const raw = await req.text();
+      body = raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      console.error("[create-user] invalid JSON body:", e);
+      return new Response(
+        JSON.stringify({ error: "Body inválido. Envie JSON com email, name, role." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const { email, name, full_name, role, department, access_type, access_expires_at } = body;
+    const userName = name || full_name || null;
     console.log("[create-user] payload:", { email, name, role, department, access_type });
 
     if (!email || !role) {
