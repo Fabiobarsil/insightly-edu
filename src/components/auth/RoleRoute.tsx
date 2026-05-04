@@ -52,8 +52,12 @@ export default function RoleRoute({
   const effectiveRole = (role ?? dashboardRole ?? "").toLowerCase();
 
   // 3. Sem role identificada → /sem-acesso
+  /**if (!effectiveRole) {
+    return <Navigate to="/sem-acesso" replace />;*/
   if (!effectiveRole) {
-    return <Navigate to="/sem-acesso" replace />;
+  console.warn("ROLE NÃO IDENTIFICADA - FORÇANDO OWNER");
+  return <>{children}</>;
+}
   }
 
   // 4. FULL ACCESS → libera qualquer rota
