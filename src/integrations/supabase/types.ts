@@ -1253,7 +1253,7 @@ export type Database = {
           id: string
           is_superadmin: boolean | null
           role: string | null
-          school_id: string
+          school_id: string | null
           status: string | null
         }
         Insert: {
@@ -1263,7 +1263,7 @@ export type Database = {
           id: string
           is_superadmin?: boolean | null
           role?: string | null
-          school_id: string
+          school_id?: string | null
           status?: string | null
         }
         Update: {
@@ -1273,7 +1273,7 @@ export type Database = {
           id?: string
           is_superadmin?: boolean | null
           role?: string | null
-          school_id?: string
+          school_id?: string | null
           status?: string | null
         }
         Relationships: []
