@@ -54,15 +54,29 @@ const tabs = [
   { id: "templates", label: "Mensagens e Templates", icon: "ri-chat-3-line" },
   { id: "documentos", label: "Cabeçalho Oficial", icon: "ri-draft-line" },
   { id: "assinaturas", label: "Assinaturas", icon: "ri-quill-pen-line" },
-  { id: "usuarios", label: "Usuários e Papéis", icon: "ri-shield-user-line" },
+  { id: "usuarios", label: "Gestão de Acessos", icon: "ri-shield-user-line" },
 ];
 
 const roleLabels: Record<string, string> = {
   owner: "Proprietário",
   admin: "Administrador",
+  diretor: "Diretor",
+  coordenador: "Coordenador",
+  secretaria: "Secretaria",
+  professor: "Professor",
+  psicologo: "Psicólogo",
   editor: "Editor",
   viewer: "Visualizador",
 };
+
+const ROLE_OPTIONS = [
+  { value: "owner", label: "Proprietário" },
+  { value: "diretor", label: "Diretor" },
+  { value: "coordenador", label: "Coordenador" },
+  { value: "secretaria", label: "Secretaria" },
+  { value: "professor", label: "Professor" },
+  { value: "psicologo", label: "Psicólogo" },
+];
 
 const accessLabels: Record<string, string> = {
   permanent: "Permanente",
@@ -73,19 +87,24 @@ interface MemberRow {
   id: string;
   user_id: string;
   role: string;
+  department: string | null;
   access_type: string;
   access_expires_at: string | null;
   created_at: string;
+  email?: string | null;
+  full_name?: string | null;
 }
 
 interface UserFormData {
+  name: string;
   email: string;
   role: string;
+  department: string;
   access_type: string;
   access_expires_at: string;
 }
 
-const emptyForm: UserFormData = { email: "", role: "editor", access_type: "permanent", access_expires_at: "" };
+const emptyForm: UserFormData = { name: "", email: "", role: "secretaria", department: "", access_type: "permanent", access_expires_at: "" };
 
 const Settings = () => {
   const [tab, setTab] = useState("escola");
@@ -192,14 +211,18 @@ const Settings = () => {
   };
 
   // --- Users tab ---
+  const { role: currentRole } = useAuth();
+  const canManageAccess = ["owner", "admin", "secretaria"].includes((currentRole || "").toLowerCase());
+
   const { data: members = [], isLoading: membersLoading } = useQuery({
-    queryKey: ["account-members"],
+    queryKey: ["account-members-enriched"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("account_members").select("*").order("created_at", { ascending: true });
+      const { data, error } = await supabase.functions.invoke("list-members", { body: {} });
       if (error) throw error;
-      return (data || []) as MemberRow[];
+      if (data?.error) throw new Error(data.error);
+      return (data?.members || []) as MemberRow[];
     },
-    enabled: tab === "usuarios",
+    enabled: tab === "usuarios" && canManageAccess,
   });
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -210,30 +233,40 @@ const Settings = () => {
   const openCreate = () => { setEditingMember(null); setUserForm(emptyForm); setModalOpen(true); };
   const openEdit = (m: MemberRow) => {
     setEditingMember(m);
-    setUserForm({ email: "", role: m.role, access_type: m.access_type, access_expires_at: m.access_expires_at?.slice(0, 10) || "" });
+    setUserForm({
+      name: m.full_name || "",
+      email: m.email || "",
+      role: m.role,
+      department: m.department || "",
+      access_type: m.access_type,
+      access_expires_at: m.access_expires_at?.slice(0, 10) || "",
+    });
     setModalOpen(true);
   };
 
   const handleCreateUser = async () => {
     if (!userForm.email.trim()) { toast.error("Informe o e-mail"); return; }
+    if (!userForm.role) { toast.error("Selecione um nível de acesso"); return; }
     if (userForm.access_type === "temporary" && !userForm.access_expires_at) { toast.error("Informe a data de expiração"); return; }
     setSaving(true);
     try {
       const { data, error } = await supabase.functions.invoke("create-user", {
         body: {
+          name: userForm.name.trim() || null,
           email: userForm.email.trim(),
           role: userForm.role,
+          department: userForm.department.trim() || null,
           access_type: userForm.access_type,
           access_expires_at: userForm.access_type === "temporary" ? userForm.access_expires_at : null,
         },
       });
       if (error) throw error;
       if (data?.error) { toast.error(data.error); setSaving(false); return; }
-      toast.success(data?.message || "Usuário criado!");
+      toast.success(data?.message || "Convite enviado!");
       setModalOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["account-members"] });
+      queryClient.invalidateQueries({ queryKey: ["account-members-enriched"] });
     } catch (err: any) {
-      toast.error(err.message || "Erro ao criar usuário");
+      toast.error(err.message || "Erro ao enviar convite");
     } finally { setSaving(false); }
   };
 
@@ -244,13 +277,14 @@ const Settings = () => {
     try {
       const { error } = await supabase.from("account_members").update({
         role: userForm.role,
+        department: userForm.department.trim() || null,
         access_type: userForm.access_type,
         access_expires_at: userForm.access_type === "temporary" ? userForm.access_expires_at : null,
       }).eq("id", editingMember.id);
       if (error) throw error;
-      toast.success("Usuário atualizado!");
+      toast.success("Acesso atualizado!");
       setModalOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["account-members"] });
+      queryClient.invalidateQueries({ queryKey: ["account-members-enriched"] });
     } catch (err: any) {
       toast.error(err.message || "Erro ao atualizar");
     } finally { setSaving(false); }
@@ -259,6 +293,7 @@ const Settings = () => {
   const handleUserFormChange = (field: keyof UserFormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setUserForm((prev) => ({ ...prev, [field]: e.target.value }));
   };
+
 
   const formatDate = (d: string | null) => {
     if (!d) return "—";
@@ -272,7 +307,7 @@ const Settings = () => {
       <PageHeader title="Administração" description="Configure os dados institucionais e identidade oficial da escola" />
 
       <div className="flex gap-2 mb-6 flex-wrap">
-        {tabs.map((t) => (
+        {tabs.filter((t) => t.id !== "usuarios" || canManageAccess).map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)} className={cn(
             "flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-bold transition-colors border",
             tab === t.id ? "bg-secondary border-secondary text-secondary-foreground" : "bg-card border-border/60 text-muted hover:bg-accent"
@@ -436,92 +471,114 @@ const Settings = () => {
         <SignaturesTab schoolId={schoolId} />
       )}
 
-      {/* ========== USUÁRIOS ========== */}
+      {/* ========== GESTÃO DE ACESSOS ========== */}
       {tab === "usuarios" && (
         <>
-          <div className="bg-card border border-border/60 rounded-xl certus-shadow">
-            <div className="p-4 border-b border-border/40 flex items-center justify-between">
-              <span className="text-sm font-bold text-primary">Usuários do Sistema</span>
-              <button onClick={openCreate} className="px-3 py-1.5 rounded-lg bg-secondary text-secondary-foreground text-xs font-bold hover:opacity-90 transition-opacity">
-                <i className="ri-add-line mr-1" /> Novo Usuário
-              </button>
+          {!canManageAccess ? (
+            <div className="bg-card border border-border/60 rounded-xl certus-shadow p-8 text-center">
+              <i className="ri-lock-2-line text-3xl text-muted-foreground mb-2 block" />
+              <p className="text-sm text-muted-foreground">
+                Apenas <strong>Proprietário</strong> e <strong>Secretaria</strong> podem gerenciar acessos.
+              </p>
             </div>
-
-            {membersLoading ? (
-              <div className="p-8 text-center text-muted-foreground text-sm">Carregando...</div>
-            ) : members.length === 0 ? (
-              <div className="p-8 text-center text-muted-foreground text-sm">Nenhum usuário encontrado</div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border/40">
-                      <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">User ID</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Papel</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Tipo de Acesso</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Expira em</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Criado em</th>
-                      <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Status</th>
-                      <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {members.map((m) => (
-                      <tr key={m.id} className="border-b border-border/20 hover:bg-accent/40 transition-colors">
-                        <td className="px-4 py-3 font-mono text-xs text-foreground">{m.user_id.slice(0, 8)}…</td>
-                        <td className="px-4 py-3">
-                          <span className="text-xs font-bold bg-accent px-2.5 py-1 rounded-full text-primary">
-                            {roleLabels[m.role] || m.role}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-xs text-foreground">{accessLabels[m.access_type] || m.access_type}</td>
-                        <td className="px-4 py-3 text-xs text-foreground">{formatDate(m.access_expires_at)}</td>
-                        <td className="px-4 py-3 text-xs text-foreground">{formatDate(m.created_at)}</td>
-                        <td className="px-4 py-3">
-                          {isExpired(m) ? (
-                            <StatusBadge status="inactive" label="Expirado" />
-                          ) : (
-                            <StatusBadge status="active" label="Ativo" />
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <button onClick={() => openEdit(m)} className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent transition-colors" title="Editar">
-                            <i className="ri-pencil-line" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+          ) : (
+            <div className="bg-card border border-border/60 rounded-xl certus-shadow">
+              <div className="p-4 border-b border-border/40 flex items-center justify-between">
+                <div>
+                  <span className="text-sm font-bold text-primary">Gestão de Acessos</span>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Convide membros da equipe e defina o nível de acesso de cada um.</p>
+                </div>
+                <button onClick={openCreate} className="px-3 py-1.5 rounded-lg bg-secondary text-secondary-foreground text-xs font-bold hover:opacity-90 transition-opacity">
+                  <i className="ri-mail-send-line mr-1" /> Convidar Usuário
+                </button>
               </div>
-            )}
 
-            <div className="p-4 border-t border-border/40 text-xs text-muted-foreground">
-              {members.length} usuário(s)
+              {membersLoading ? (
+                <div className="p-8 text-center text-muted-foreground text-sm">Carregando...</div>
+              ) : members.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground text-sm">Nenhum usuário encontrado</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border/40">
+                        <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Nome</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Email</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Nível de Acesso</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Área</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Tipo</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Status</th>
+                        <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {members.map((m) => (
+                        <tr key={m.id} className="border-b border-border/20 hover:bg-accent/40 transition-colors">
+                          <td className="px-4 py-3 text-xs text-foreground font-medium">{m.full_name || "—"}</td>
+                          <td className="px-4 py-3 text-xs text-foreground">{m.email || "—"}</td>
+                          <td className="px-4 py-3">
+                            <span className="text-xs font-bold bg-accent px-2.5 py-1 rounded-full text-primary">
+                              {roleLabels[m.role] || m.role}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-xs text-foreground">{m.department || "—"}</td>
+                          <td className="px-4 py-3 text-xs text-foreground">{accessLabels[m.access_type] || m.access_type}</td>
+                          <td className="px-4 py-3">
+                            {isExpired(m) ? (
+                              <StatusBadge status="inactive" label="Expirado" />
+                            ) : (
+                              <StatusBadge status="active" label="Ativo" />
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <button onClick={() => openEdit(m)} className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent transition-colors" title="Editar">
+                              <i className="ri-pencil-line" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              <div className="p-4 border-t border-border/40 text-xs text-muted-foreground">
+                {members.length} usuário(s)
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Modal Criar / Editar */}
+          {/* Modal Convidar / Editar */}
           <Dialog open={modalOpen} onOpenChange={setModalOpen}>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>{editingMember ? "Editar Usuário" : "Novo Usuário"}</DialogTitle>
+                <DialogTitle>{editingMember ? "Editar Acesso" : "Convidar Usuário"}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 mt-2">
                 {!editingMember && (
-                  <div>
-                    <label className="block text-xs font-bold text-muted-foreground mb-1.5">E-mail</label>
-                    <input type="email" value={userForm.email} onChange={handleUserFormChange("email")} placeholder="usuario@email.com" className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
-                  </div>
+                  <>
+                    <div>
+                      <label className="block text-xs font-bold text-muted-foreground mb-1.5">Nome</label>
+                      <input value={userForm.name} onChange={handleUserFormChange("name")} placeholder="Nome completo" className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-muted-foreground mb-1.5">E-mail</label>
+                      <input type="email" value={userForm.email} onChange={handleUserFormChange("email")} placeholder="usuario@email.com" className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+                      <p className="text-[11px] text-muted-foreground mt-1">Um e-mail de convite será enviado ao usuário para definir a senha.</p>
+                    </div>
+                  </>
                 )}
                 <div>
-                  <label className="block text-xs font-bold text-muted-foreground mb-1.5">Papel</label>
+                  <label className="block text-xs font-bold text-muted-foreground mb-1.5">Nível de Acesso</label>
                   <select value={userForm.role} onChange={handleUserFormChange("role")} className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors">
-                    <option value="owner">Proprietário</option>
-                    <option value="admin">Administrador</option>
-                    <option value="editor">Editor</option>
-                    <option value="viewer">Visualizador</option>
+                    {ROLE_OPTIONS.map((r) => (
+                      <option key={r.value} value={r.value}>{r.label}</option>
+                    ))}
                   </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-muted-foreground mb-1.5">Área / Departamento</label>
+                  <input value={userForm.department} onChange={handleUserFormChange("department")} placeholder="Ex: Pedagógico, Financeiro, Direção..." className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-muted-foreground mb-1.5">Tipo de Acesso</label>
@@ -537,7 +594,7 @@ const Settings = () => {
                   </div>
                 )}
                 <button onClick={editingMember ? handleUpdateMember : handleCreateUser} disabled={saving} className="w-full py-2.5 rounded-[12px] bg-secondary text-secondary-foreground text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50">
-                  {saving ? "Salvando..." : editingMember ? "Salvar Alterações" : "Criar Usuário"}
+                  {saving ? "Enviando..." : editingMember ? "Salvar Alterações" : "Enviar Convite"}
                 </button>
               </div>
             </DialogContent>
