@@ -19,36 +19,99 @@ const AcceptInvite = () => {
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Process the invite/recovery link from the URL hash and validate session
+  const [linkError, setLinkError] = useState<string>("");
+
+  // Process the invite/recovery link from the URL and validate session
   useEffect(() => {
+    let cancelled = false;
+
     const init = async () => {
-      // Supabase puts tokens in the URL hash; the client picks them up automatically.
-      // Give it a tick, then check the session.
-      await new Promise((r) => setTimeout(r, 50));
+      try {
+        const url = new URL(window.location.href);
+        const hash = window.location.hash.startsWith("#")
+          ? window.location.hash.slice(1)
+          : window.location.hash;
+        const hashParams = new URLSearchParams(hash);
+        const queryParams = url.searchParams;
 
-      const { data } = await supabase.auth.getSession();
-      if (data?.session?.user) {
-        setHasSession(true);
-        setEmail(data.session.user.email || "");
-        const meta = (data.session.user.user_metadata || {}) as any;
-        if (meta.full_name) setFullName(meta.full_name);
-      }
-      setChecking(false);
+        // 1) Error returned in the hash (e.g. expired link)
+        const errDesc = hashParams.get("error_description") || queryParams.get("error_description");
+        const errCode = hashParams.get("error") || queryParams.get("error");
+        if (errDesc || errCode) {
+          console.error("[accept-invite] link error:", errCode, errDesc);
+          if (!cancelled) {
+            setLinkError(errDesc || errCode || "Link inválido");
+            setChecking(false);
+          }
+          return;
+        }
 
-      // Clean hash so tokens don't linger in the URL bar
-      if (window.location.hash) {
-        window.history.replaceState(null, "", window.location.pathname);
+        // 2) PKCE flow: ?code=...
+        const code = queryParams.get("code");
+        if (code) {
+          console.log("[accept-invite] exchanging PKCE code for session");
+          const { error: exErr } = await supabase.auth.exchangeCodeForSession(code);
+          if (exErr) console.error("[accept-invite] exchange error:", exErr);
+        }
+
+        // 3) Token hash flow: ?token_hash=...&type=invite|recovery|signup
+        const tokenHash = queryParams.get("token_hash");
+        const otpType = queryParams.get("type");
+        if (tokenHash && otpType) {
+          console.log("[accept-invite] verifying OTP token_hash, type:", otpType);
+          const { error: vErr } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: otpType as any,
+          });
+          if (vErr) console.error("[accept-invite] verifyOtp error:", vErr);
+        }
+
+        // 4) Implicit flow tokens are auto-detected by detectSessionInUrl;
+        //    just give the client a tick to settle.
+        await new Promise((r) => setTimeout(r, 100));
+
+        const { data, error } = await supabase.auth.getSession();
+        console.log("[accept-invite] getSession ->", { hasSession: !!data?.session, error });
+
+        if (!cancelled) {
+          if (data?.session?.user) {
+            setHasSession(true);
+            setEmail(data.session.user.email || "");
+            const meta = (data.session.user.user_metadata || {}) as any;
+            if (meta.full_name) setFullName(meta.full_name);
+          }
+          setChecking(false);
+        }
+
+        // Clean URL so tokens don't linger
+        if (window.location.hash || window.location.search) {
+          window.history.replaceState(null, "", window.location.pathname);
+        }
+      } catch (e) {
+        console.error("[accept-invite] init error:", e);
+        if (!cancelled) {
+          setLinkError((e as Error).message);
+          setChecking(false);
+        }
       }
     };
+
     init();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("[accept-invite] auth event:", event, !!session);
       if (session?.user) {
         setHasSession(true);
         setEmail(session.user.email || "");
+        const meta = (session.user.user_metadata || {}) as any;
+        if (meta.full_name && !fullName) setFullName(meta.full_name);
       }
     });
-    return () => listener.subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      listener.subscription.unsubscribe();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
