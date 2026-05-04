@@ -109,7 +109,7 @@ const AcceptInvite = () => {
       }
 
       // 3) Update profile row
-      const profilePatch: Record<string, any> = {
+      const profilePatch: { full_name: string; phone: string | null; avatar_url?: string } = {
         full_name: fullName.trim(),
         phone: phone.trim() || null,
       };
