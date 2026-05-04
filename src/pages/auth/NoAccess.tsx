@@ -1,17 +1,14 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect } from "react";
 
 const NoAccess = () => {
-  const { signOut, session, role, dashboardRole } = useAuth();
+  const { signOut } = useAuth();
   const navigate = useNavigate();
 
-  // 🔥 ESSA PARTE RESOLVE TUDO
-  useEffect(() => {
-    if (session && (role || dashboardRole)) {
-      navigate("/admin/dashboard");
-    }
-  }, [session, role, dashboardRole]);
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/login", { replace: true });
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4">
@@ -22,11 +19,14 @@ const NoAccess = () => {
 
         <h1 className="text-xl font-bold text-foreground mb-2">Acesso não autorizado</h1>
 
-        <p className="text-sm text-muted-foreground mb-6">Sua conta não possui permissão para acessar esta área.</p>
+        <p className="text-sm text-muted-foreground mb-6">
+          Sua conta foi autenticada, mas ainda não possui permissão para acessar este sistema. Entre em contato com o
+          administrador.
+        </p>
 
         <div className="flex flex-col gap-2">
           <button
-            onClick={signOut}
+            onClick={handleSignOut}
             className="w-full bg-primary text-primary-foreground py-2.5 rounded-xl font-bold text-sm hover:opacity-90 transition-opacity"
           >
             Sair
