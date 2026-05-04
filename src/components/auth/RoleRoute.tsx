@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const FULL_ACCESS_ROLES = ["owner", "admin", "diretor", "coordenador", "secretaria", "administracao", "superadmin"];
 
 export default function RoleRoute({ children, allowedRoles }) {
-  const { session, loading, role, dashboardRole } = useAuth();
+  const { session, loading, role } = useAuth();
 
   if (loading) {
     return (
@@ -18,21 +18,17 @@ export default function RoleRoute({ children, allowedRoles }) {
     return <Navigate to="/login" replace />;
   }
 
-  const effectiveRole = (role || dashboardRole || "").toLowerCase();
-
-  console.log("ROLE:", role);
-  console.log("DASHBOARD ROLE:", dashboardRole);
-  console.log("EFFECTIVE ROLE:", effectiveRole);
-
-  if (!effectiveRole) {
+  if (!role) {
     return <Navigate to="/sem-acesso" replace />;
   }
+
+  const effectiveRole = role.toLowerCase();
 
   if (FULL_ACCESS_ROLES.includes(effectiveRole)) {
     return <>{children}</>;
   }
 
-  const allowed = allowedRoles.map((r) => r.toLowerCase());
+  const allowed = (allowedRoles || []).map((r: string) => r.toLowerCase());
 
   if (allowed.includes(effectiveRole)) {
     return <>{children}</>;
