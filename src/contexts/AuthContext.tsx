@@ -183,6 +183,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (nextSession?.user) {
         const userId = nextSession.user.id;
+        setLoading(true);
 
         Promise.resolve().then(() => {
           if (!mountedRef.current) return;
