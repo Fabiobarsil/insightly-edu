@@ -136,6 +136,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/sem-acesso" element={<NoAccess />} />
             <Route path="/aceitar-convite" element={<AcceptInvite />} />
 
             <Route path="/" element={<RootRedirect />} />
