@@ -137,7 +137,7 @@ const App = () => (
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/aceitar-convite" element={<AcceptInvite />} />
-            <Route path="/sem-acesso" element={<NoAccess />} />
+
             <Route path="/" element={<RootRedirect />} />
 
             {/* Superadmin routes */}
