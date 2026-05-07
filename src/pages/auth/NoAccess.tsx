@@ -1,14 +1,37 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
+import { useAuth, getDashboardPath } from "@/contexts/AuthContext";
 
 const NoAccess = () => {
-  const { signOut } = useAuth();
+  const { signOut, session, loading, dashboardRole } = useAuth();
   const navigate = useNavigate();
+
+  // Se o usuário tem sessão e papel válido, redireciona para o dashboard correto.
+  // Esta tela só deve ser exibida para usuários autenticados SEM permissão.
+  useEffect(() => {
+    if (loading) return;
+    if (!session) {
+      navigate("/login", { replace: true });
+      return;
+    }
+    if (dashboardRole) {
+      navigate(getDashboardPath(dashboardRole), { replace: true });
+    }
+  }, [loading, session, dashboardRole, navigate]);
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/login", { replace: true });
   };
+
+  // Enquanto o auth resolve ou enquanto o redirect acontece, mostra loader
+  if (loading || (session && dashboardRole)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4">
