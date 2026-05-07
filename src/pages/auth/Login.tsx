@@ -14,10 +14,13 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && session) {
-      navigate("/admin/dashboard", { replace: true });
+    if (authLoading || !session) return;
+    if (dashboardRole) {
+      navigate(getDashboardPath(dashboardRole), { replace: true });
+    } else {
+      navigate("/sem-acesso", { replace: true });
     }
-  }, [authLoading, session, navigate]);
+  }, [authLoading, session, dashboardRole, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
