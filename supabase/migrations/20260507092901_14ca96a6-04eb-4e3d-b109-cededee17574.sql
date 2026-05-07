@@ -1,0 +1,1 @@
+UPDATE public.profiles SET role='admin', status='active' WHERE id='6e154eda-7bd0-445e-8a56-5e4348853dc0';
