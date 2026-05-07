@@ -62,8 +62,9 @@ import Indicadores from "./pages/admin/Indicadores.tsx";
 const queryClient = new QueryClient();
 
 const RootRedirect = () => {
-  const { session, loading, dashboardRole, role } = useAuth();
+  const { session, loading, dashboardRole } = useAuth();
 
+  // Aguarda hidratação do auth
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -72,12 +73,21 @@ const RootRedirect = () => {
     );
   }
 
-  if (!session) return <Navigate to="/login" replace />;
-
-  if (!role || !dashboardRole) {
-    return <Navigate to="/sem-acesso" replace />;
+  // Sem login
+  if (!session) {
+    return <Navigate to="/login" replace />;
   }
 
+  // Role ainda carregando
+  if (!dashboardRole) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  // Redireciona corretamente conforme role
   return <Navigate to={getDashboardPath(dashboardRole)} replace />;
 };
 
