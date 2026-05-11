@@ -78,13 +78,9 @@ const RootRedirect = () => {
     return <Navigate to="/login" replace />;
   }
 
-  // Role ainda carregando
+  // Sessão carregada, mas sem vínculo/role reconhecida
   if (!dashboardRole) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
-    );
+    return <Navigate to="/sem-acesso" replace />;
   }
 
   // Redireciona corretamente conforme role
@@ -117,6 +113,8 @@ const LegacyRedirect = ({ path }: { path: string }) => {
             : dashboardRole === "psicologo"
               ? "/psicologia"
               : "";
+
+  if (!prefix) return <Navigate to="/sem-acesso" replace />;
 
   return <Navigate to={`${prefix}${path}`} replace />;
 };
