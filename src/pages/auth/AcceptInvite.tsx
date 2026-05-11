@@ -214,9 +214,9 @@ const AcceptInvite = () => {
 
       toast.success("Cadastro concluído! Bem-vindo(a).");
       navigate("/", { replace: true });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("[accept-invite] error:", err);
-      toast.error(err?.message || "Erro ao concluir o cadastro");
+      toast.error(err instanceof Error ? err.message : "Erro ao concluir o cadastro");
     } finally {
       setSaving(false);
     }
