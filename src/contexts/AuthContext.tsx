@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useRef, ReactNode, useCallback } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -6,6 +6,7 @@ export type AppRole =
   | "superadmin"
   | "owner"
   | "admin"
+  | "administracao"
   | "secretaria"
   | "coordenador"
   | "diretor"
@@ -19,12 +20,153 @@ const roleToDashboard: Record<AppRole, DashboardRole> = {
   superadmin: "superadmin",
   owner: "admin",
   admin: "admin",
+  administracao: "admin",
   diretor: "admin",
   coordenador: "admin",
   secretaria: "secretaria",
   auxiliar: "secretaria",
   professor: "professor",
   psicologo: "psicologo",
+};
+
+const KNOWN_ROLES: AppRole[] = [
+  "superadmin",
+  "owner",
+  "admin",
+  "administracao",
+  "secretaria",
+  "coordenador",
+  "diretor",
+  "professor",
+  "psicologo",
+  "auxiliar",
+];
+
+const AUTH_TIMEOUT_MS = 10000;
+const AUTH_CALLBACK_PATHS = new Set(["/aceitar-convite", "/reset-password"]);
+type AuthOtpType = "signup" | "invite" | "magiclink" | "recovery" | "email_change" | "email";
+const OTP_TYPES: AuthOtpType[] = ["signup", "invite", "magiclink", "recovery", "email_change", "email"];
+
+const normalizeRole = (value?: string | null): AppRole | null => {
+  if (!value) return null;
+  const role = value.toLowerCase() as AppRole;
+  return KNOWN_ROLES.includes(role) ? role : null;
+};
+
+const normalizeOtpType = (value: string | null): AuthOtpType | null => {
+  if (!value) return null;
+  return OTP_TYPES.includes(value as AuthOtpType) ? (value as AuthOtpType) : null;
+};
+
+const withTimeout = async <T,>(promise: Promise<T>, label: string): Promise<T> => {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(`${label} excedeu o tempo limite`)), AUTH_TIMEOUT_MS);
+  });
+
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+};
+
+const getUrlParams = () => {
+  const url = new URL(window.location.href);
+  const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash;
+  return {
+    url,
+    hashParams: new URLSearchParams(hash),
+    queryParams: url.searchParams,
+  };
+};
+
+const hasAuthParams = () => {
+  if (typeof window === "undefined") return false;
+  const { hashParams, queryParams } = getUrlParams();
+  return (
+    queryParams.has("code") ||
+    queryParams.has("token_hash") ||
+    queryParams.has("type") ||
+    queryParams.has("error") ||
+    queryParams.has("error_description") ||
+    hashParams.has("access_token") ||
+    hashParams.has("refresh_token") ||
+    hashParams.has("type") ||
+    hashParams.has("error") ||
+    hashParams.has("error_description")
+  );
+};
+
+const cleanAuthParamsFromUrl = () => {
+  if (typeof window === "undefined" || !hasAuthParams()) return;
+
+  const { url } = getUrlParams();
+  const authQueryParams = [
+    "code",
+    "token_hash",
+    "type",
+    "error",
+    "error_code",
+    "error_description",
+    "access_token",
+    "refresh_token",
+    "expires_in",
+    "expires_at",
+    "token_type",
+  ];
+
+  authQueryParams.forEach((param) => url.searchParams.delete(param));
+  const nextSearch = url.searchParams.toString();
+  const nextUrl = `${url.pathname}${nextSearch ? `?${nextSearch}` : ""}`;
+  window.history.replaceState(null, "", nextUrl);
+};
+
+const processAuthCallbackFromUrl = async () => {
+  if (typeof window === "undefined" || !hasAuthParams()) return;
+
+  const pathname = window.location.pathname;
+  if (AUTH_CALLBACK_PATHS.has(pathname)) return;
+
+  const { hashParams, queryParams } = getUrlParams();
+  const errorDescription = hashParams.get("error_description") || queryParams.get("error_description");
+  const errorCode = hashParams.get("error") || queryParams.get("error");
+
+  if (errorDescription || errorCode) {
+    console.error("[Auth] callback retornou erro:", errorCode, errorDescription);
+    cleanAuthParamsFromUrl();
+    return;
+  }
+
+  const code = queryParams.get("code");
+  if (code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error) console.error("[Auth] exchangeCodeForSession error:", error);
+  }
+
+  const tokenHash = queryParams.get("token_hash");
+  const otpType = normalizeOtpType(queryParams.get("type"));
+  if (tokenHash && otpType) {
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: otpType,
+    });
+    if (error) console.error("[Auth] verifyOtp error:", error);
+  }
+
+  const accessToken = hashParams.get("access_token");
+  const refreshToken = hashParams.get("refresh_token");
+  if (accessToken && refreshToken) {
+    const { error } = await supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+    if (error) console.error("[Auth] setSession from URL error:", error);
+  }
+
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  cleanAuthParamsFromUrl();
 };
 
 export const getDashboardPath = (role: DashboardRole) => {
@@ -63,45 +205,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<AppRole | null>(null);
   const mountedRef = useRef(true);
+  const roleRequestRef = useRef(0);
 
-  const fetchRole = async (userId: string) => {
+  const resolveRole = useCallback(async (userId: string): Promise<AppRole | null> => {
     try {
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("role, is_superadmin, status")
         .eq("id", userId)
         .maybeSingle();
 
-      if (!mountedRef.current) return;
+      if (profileError) {
+        console.warn("[Auth] erro ao buscar profiles:", profileError);
+      }
 
-      const known = [
-        "superadmin",
-        "owner",
-        "admin",
-        "secretaria",
-        "coordenador",
-        "diretor",
-        "professor",
-        "psicologo",
-        "auxiliar",
-      ];
-
-      // 🔥 SUPERADMIN
-      if (profile?.is_superadmin || profile?.role?.toLowerCase() === "superadmin") {
+      if (profile?.is_superadmin || normalizeRole(profile?.role) === "superadmin") {
         console.log("[Auth] SUPERADMIN DETECTADO");
-        setRole("superadmin");
-        return;
+        return "superadmin";
       }
 
-      if (profile?.role) {
-        const r = profile.role.toLowerCase();
-        if (known.includes(r)) {
-          setRole(r as AppRole);
-          return;
-        }
-      }
+      const profileRole = normalizeRole(profile?.role);
+      if (profileRole) return profileRole;
 
-      // 🔹 account_members
       const { data: accountMember, error: accountMemberError } = await supabase
         .from("account_members")
         .select("role")
@@ -109,104 +234,131 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .limit(1)
         .maybeSingle();
 
-      if (!mountedRef.current) return;
-
       if (accountMemberError) {
         console.warn("[Auth] erro ao buscar account_members:", accountMemberError);
       }
 
-      if (accountMember?.role) {
-        const r = accountMember.role.toLowerCase();
-        if (known.includes(r)) {
-          setRole(r as AppRole);
-          return;
-        }
-      }
+      const accountRole = normalizeRole(accountMember?.role);
+      if (accountRole) return accountRole;
 
-      // 🔹 school_memberships (compat)
-      const { data: membership } = await supabase
+      const { data: membership, error: membershipError } = await supabase
         .from("school_memberships")
         .select("role")
         .eq("user_id", userId)
         .limit(1)
         .maybeSingle();
 
-      if (!mountedRef.current) return;
-
-      if (membership?.role) {
-        const r = (membership.role as string).toLowerCase();
-        if (known.includes(r)) {
-          setRole(r as AppRole);
-          return;
-        }
+      if (membershipError) {
+        console.warn("[Auth] erro ao buscar school_memberships:", membershipError);
       }
 
+      const membershipRole = normalizeRole(membership?.role as string | null);
+      if (membershipRole) return membershipRole;
+
       console.warn("[Auth] usuário autenticado, mas sem permissão no sistema");
-      setRole(null);
+      return null;
     } catch (err) {
-      console.error("[Auth] fetchRole error:", err);
-      if (mountedRef.current) setRole(null);
+      console.error("[Auth] resolveRole error:", err);
+      return null;
     }
-  };
+  }, []);
+
+  const loadRoleForUser = useCallback(async (userId: string, requestId: number) => {
+    try {
+      const nextRole = await withTimeout(resolveRole(userId), "[Auth] carregamento de permissões");
+      if (mountedRef.current && roleRequestRef.current === requestId) {
+        setRole(nextRole);
+      }
+    } catch (err) {
+      console.error("[Auth] falha ao carregar permissões:", err);
+      if (mountedRef.current && roleRequestRef.current === requestId) {
+        setRole(null);
+      }
+    } finally {
+      if (mountedRef.current && roleRequestRef.current === requestId) {
+        setLoading(false);
+      }
+    }
+  }, [resolveRole]);
 
   useEffect(() => {
     mountedRef.current = true;
-
-    supabase.auth
-      .getSession()
-      .then(({ data: { session: s } }) => {
-        if (!mountedRef.current) return;
-
-        setSession(s);
-
-        if (s?.user) {
-          fetchRole(s.user.id).finally(() => {
-            if (mountedRef.current) setLoading(false);
-          });
-        } else {
-          setLoading(false);
-        }
-      })
-      .catch(() => {
-        if (mountedRef.current) {
-          setSession(null);
-          setLoading(false);
-        }
-      });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (!mountedRef.current) return;
 
+      roleRequestRef.current += 1;
+      const requestId = roleRequestRef.current;
+
       setSession(nextSession);
+      setRole(null);
 
       if (nextSession?.user) {
-        const userId = nextSession.user.id;
         setLoading(true);
-
-        Promise.resolve().then(() => {
-          if (!mountedRef.current) return;
-
-          fetchRole(userId).finally(() => {
-            if (mountedRef.current) setLoading(false);
-          });
-        });
+        setTimeout(() => {
+          if (mountedRef.current && roleRequestRef.current === requestId) {
+            void loadRoleForUser(nextSession.user.id, requestId);
+          }
+        }, 0);
       } else {
-        setRole(null);
         setLoading(false);
       }
     });
+
+    const initializeAuth = async () => {
+      try {
+        setLoading(true);
+        await withTimeout(processAuthCallbackFromUrl(), "[Auth] processamento do callback");
+
+        const {
+          data: { session: restoredSession },
+          error,
+        } = await withTimeout(supabase.auth.getSession(), "[Auth] getSession");
+
+        if (error) {
+          console.error("[Auth] getSession error:", error);
+        }
+
+        if (!mountedRef.current) return;
+
+        roleRequestRef.current += 1;
+        const requestId = roleRequestRef.current;
+
+        setSession(restoredSession);
+        setRole(null);
+
+        if (restoredSession?.user) {
+          await loadRoleForUser(restoredSession.user.id, requestId);
+        } else if (mountedRef.current && roleRequestRef.current === requestId) {
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error("[Auth] initializeAuth error:", err);
+        if (mountedRef.current) {
+          roleRequestRef.current += 1;
+          setSession(null);
+          setRole(null);
+          setLoading(false);
+        }
+      }
+    };
+
+    void initializeAuth();
 
     return () => {
       mountedRef.current = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [loadRoleForUser]);
 
   const signOut = async () => {
+    roleRequestRef.current += 1;
     await supabase.auth.signOut();
+    setSession(null);
     setRole(null);
+    setLoading(false);
   };
 
   const dashboardRole = role ? roleToDashboard[role] : null;

@@ -4,6 +4,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import logoCertus from "@/assets/logo-certus.png";
 
+type AuthOtpType = "signup" | "invite" | "magiclink" | "recovery" | "email_change" | "email";
+const OTP_TYPES: AuthOtpType[] = ["signup", "invite", "magiclink", "recovery", "email_change", "email"];
+
+const normalizeOtpType = (value: string | null): AuthOtpType | null => {
+  if (!value) return null;
+  return OTP_TYPES.includes(value as AuthOtpType) ? (value as AuthOtpType) : null;
+};
+
+const getFullNameFromMetadata = (metadata: Record<string, unknown> | null | undefined) =>
+  typeof metadata?.full_name === "string" ? metadata.full_name : "";
+
 const AcceptInvite = () => {
   const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
@@ -54,20 +65,37 @@ const AcceptInvite = () => {
           if (exErr) console.error("[accept-invite] exchange error:", exErr);
         }
 
-        // 3) Token hash flow: ?token_hash=...&type=invite|recovery|signup
-        const tokenHash = queryParams.get("token_hash");
-        const otpType = queryParams.get("type");
-        if (tokenHash && otpType) {
-          console.log("[accept-invite] verifying OTP token_hash, type:", otpType);
-          const { error: vErr } = await supabase.auth.verifyOtp({
-            token_hash: tokenHash,
-            type: otpType as any,
+        // 2.1) Implicit flow: persist tokens from hash before cleaning the URL.
+        const accessToken = hashParams.get("access_token");
+        const refreshToken = hashParams.get("refresh_token");
+        if (accessToken && refreshToken) {
+          console.log("[accept-invite] setting implicit session from URL hash");
+          const { error: setErr } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
           });
-          if (vErr) console.error("[accept-invite] verifyOtp error:", vErr);
+          if (setErr) console.error("[accept-invite] setSession error:", setErr);
         }
 
-        // 4) Implicit flow tokens are auto-detected by detectSessionInUrl;
-        //    just give the client a tick to settle.
+        // 3) Token hash flow: ?token_hash=...&type=invite|recovery|signup
+        const tokenHash = queryParams.get("token_hash");
+        const otpType = normalizeOtpType(queryParams.get("type"));
+        if (tokenHash && otpType) {
+          console.log("[accept-invite] verifying OTP token_hash, type:", otpType);
+          const { data: verified, error: vErr } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: otpType,
+          });
+          if (vErr) console.error("[accept-invite] verifyOtp error:", vErr);
+          if (verified?.session?.access_token && verified.session.refresh_token) {
+            await supabase.auth.setSession({
+              access_token: verified.session.access_token,
+              refresh_token: verified.session.refresh_token,
+            });
+          }
+        }
+
+        // 4) Give the client a tick to settle after exchange/setSession.
         await new Promise((r) => setTimeout(r, 100));
 
         const { data, error } = await supabase.auth.getSession();
@@ -77,8 +105,8 @@ const AcceptInvite = () => {
           if (data?.session?.user) {
             setHasSession(true);
             setEmail(data.session.user.email || "");
-            const meta = (data.session.user.user_metadata || {}) as any;
-            if (meta.full_name) setFullName(meta.full_name);
+            const metadataName = getFullNameFromMetadata(data.session.user.user_metadata);
+            if (metadataName) setFullName(metadataName);
           }
           setChecking(false);
         }
@@ -103,8 +131,8 @@ const AcceptInvite = () => {
       if (session?.user) {
         setHasSession(true);
         setEmail(session.user.email || "");
-        const meta = (session.user.user_metadata || {}) as any;
-        if (meta.full_name && !fullName) setFullName(meta.full_name);
+        const metadataName = getFullNameFromMetadata(session.user.user_metadata);
+        if (metadataName && !fullName) setFullName(metadataName);
       }
     });
     return () => {
@@ -186,9 +214,9 @@ const AcceptInvite = () => {
 
       toast.success("Cadastro concluído! Bem-vindo(a).");
       navigate("/", { replace: true });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("[accept-invite] error:", err);
-      toast.error(err?.message || "Erro ao concluir o cadastro");
+      toast.error(err instanceof Error ? err.message : "Erro ao concluir o cadastro");
     } finally {
       setSaving(false);
     }
