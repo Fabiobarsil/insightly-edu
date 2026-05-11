@@ -54,20 +54,37 @@ const AcceptInvite = () => {
           if (exErr) console.error("[accept-invite] exchange error:", exErr);
         }
 
+        // 2.1) Implicit flow: persist tokens from hash before cleaning the URL.
+        const accessToken = hashParams.get("access_token");
+        const refreshToken = hashParams.get("refresh_token");
+        if (accessToken && refreshToken) {
+          console.log("[accept-invite] setting implicit session from URL hash");
+          const { error: setErr } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (setErr) console.error("[accept-invite] setSession error:", setErr);
+        }
+
         // 3) Token hash flow: ?token_hash=...&type=invite|recovery|signup
         const tokenHash = queryParams.get("token_hash");
         const otpType = queryParams.get("type");
         if (tokenHash && otpType) {
           console.log("[accept-invite] verifying OTP token_hash, type:", otpType);
-          const { error: vErr } = await supabase.auth.verifyOtp({
+          const { data: verified, error: vErr } = await supabase.auth.verifyOtp({
             token_hash: tokenHash,
             type: otpType as any,
           });
           if (vErr) console.error("[accept-invite] verifyOtp error:", vErr);
+          if (verified?.session?.access_token && verified.session.refresh_token) {
+            await supabase.auth.setSession({
+              access_token: verified.session.access_token,
+              refresh_token: verified.session.refresh_token,
+            });
+          }
         }
 
-        // 4) Implicit flow tokens are auto-detected by detectSessionInUrl;
-        //    just give the client a tick to settle.
+        // 4) Give the client a tick to settle after exchange/setSession.
         await new Promise((r) => setTimeout(r, 100));
 
         const { data, error } = await supabase.auth.getSession();
