@@ -4,6 +4,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import logoCertus from "@/assets/logo-certus.png";
 
+type AuthOtpType = "signup" | "invite" | "magiclink" | "recovery" | "email_change" | "email";
+const OTP_TYPES: AuthOtpType[] = ["signup", "invite", "magiclink", "recovery", "email_change", "email"];
+
+const normalizeOtpType = (value: string | null): AuthOtpType | null => {
+  if (!value) return null;
+  return OTP_TYPES.includes(value as AuthOtpType) ? (value as AuthOtpType) : null;
+};
+
+const getFullNameFromMetadata = (metadata: Record<string, unknown> | null | undefined) =>
+  typeof metadata?.full_name === "string" ? metadata.full_name : "";
+
 const AcceptInvite = () => {
   const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
@@ -68,12 +79,12 @@ const AcceptInvite = () => {
 
         // 3) Token hash flow: ?token_hash=...&type=invite|recovery|signup
         const tokenHash = queryParams.get("token_hash");
-        const otpType = queryParams.get("type");
+        const otpType = normalizeOtpType(queryParams.get("type"));
         if (tokenHash && otpType) {
           console.log("[accept-invite] verifying OTP token_hash, type:", otpType);
           const { data: verified, error: vErr } = await supabase.auth.verifyOtp({
             token_hash: tokenHash,
-            type: otpType as any,
+            type: otpType,
           });
           if (vErr) console.error("[accept-invite] verifyOtp error:", vErr);
           if (verified?.session?.access_token && verified.session.refresh_token) {
@@ -94,8 +105,8 @@ const AcceptInvite = () => {
           if (data?.session?.user) {
             setHasSession(true);
             setEmail(data.session.user.email || "");
-            const meta = (data.session.user.user_metadata || {}) as any;
-            if (meta.full_name) setFullName(meta.full_name);
+            const metadataName = getFullNameFromMetadata(data.session.user.user_metadata);
+            if (metadataName) setFullName(metadataName);
           }
           setChecking(false);
         }
@@ -120,8 +131,8 @@ const AcceptInvite = () => {
       if (session?.user) {
         setHasSession(true);
         setEmail(session.user.email || "");
-        const meta = (session.user.user_metadata || {}) as any;
-        if (meta.full_name && !fullName) setFullName(meta.full_name);
+        const metadataName = getFullNameFromMetadata(session.user.user_metadata);
+        if (metadataName && !fullName) setFullName(metadataName);
       }
     });
     return () => {
