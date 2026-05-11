@@ -207,7 +207,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const mountedRef = useRef(true);
   const roleRequestRef = useRef(0);
 
-  const resolveRole = async (userId: string): Promise<AppRole | null> => {
+  const resolveRole = useCallback(async (userId: string): Promise<AppRole | null> => {
     try {
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
@@ -261,9 +261,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error("[Auth] resolveRole error:", err);
       return null;
     }
-  };
+  }, []);
 
-  const loadRoleForUser = async (userId: string, requestId: number) => {
+  const loadRoleForUser = useCallback(async (userId: string, requestId: number) => {
     try {
       const nextRole = await withTimeout(resolveRole(userId), "[Auth] carregamento de permissões");
       if (mountedRef.current && roleRequestRef.current === requestId) {
@@ -279,7 +279,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setLoading(false);
       }
     }
-  };
+  }, [resolveRole]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -351,7 +351,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       mountedRef.current = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [loadRoleForUser]);
 
   const signOut = async () => {
     roleRequestRef.current += 1;
