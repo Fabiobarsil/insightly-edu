@@ -34,6 +34,7 @@ const Login = () => {
       return;
     }
 
+    toast.success("Login realizado com sucesso!");
   };
 
   if (authLoading) {
