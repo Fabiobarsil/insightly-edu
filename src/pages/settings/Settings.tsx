@@ -16,10 +16,45 @@ import TemplatesTab from "@/components/settings/TemplatesTab";
 import SignaturesTab from "@/components/settings/SignaturesTab";
 import { fetchAddressByCEP } from "@/utils/cep";
 
-const UF_LIST = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
+const UF_LIST = [
+  "AC",
+  "AL",
+  "AP",
+  "AM",
+  "BA",
+  "CE",
+  "DF",
+  "ES",
+  "GO",
+  "MA",
+  "MT",
+  "MS",
+  "MG",
+  "PA",
+  "PB",
+  "PR",
+  "PE",
+  "PI",
+  "RJ",
+  "RN",
+  "RS",
+  "RO",
+  "RR",
+  "SC",
+  "SP",
+  "SE",
+  "TO",
+];
 
 // Serializa partes em uma única string (compatível com a coluna address existente)
-function composeAddress(parts: { street: string; number: string; district: string; city: string; state: string; zip: string }) {
+function composeAddress(parts: {
+  street: string;
+  number: string;
+  district: string;
+  city: string;
+  state: string;
+  zip: string;
+}) {
   const { street, number, district, city, state, zip } = parts;
   const left = [street, number].filter(Boolean).join(", ");
   const middle = [left, district].filter(Boolean).join(" - ");
@@ -41,8 +76,13 @@ function parseAddress(addr: string) {
   const beforeCity = (cityUfMatch ? withoutZip.slice(0, withoutZip.lastIndexOf(cityUfMatch[0])) : withoutZip).trim();
   const districtMatch = beforeCity.match(/\s-\s([^,-]+)$/);
   const district = districtMatch?.[1]?.trim() || "";
-  const beforeDistrict = (districtMatch ? beforeCity.slice(0, beforeCity.lastIndexOf(districtMatch[0])) : beforeCity).trim();
-  const parts = beforeDistrict.split(",").map((p) => p.trim()).filter(Boolean);
+  const beforeDistrict = (
+    districtMatch ? beforeCity.slice(0, beforeCity.lastIndexOf(districtMatch[0])) : beforeCity
+  ).trim();
+  const parts = beforeDistrict
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
   const street = parts[0] || "";
   const number = parts[1] || "";
   return { street, number, district, city, state, zip };
@@ -104,7 +144,14 @@ interface UserFormData {
   access_expires_at: string;
 }
 
-const emptyForm: UserFormData = { name: "", email: "", role: "secretaria", department: "", access_type: "permanent", access_expires_at: "" };
+const emptyForm: UserFormData = {
+  name: "",
+  email: "",
+  role: "secretaria",
+  department: "",
+  access_type: "permanent",
+  access_expires_at: "",
+};
 
 const Settings = () => {
   const [tab, setTab] = useState("escola");
@@ -126,11 +173,24 @@ const Settings = () => {
   });
 
   const [form, setForm] = useState({
-    name: "", complement: "", cnpj: "", mec_authorization_code: "",
-    director_name: "", director_role: "", logo_url: "",
+    name: "",
+    complement: "",
+    cnpj: "",
+    mec_authorization_code: "",
+    director_name: "",
+    director_role: "",
+    logo_url: "",
     // Endereço estruturado
-    zip: "", street: "", number: "", district: "", city: "", state: "",
-    offers_ensino_fundamental: false, offers_ensino_medio: true, offers_eja: false, offers_curso_tecnico: false,
+    zip: "",
+    street: "",
+    number: "",
+    district: "",
+    city: "",
+    state: "",
+    offers_ensino_fundamental: false,
+    offers_ensino_medio: true,
+    offers_eja: false,
+    offers_curso_tecnico: false,
   });
   const [cepLoading, setCepLoading] = useState(false);
 
@@ -138,11 +198,19 @@ const Settings = () => {
     if (school) {
       const parsed = parseAddress(school.address || "");
       setForm({
-        name: school.name || "", complement: (school as any).complement || "", cnpj: school.cnpj || "",
-        mec_authorization_code: school.mec_authorization_code || "", director_name: school.director_name || "",
-        director_role: school.director_role || "", logo_url: school.logo_url || "",
-        zip: parsed.zip, street: parsed.street, number: parsed.number,
-        district: parsed.district, city: parsed.city, state: parsed.state,
+        name: school.name || "",
+        complement: (school as any).complement || "",
+        cnpj: school.cnpj || "",
+        mec_authorization_code: school.mec_authorization_code || "",
+        director_name: school.director_name || "",
+        director_role: school.director_role || "",
+        logo_url: school.logo_url || "",
+        zip: parsed.zip,
+        street: parsed.street,
+        number: parsed.number,
+        district: parsed.district,
+        city: parsed.city,
+        state: parsed.state,
         offers_ensino_fundamental: (school as any).offers_ensino_fundamental ?? false,
         offers_ensino_medio: (school as any).offers_ensino_medio ?? true,
         offers_eja: (school as any).offers_eja ?? false,
@@ -151,8 +219,9 @@ const Settings = () => {
     }
   }, [school]);
 
-  const toggleOffer = (key: "offers_ensino_fundamental" | "offers_ensino_medio" | "offers_eja" | "offers_curso_tecnico") =>
-    setForm((prev) => ({ ...prev, [key]: !prev[key] }));
+  const toggleOffer = (
+    key: "offers_ensino_fundamental" | "offers_ensino_medio" | "offers_eja" | "offers_curso_tecnico",
+  ) => setForm((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const handleCepBlur = async () => {
     const clean = form.zip.replace(/\D/g, "");
@@ -160,7 +229,10 @@ const Settings = () => {
     setCepLoading(true);
     const result = await fetchAddressByCEP(clean);
     setCepLoading(false);
-    if (!result) { toast.error("CEP não encontrado"); return; }
+    if (!result) {
+      toast.error("CEP não encontrado");
+      return;
+    }
     setForm((prev) => ({
       ...prev,
       street: result.address || prev.street,
@@ -174,14 +246,22 @@ const Settings = () => {
     mutationFn: async (data: typeof form) => {
       if (!schoolId) throw new Error("Escola não encontrada");
       const address = composeAddress({
-        street: data.street, number: data.number, district: data.district,
-        city: data.city, state: data.state, zip: data.zip,
+        street: data.street,
+        number: data.number,
+        district: data.district,
+        city: data.city,
+        state: data.state,
+        zip: data.zip,
       });
       const payload = {
-        name: data.name, complement: data.complement, cnpj: data.cnpj,
+        name: data.name,
+        complement: data.complement,
+        cnpj: data.cnpj,
         mec_authorization_code: data.mec_authorization_code,
-        director_name: data.director_name, director_role: data.director_role,
-        logo_url: data.logo_url, address,
+        director_name: data.director_name,
+        director_role: data.director_role,
+        logo_url: data.logo_url,
+        address,
         offers_ensino_fundamental: data.offers_ensino_fundamental,
         offers_ensino_medio: data.offers_ensino_medio,
         offers_eja: data.offers_eja,
@@ -190,7 +270,10 @@ const Settings = () => {
       const { error } = await supabase.from("schools").update(payload).eq("id", schoolId);
       if (error) throw error;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["school-admin"] }); toast.success("Dados salvos!"); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["school-admin"] });
+      toast.success("Dados salvos!");
+    },
     onError: () => toast.error("Erro ao salvar dados"),
   });
 
@@ -200,15 +283,19 @@ const Settings = () => {
     const ext = file.name.split(".").pop();
     const path = `logos/${schoolId}.${ext}`;
     const { error: uploadError } = await supabase.storage.from("school-assets").upload(path, file, { upsert: true });
-    if (uploadError) { toast.error("Erro ao fazer upload da logo."); return; }
+    if (uploadError) {
+      toast.error("Erro ao fazer upload da logo.");
+      return;
+    }
     const { data: urlData } = supabase.storage.from("school-assets").getPublicUrl(path);
     setForm((prev) => ({ ...prev, logo_url: urlData.publicUrl }));
     toast.success("Logo carregada! Salve para confirmar.");
   };
 
-  const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
-  };
+  const handleChange =
+    (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+      setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    };
 
   // --- Users tab ---
   const { role: currentRole } = useAuth();
@@ -230,7 +317,11 @@ const Settings = () => {
   const [userForm, setUserForm] = useState<UserFormData>(emptyForm);
   const [saving, setSaving] = useState(false);
 
-  const openCreate = () => { setEditingMember(null); setUserForm(emptyForm); setModalOpen(true); };
+  const openCreate = () => {
+    setEditingMember(null);
+    setUserForm(emptyForm);
+    setModalOpen(true);
+  };
   const openEdit = (m: MemberRow) => {
     setEditingMember(m);
     setUserForm({
@@ -245,9 +336,18 @@ const Settings = () => {
   };
 
   const handleCreateUser = async () => {
-    if (!userForm.email.trim()) { toast.error("Informe o e-mail"); return; }
-    if (!userForm.role) { toast.error("Selecione um nível de acesso"); return; }
-    if (userForm.access_type === "temporary" && !userForm.access_expires_at) { toast.error("Informe a data de expiração"); return; }
+    if (!userForm.email.trim()) {
+      toast.error("Informe o e-mail");
+      return;
+    }
+    if (!userForm.role) {
+      toast.error("Selecione um nível de acesso");
+      return;
+    }
+    if (userForm.access_type === "temporary" && !userForm.access_expires_at) {
+      toast.error("Informe a data de expiração");
+      return;
+    }
     setSaving(true);
     try {
       const { data: authData } = await supabase.auth.getUser();
@@ -263,46 +363,85 @@ const Settings = () => {
         invited_by,
       };
       console.log("[create-user] invoking with payload:", payload);
+      const { data: sessionData } = await supabase.auth.getSession();
+
+      let accessToken = sessionData.session?.access_token;
+
+      const expiresAt = sessionData.session?.expires_at ?? 0;
+
+      if (!accessToken || expiresAt * 1000 < Date.now() + 60000) {
+        const { data: refreshed, error: refreshErr } = await supabase.auth.refreshSession();
+
+        if (refreshErr || !refreshed.session) {
+          toast.error("Sessão expirada. Faça login novamente.");
+          setSaving(false);
+          return;
+        }
+
+        accessToken = refreshed.session.access_token;
+      }
+
       const { data, error } = await supabase.functions.invoke("create-user", {
         body: payload,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
       });
       if (error) throw error;
-      if (data?.error) { toast.error(data.error); setSaving(false); return; }
+      if (data?.error) {
+        toast.error(data.error);
+        setSaving(false);
+        return;
+      }
       toast.success(data?.message || "Convite enviado!");
       setModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ["account-members-enriched"] });
     } catch (err: any) {
       toast.error(err.message || "Erro ao enviar convite");
-    } finally { setSaving(false); }
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleUpdateMember = async () => {
     if (!editingMember) return;
-    if (userForm.access_type === "temporary" && !userForm.access_expires_at) { toast.error("Informe a data de expiração"); return; }
+    if (userForm.access_type === "temporary" && !userForm.access_expires_at) {
+      toast.error("Informe a data de expiração");
+      return;
+    }
     setSaving(true);
     try {
-      const { error } = await supabase.from("account_members").update({
-        role: userForm.role,
-        department: userForm.department.trim() || null,
-        access_type: userForm.access_type,
-        access_expires_at: userForm.access_type === "temporary" ? userForm.access_expires_at : null,
-      }).eq("id", editingMember.id);
+      const { error } = await supabase
+        .from("account_members")
+        .update({
+          role: userForm.role,
+          department: userForm.department.trim() || null,
+          access_type: userForm.access_type,
+          access_expires_at: userForm.access_type === "temporary" ? userForm.access_expires_at : null,
+        })
+        .eq("id", editingMember.id);
       if (error) throw error;
       toast.success("Acesso atualizado!");
       setModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ["account-members-enriched"] });
     } catch (err: any) {
       toast.error(err.message || "Erro ao atualizar");
-    } finally { setSaving(false); }
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleUserFormChange = (field: keyof UserFormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setUserForm((prev) => ({ ...prev, [field]: e.target.value }));
-  };
+  const handleUserFormChange =
+    (field: keyof UserFormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+      setUserForm((prev) => ({ ...prev, [field]: e.target.value }));
+    };
 
   const [resendingId, setResendingId] = useState<string | null>(null);
   const handleResendInvite = async (m: MemberRow) => {
-    if (!m.email) { toast.error("Membro sem e-mail cadastrado"); return; }
+    if (!m.email) {
+      toast.error("Membro sem e-mail cadastrado");
+      return;
+    }
     setResendingId(m.id);
     try {
       // Garante token de sessão válido (evita 401 "Token inválido ou expirado")
@@ -323,7 +462,10 @@ const Settings = () => {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (error) throw error;
-      if (data?.error) { toast.error(data.error); return; }
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
       toast.success(data?.message || "Convite reenviado!");
     } catch (err: any) {
       console.error("[resend-invite] error:", err);
@@ -333,41 +475,69 @@ const Settings = () => {
     }
   };
 
-
   const formatDate = (d: string | null) => {
     if (!d) return "—";
-    try { return new Date(d).toLocaleDateString("pt-BR"); } catch { return d; }
+    try {
+      return new Date(d).toLocaleDateString("pt-BR");
+    } catch {
+      return d;
+    }
   };
 
-  const isExpired = (m: MemberRow) => m.access_type === "temporary" && m.access_expires_at && new Date(m.access_expires_at) < new Date();
+  const isExpired = (m: MemberRow) =>
+    m.access_type === "temporary" && m.access_expires_at && new Date(m.access_expires_at) < new Date();
 
   return (
     <AppLayout title="Administração" breadcrumbs={[{ label: "Administração" }]}>
-      <PageHeader title="Administração" description="Configure os dados institucionais e identidade oficial da escola" />
+      <PageHeader
+        title="Administração"
+        description="Configure os dados institucionais e identidade oficial da escola"
+      />
 
       <div className="flex gap-2 mb-6 flex-wrap">
-        {tabs.filter((t) => t.id !== "usuarios" || canManageAccess).map((t) => (
-          <button key={t.id} onClick={() => setTab(t.id)} className={cn(
-            "flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-bold transition-colors border",
-            tab === t.id ? "bg-secondary border-secondary text-secondary-foreground" : "bg-card border-border/60 text-muted hover:bg-accent"
-          )}>
-            <i className={t.icon} /> {t.label}
-          </button>
-        ))}
+        {tabs
+          .filter((t) => t.id !== "usuarios" || canManageAccess)
+          .map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={cn(
+                "flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-bold transition-colors border",
+                tab === t.id
+                  ? "bg-secondary border-secondary text-secondary-foreground"
+                  : "bg-card border-border/60 text-muted hover:bg-accent",
+              )}
+            >
+              <i className={t.icon} /> {t.label}
+            </button>
+          ))}
       </div>
 
       {/* ========== ESCOLA ========== */}
       {tab === "escola" && (
         <div className="space-y-6">
-          <FormCard title="Informações Institucionais" onSubmit={() => updateMutation.mutate(form)} submitLabel="Salvar Dados">
+          <FormCard
+            title="Informações Institucionais"
+            onSubmit={() => updateMutation.mutate(form)}
+            submitLabel="Salvar Dados"
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-muted-foreground mb-1.5">Nome da Escola</label>
-                <input value={form.name} onChange={handleChange("name")} className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+                <input
+                  value={form.name}
+                  onChange={handleChange("name")}
+                  className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+                />
               </div>
               <div>
                 <label className="block text-xs font-bold text-muted-foreground mb-1.5">CNPJ</label>
-                <input value={form.cnpj} onChange={handleChange("cnpj")} placeholder="00.000.000/0000-00" className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+                <input
+                  value={form.cnpj}
+                  onChange={handleChange("cnpj")}
+                  placeholder="00.000.000/0000-00"
+                  className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+                />
               </div>
               <div>
                 <label className="block text-xs font-bold text-muted-foreground mb-1.5">CEP</label>
@@ -380,49 +550,101 @@ const Settings = () => {
                     maxLength={9}
                     className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
                   />
-                  {cepLoading && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">buscando...</span>}
+                  {cepLoading && (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
+                      buscando...
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="md:col-span-1">
                 <label className="block text-xs font-bold text-muted-foreground mb-1.5">Logradouro</label>
-                <input value={form.street} onChange={handleChange("street")} placeholder="Rua, Avenida..." className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+                <input
+                  value={form.street}
+                  onChange={handleChange("street")}
+                  placeholder="Rua, Avenida..."
+                  className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+                />
               </div>
               <div>
                 <label className="block text-xs font-bold text-muted-foreground mb-1.5">Número</label>
-                <input value={form.number} onChange={handleChange("number")} placeholder="123" className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+                <input
+                  value={form.number}
+                  onChange={handleChange("number")}
+                  placeholder="123"
+                  className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+                />
               </div>
               <div>
                 <label className="block text-xs font-bold text-muted-foreground mb-1.5">Bairro</label>
-                <input value={form.district} onChange={handleChange("district")} placeholder="Centro" className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+                <input
+                  value={form.district}
+                  onChange={handleChange("district")}
+                  placeholder="Centro"
+                  className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+                />
               </div>
               <div>
                 <label className="block text-xs font-bold text-muted-foreground mb-1.5">Cidade</label>
-                <input value={form.city} onChange={handleChange("city")} placeholder="Cidade" className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+                <input
+                  value={form.city}
+                  onChange={handleChange("city")}
+                  placeholder="Cidade"
+                  className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+                />
               </div>
               <div>
                 <label className="block text-xs font-bold text-muted-foreground mb-1.5">Estado (UF)</label>
-                <select value={form.state} onChange={handleChange("state")} className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors">
+                <select
+                  value={form.state}
+                  onChange={handleChange("state")}
+                  className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+                >
                   <option value="">Selecione</option>
                   {UF_LIST.map((uf) => (
-                    <option key={uf} value={uf}>{uf}</option>
+                    <option key={uf} value={uf}>
+                      {uf}
+                    </option>
                   ))}
                 </select>
               </div>
               <div className="md:col-span-2">
                 <label className="block text-xs font-bold text-muted-foreground mb-1.5">Complemento</label>
-                <input value={form.complement} onChange={handleChange("complement")} placeholder="Sala, Bloco, Andar..." className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+                <input
+                  value={form.complement}
+                  onChange={handleChange("complement")}
+                  placeholder="Sala, Bloco, Andar..."
+                  className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+                />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-muted-foreground mb-1.5">Portaria / Ato de Autorização</label>
-                <input value={form.mec_authorization_code} onChange={handleChange("mec_authorization_code")} placeholder="Ex: Portaria SEE nº 1234/2020" className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5">
+                  Portaria / Ato de Autorização
+                </label>
+                <input
+                  value={form.mec_authorization_code}
+                  onChange={handleChange("mec_authorization_code")}
+                  placeholder="Ex: Portaria SEE nº 1234/2020"
+                  className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+                />
               </div>
               <div>
                 <label className="block text-xs font-bold text-muted-foreground mb-1.5">Diretor(a) Responsável</label>
-                <input value={form.director_name} onChange={handleChange("director_name")} className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+                <input
+                  value={form.director_name}
+                  onChange={handleChange("director_name")}
+                  className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+                />
               </div>
               <div>
-                <label className="block text-xs font-bold text-muted-foreground mb-1.5">Entidade Mantenedora / Cargo</label>
-                <input value={form.director_role} onChange={handleChange("director_role")} className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+                <label className="block text-xs font-bold text-muted-foreground mb-1.5">
+                  Entidade Mantenedora / Cargo
+                </label>
+                <input
+                  value={form.director_role}
+                  onChange={handleChange("director_role")}
+                  className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+                />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-xs font-bold text-muted-foreground mb-2">Modalidades Oferecidas</label>
@@ -439,7 +661,7 @@ const Settings = () => {
                         "flex items-center gap-2 px-3 py-2.5 rounded-[12px] border cursor-pointer transition-colors text-sm",
                         form[m.key]
                           ? "border-secondary bg-secondary/10 text-primary font-bold"
-                          : "border-border bg-background text-muted-foreground hover:bg-accent"
+                          : "border-border bg-background text-muted-foreground hover:bg-accent",
                       )}
                     >
                       <input
@@ -462,21 +684,32 @@ const Settings = () => {
             <div className="flex items-start gap-6">
               <div className="flex-shrink-0">
                 {form.logo_url ? (
-                  <img src={form.logo_url} alt="Logo" className="w-24 h-24 object-contain rounded-xl border border-border bg-background p-1" />
+                  <img
+                    src={form.logo_url}
+                    alt="Logo"
+                    className="w-24 h-24 object-contain rounded-xl border border-border bg-background p-1"
+                  />
                 ) : (
                   <div className="w-24 h-24 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground bg-accent/30">
-                    <i className="ri-image-add-line text-2xl mb-1" /><span className="text-[10px]">Sem logo</span>
+                    <i className="ri-image-add-line text-2xl mb-1" />
+                    <span className="text-[10px]">Sem logo</span>
                   </div>
                 )}
               </div>
               <div className="flex-1 space-y-3">
                 <p className="text-xs text-muted-foreground">Usada apenas em documentos oficiais.</p>
                 <input ref={fileInputRef} type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
-                <button onClick={() => fileInputRef.current?.click()} className="inline-flex items-center gap-2 px-4 py-2 rounded-[12px] text-xs font-bold border border-border hover:bg-accent transition-colors">
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-[12px] text-xs font-bold border border-border hover:bg-accent transition-colors"
+                >
                   <i className="ri-upload-2-line" /> Enviar Logo
                 </button>
                 {form.logo_url && (
-                  <button onClick={() => setForm((p) => ({ ...p, logo_url: "" }))} className="inline-flex items-center gap-2 px-4 py-2 rounded-[12px] text-xs font-bold text-destructive border border-destructive/30 hover:bg-destructive/10 transition-colors ml-2">
+                  <button
+                    onClick={() => setForm((p) => ({ ...p, logo_url: "" }))}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-[12px] text-xs font-bold text-destructive border border-destructive/30 hover:bg-destructive/10 transition-colors ml-2"
+                  >
                     <i className="ri-delete-bin-line" /> Remover
                   </button>
                 )}
@@ -496,19 +729,21 @@ const Settings = () => {
       {tab === "documentos" && (
         <div className="space-y-6">
           <div className="bg-card border border-border/60 rounded-xl certus-shadow p-6">
-            <h3 className="text-sm font-bold text-primary mb-4 flex items-center gap-2"><i className="ri-eye-line" /> Pré-visualização</h3>
+            <h3 className="text-sm font-bold text-primary mb-4 flex items-center gap-2">
+              <i className="ri-eye-line" /> Pré-visualização
+            </h3>
             <div className="bg-white border border-border rounded-xl p-8 shadow-sm">
               <OfficialDocumentHeader school={form} />
-              <p className="text-xs text-muted-foreground italic text-center mt-4">Cabeçalho aplicado automaticamente nos documentos oficiais.</p>
+              <p className="text-xs text-muted-foreground italic text-center mt-4">
+                Cabeçalho aplicado automaticamente nos documentos oficiais.
+              </p>
             </div>
           </div>
         </div>
       )}
 
       {/* ========== ASSINATURAS ========== */}
-      {tab === "assinaturas" && (
-        <SignaturesTab schoolId={schoolId} />
-      )}
+      {tab === "assinaturas" && <SignaturesTab schoolId={schoolId} />}
 
       {/* ========== GESTÃO DE ACESSOS ========== */}
       {tab === "usuarios" && (
@@ -525,9 +760,14 @@ const Settings = () => {
               <div className="p-4 border-b border-border/40 flex items-center justify-between">
                 <div>
                   <span className="text-sm font-bold text-primary">Gestão de Acessos</span>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">Convide membros da equipe e defina o nível de acesso de cada um.</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Convide membros da equipe e defina o nível de acesso de cada um.
+                  </p>
                 </div>
-                <button onClick={openCreate} className="px-3 py-1.5 rounded-lg bg-secondary text-secondary-foreground text-xs font-bold hover:opacity-90 transition-opacity">
+                <button
+                  onClick={openCreate}
+                  className="px-3 py-1.5 rounded-lg bg-secondary text-secondary-foreground text-xs font-bold hover:opacity-90 transition-opacity"
+                >
                   <i className="ri-mail-send-line mr-1" /> Convidar Usuário
                 </button>
               </div>
@@ -543,11 +783,17 @@ const Settings = () => {
                       <tr className="border-b border-border/40">
                         <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Nome</th>
                         <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Email</th>
-                        <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Nível de Acesso</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">
+                          Nível de Acesso
+                        </th>
                         <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Área</th>
                         <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Tipo</th>
-                        <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Status</th>
-                        <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Ações</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">
+                          Status
+                        </th>
+                        <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase">
+                          Ações
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -561,7 +807,9 @@ const Settings = () => {
                             </span>
                           </td>
                           <td className="px-4 py-3 text-xs text-foreground">{m.department || "—"}</td>
-                          <td className="px-4 py-3 text-xs text-foreground">{accessLabels[m.access_type] || m.access_type}</td>
+                          <td className="px-4 py-3 text-xs text-foreground">
+                            {accessLabels[m.access_type] || m.access_type}
+                          </td>
                           <td className="px-4 py-3">
                             {isExpired(m) ? (
                               <StatusBadge status="inactive" label="Expirado" />
@@ -577,9 +825,17 @@ const Settings = () => {
                                 className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent transition-colors disabled:opacity-50"
                                 title="Reenviar convite"
                               >
-                                <i className={resendingId === m.id ? "ri-loader-4-line animate-spin" : "ri-mail-send-line"} />
+                                <i
+                                  className={
+                                    resendingId === m.id ? "ri-loader-4-line animate-spin" : "ri-mail-send-line"
+                                  }
+                                />
                               </button>
-                              <button onClick={() => openEdit(m)} className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent transition-colors" title="Editar">
+                              <button
+                                onClick={() => openEdit(m)}
+                                className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent transition-colors"
+                                title="Editar"
+                              >
                                 <i className="ri-pencil-line" />
                               </button>
                             </div>
@@ -608,30 +864,58 @@ const Settings = () => {
                   <>
                     <div>
                       <label className="block text-xs font-bold text-muted-foreground mb-1.5">Nome</label>
-                      <input value={userForm.name} onChange={handleUserFormChange("name")} placeholder="Nome completo" className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+                      <input
+                        value={userForm.name}
+                        onChange={handleUserFormChange("name")}
+                        placeholder="Nome completo"
+                        className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+                      />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-muted-foreground mb-1.5">E-mail</label>
-                      <input type="email" value={userForm.email} onChange={handleUserFormChange("email")} placeholder="usuario@email.com" className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
-                      <p className="text-[11px] text-muted-foreground mt-1">Um e-mail de convite será enviado ao usuário para definir a senha.</p>
+                      <input
+                        type="email"
+                        value={userForm.email}
+                        onChange={handleUserFormChange("email")}
+                        placeholder="usuario@email.com"
+                        className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+                      />
+                      <p className="text-[11px] text-muted-foreground mt-1">
+                        Um e-mail de convite será enviado ao usuário para definir a senha.
+                      </p>
                     </div>
                   </>
                 )}
                 <div>
                   <label className="block text-xs font-bold text-muted-foreground mb-1.5">Nível de Acesso</label>
-                  <select value={userForm.role} onChange={handleUserFormChange("role")} className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors">
+                  <select
+                    value={userForm.role}
+                    onChange={handleUserFormChange("role")}
+                    className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+                  >
                     {ROLE_OPTIONS.map((r) => (
-                      <option key={r.value} value={r.value}>{r.label}</option>
+                      <option key={r.value} value={r.value}>
+                        {r.label}
+                      </option>
                     ))}
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-muted-foreground mb-1.5">Área / Departamento</label>
-                  <input value={userForm.department} onChange={handleUserFormChange("department")} placeholder="Ex: Pedagógico, Financeiro, Direção..." className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+                  <input
+                    value={userForm.department}
+                    onChange={handleUserFormChange("department")}
+                    placeholder="Ex: Pedagógico, Financeiro, Direção..."
+                    className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-muted-foreground mb-1.5">Tipo de Acesso</label>
-                  <select value={userForm.access_type} onChange={handleUserFormChange("access_type")} className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors">
+                  <select
+                    value={userForm.access_type}
+                    onChange={handleUserFormChange("access_type")}
+                    className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+                  >
                     <option value="permanent">Permanente</option>
                     <option value="temporary">Temporário</option>
                   </select>
@@ -639,10 +923,19 @@ const Settings = () => {
                 {userForm.access_type === "temporary" && (
                   <div>
                     <label className="block text-xs font-bold text-muted-foreground mb-1.5">Data de Expiração</label>
-                    <input type="date" value={userForm.access_expires_at} onChange={handleUserFormChange("access_expires_at")} className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors" />
+                    <input
+                      type="date"
+                      value={userForm.access_expires_at}
+                      onChange={handleUserFormChange("access_expires_at")}
+                      className="w-full border border-border rounded-[12px] px-3 py-2.5 text-sm bg-background focus:outline-none focus:border-secondary transition-colors"
+                    />
                   </div>
                 )}
-                <button onClick={editingMember ? handleUpdateMember : handleCreateUser} disabled={saving} className="w-full py-2.5 rounded-[12px] bg-secondary text-secondary-foreground text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50">
+                <button
+                  onClick={editingMember ? handleUpdateMember : handleCreateUser}
+                  disabled={saving}
+                  className="w-full py-2.5 rounded-[12px] bg-secondary text-secondary-foreground text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
                   {saving ? "Enviando..." : editingMember ? "Salvar Alterações" : "Enviar Convite"}
                 </button>
               </div>
