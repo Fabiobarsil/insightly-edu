@@ -34,21 +34,6 @@ const Login = () => {
       return;
     }
 
-    toast.success("Login realizado com sucesso!");
-  };
-
-  const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/`,
-      },
-    });
-
-    if (error) {
-      console.error("[Login Google] erro:", error);
-      toast.error(error.message || "Erro ao entrar com Google");
-    }
   };
 
   if (authLoading) {
