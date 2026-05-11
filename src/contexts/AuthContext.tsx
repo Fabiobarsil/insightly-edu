@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useRef, ReactNode, useCallback } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -44,11 +44,18 @@ const KNOWN_ROLES: AppRole[] = [
 
 const AUTH_TIMEOUT_MS = 10000;
 const AUTH_CALLBACK_PATHS = new Set(["/aceitar-convite", "/reset-password"]);
+type AuthOtpType = "signup" | "invite" | "magiclink" | "recovery" | "email_change" | "email";
+const OTP_TYPES: AuthOtpType[] = ["signup", "invite", "magiclink", "recovery", "email_change", "email"];
 
 const normalizeRole = (value?: string | null): AppRole | null => {
   if (!value) return null;
   const role = value.toLowerCase() as AppRole;
   return KNOWN_ROLES.includes(role) ? role : null;
+};
+
+const normalizeOtpType = (value: string | null): AuthOtpType | null => {
+  if (!value) return null;
+  return OTP_TYPES.includes(value as AuthOtpType) ? (value as AuthOtpType) : null;
 };
 
 const withTimeout = async <T,>(promise: Promise<T>, label: string): Promise<T> => {
@@ -139,11 +146,11 @@ const processAuthCallbackFromUrl = async () => {
   }
 
   const tokenHash = queryParams.get("token_hash");
-  const otpType = queryParams.get("type");
+  const otpType = normalizeOtpType(queryParams.get("type"));
   if (tokenHash && otpType) {
     const { error } = await supabase.auth.verifyOtp({
       token_hash: tokenHash,
-      type: otpType as any,
+      type: otpType,
     });
     if (error) console.error("[Auth] verifyOtp error:", error);
   }
