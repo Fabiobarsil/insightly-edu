@@ -19,11 +19,7 @@ export default function RoleRoute({ children, allowedRoles }) {
   }
 
   if (!role) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-b-2 border-primary rounded-full" />
-      </div>
-    );
+    return <Navigate to="/sem-acesso" replace />;
   }
 
   const effectiveRole = role.toLowerCase();
