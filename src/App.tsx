@@ -136,6 +136,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/sem-acesso" element={<NoAccess />} />
             <Route path="/aceitar-convite" element={<AcceptInvite />} />
+            <Route path="/reset-password" element={<AcceptInvite />} />
 
             <Route path="/" element={<RootRedirect />} />
 
