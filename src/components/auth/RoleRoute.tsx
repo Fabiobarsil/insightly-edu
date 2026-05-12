@@ -27,6 +27,9 @@ export default function RoleRoute({ children, allowedRoles }) {
   }
 
   const effectiveRole = role.toLowerCase();
+  console.log("ROLE REAL:", role);
+  console.log("EFFECTIVE ROLE:", effectiveRole);
+  console.log("ALLOWED ROLES:", allowedRoles);
 
   if (FULL_ACCESS_ROLES.includes(effectiveRole)) {
     return <>{children}</>;
