@@ -112,9 +112,18 @@ Deno.serve(async (req) => {
 
     if (resetErr) {
       console.error("[resend-invite] resetPasswordForEmail failed:", resetErr);
+      const isRateLimit =
+        resetErr.status === 429 ||
+        resetErr.code === "over_email_send_rate_limit" ||
+        resetErr.message?.toLowerCase().includes("rate limit");
+
       return new Response(
-        JSON.stringify({ error: `Erro ao reenviar: ${resetErr.message}` }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({
+          error: isRateLimit
+            ? "Limite de envio de e-mails atingido. Aguarde alguns minutos antes de reenviar o convite."
+            : `Erro ao reenviar: ${resetErr.message}`,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
