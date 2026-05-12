@@ -6,8 +6,16 @@ import { useSchoolId } from "@/hooks/useSchoolId";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   AlertTriangle, BookOpen, CheckCircle2,
-  Clock, MessageSquare, PhoneCall, Activity, User, Send
+  Clock, MessageSquare, PhoneCall, Activity, User, Send, Megaphone
 } from "lucide-react";
+
+const avisos = [
+  { id: 1, titulo: "Reunião pedagógica", data: "05/05", texto: "Alinhamento geral com a coordenação sobre o bimestre.", tag: "Escola" },
+  { id: 2, titulo: "Entrega de notas do bimestre", data: "10/05", texto: "Prazo final para lançamento de notas no sistema. Confira pendências em suas turmas.", tag: "Professores" },
+  { id: 3, titulo: "Conselho de classe", data: "15/05", texto: "Participação obrigatória dos professores titulares. Levar relatórios de acompanhamento.", tag: "Professores" },
+  { id: 4, titulo: "Semana cultural", data: "22/05", texto: "Programação especial para todas as turmas — confira a agenda completa.", tag: "Escola" },
+  { id: 5, titulo: "Formação continuada", data: "28/05", texto: "Workshop sobre práticas pedagógicas inclusivas. Inscrições abertas.", tag: "Professores" },
+];
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -166,6 +174,37 @@ const ProfessorDashboard = () => {
             {currentTeacher ? `Olá, ${currentTeacher.full_name}` : "Gerencie suas turmas e ações pedagógicas"}
           </p>
         </div>
+
+        {/* Quadro de Avisos */}
+        <Card className="rounded-2xl border-border/50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-bold flex items-center gap-2 text-primary">
+              <Megaphone className="h-4 w-4" />
+              Quadro de Avisos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="divide-y divide-border/60">
+              {avisos.map((a) => (
+                <li key={a.id} className="py-3 flex items-start gap-3">
+                  <span className="text-xs font-semibold text-secondary min-w-[44px] pt-0.5">{a.data}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-semibold text-foreground">{a.titulo}</p>
+                      <Badge
+                        variant="outline"
+                        className={`text-[9px] ${a.tag === "Professores" ? "border-primary/40 text-primary" : "border-border text-muted-foreground"}`}
+                      >
+                        {a.tag}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{a.texto}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
 
         {/* KPI cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
