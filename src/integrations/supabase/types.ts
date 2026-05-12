@@ -723,6 +723,7 @@ export type Database = {
           status: string
           student_id: string
           subject_id: string | null
+          target_role: string | null
           teacher_id: string | null
           teacher_notes: string | null
           updated_at: string
@@ -744,6 +745,7 @@ export type Database = {
           status?: string
           student_id: string
           subject_id?: string | null
+          target_role?: string | null
           teacher_id?: string | null
           teacher_notes?: string | null
           updated_at?: string
@@ -765,6 +767,7 @@ export type Database = {
           status?: string
           student_id?: string
           subject_id?: string | null
+          target_role?: string | null
           teacher_id?: string | null
           teacher_notes?: string | null
           updated_at?: string
