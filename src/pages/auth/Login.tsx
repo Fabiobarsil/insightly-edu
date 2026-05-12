@@ -26,6 +26,13 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
 
+    // Garante que qualquer sessão anterior seja descartada antes do novo login
+    try {
+      await supabase.auth.signOut({ scope: "local" });
+    } catch (err) {
+      console.warn("[Login] signOut prévio falhou:", err);
+    }
+
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {

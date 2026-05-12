@@ -265,9 +265,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const loadRoleForUser = useCallback(async (userId: string, requestId: number) => {
     try {
+      console.log("[Auth] resolvendo role para SESSION USER ID:", userId, "req:", requestId);
       const nextRole = await withTimeout(resolveRole(userId), "[Auth] carregamento de permissões");
       if (mountedRef.current && roleRequestRef.current === requestId) {
+        console.log("[Auth] ROLE RESOLVIDA:", nextRole, "para AUTH USER ID:", userId);
         setRole(nextRole);
+      } else {
+        console.log("[Auth] descartando role (request stale)", { requestId, current: roleRequestRef.current });
       }
     } catch (err) {
       console.error("[Auth] falha ao carregar permissões:", err);
@@ -286,25 +290,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!mountedRef.current) return;
 
+      console.log("[Auth] onAuthStateChange:", event, "user:", nextSession?.user?.id ?? null);
+
+      // Invalida qualquer resolução de role em andamento (sessão anterior)
       roleRequestRef.current += 1;
       const requestId = roleRequestRef.current;
 
+      // Reseta sempre — evita stale role entre trocas de usuário
       setSession(nextSession);
       setRole(null);
 
-      if (nextSession?.user) {
-        setLoading(true);
-        setTimeout(() => {
-          if (mountedRef.current && roleRequestRef.current === requestId) {
-            void loadRoleForUser(nextSession.user.id, requestId);
-          }
-        }, 0);
-      } else {
+      if (event === "SIGNED_OUT" || !nextSession?.user) {
         setLoading(false);
+        return;
       }
+
+      setLoading(true);
+      // microtask: evita deadlock dentro do callback do Supabase
+      setTimeout(() => {
+        if (mountedRef.current && roleRequestRef.current === requestId) {
+          void loadRoleForUser(nextSession.user.id, requestId);
+        }
+      }, 0);
     });
 
     const initializeAuth = async () => {
@@ -325,6 +335,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         roleRequestRef.current += 1;
         const requestId = roleRequestRef.current;
+
+        console.log("[Auth] initializeAuth → SESSION USER ID:", restoredSession?.user?.id ?? null);
 
         setSession(restoredSession);
         setRole(null);
@@ -353,11 +365,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [loadRoleForUser]);
 
+  const clearSupabaseStorage = () => {
+    if (typeof window === "undefined") return;
+    try {
+      const keys: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && (k.startsWith("sb-") || k.includes("supabase.auth"))) keys.push(k);
+      }
+      keys.forEach((k) => localStorage.removeItem(k));
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const k = sessionStorage.key(i);
+        if (k && (k.startsWith("sb-") || k.includes("supabase.auth"))) sessionStorage.removeItem(k);
+      }
+    } catch (err) {
+      console.warn("[Auth] erro limpando storage:", err);
+    }
+  };
+
   const signOut = async () => {
     roleRequestRef.current += 1;
-    await supabase.auth.signOut();
     setSession(null);
     setRole(null);
+    try {
+      await supabase.auth.signOut({ scope: "global" });
+    } catch (err) {
+      console.warn("[Auth] signOut error:", err);
+    }
+    clearSupabaseStorage();
     setLoading(false);
   };
 
