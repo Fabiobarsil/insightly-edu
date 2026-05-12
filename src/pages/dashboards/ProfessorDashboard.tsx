@@ -5,16 +5,54 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  AlertTriangle, BookOpen, CheckCircle2,
-  Clock, MessageSquare, PhoneCall, Activity, User, Send, Megaphone
+  AlertTriangle,
+  BookOpen,
+  CheckCircle2,
+  Clock,
+  MessageSquare,
+  PhoneCall,
+  Activity,
+  User,
+  Send,
+  Megaphone,
 } from "lucide-react";
 
 const avisos = [
-  { id: 1, titulo: "Reunião pedagógica", data: "05/05", texto: "Alinhamento geral com a coordenação sobre o bimestre.", tag: "Escola" },
-  { id: 2, titulo: "Entrega de notas do bimestre", data: "10/05", texto: "Prazo final para lançamento de notas no sistema. Confira pendências em suas turmas.", tag: "Professores" },
-  { id: 3, titulo: "Conselho de classe", data: "15/05", texto: "Participação obrigatória dos professores titulares. Levar relatórios de acompanhamento.", tag: "Professores" },
-  { id: 4, titulo: "Semana cultural", data: "22/05", texto: "Programação especial para todas as turmas — confira a agenda completa.", tag: "Escola" },
-  { id: 5, titulo: "Formação continuada", data: "28/05", texto: "Workshop sobre práticas pedagógicas inclusivas. Inscrições abertas.", tag: "Professores" },
+  {
+    id: 1,
+    titulo: "Reunião pedagógica",
+    data: "05/05",
+    texto: "Alinhamento geral com a coordenação sobre o bimestre.",
+    tag: "Escola",
+  },
+  {
+    id: 2,
+    titulo: "Entrega de notas do bimestre",
+    data: "10/05",
+    texto: "Prazo final para lançamento de notas no sistema. Confira pendências em suas turmas.",
+    tag: "Professores",
+  },
+  {
+    id: 3,
+    titulo: "Conselho de classe",
+    data: "15/05",
+    texto: "Participação obrigatória dos professores titulares. Levar relatórios de acompanhamento.",
+    tag: "Professores",
+  },
+  {
+    id: 4,
+    titulo: "Semana cultural",
+    data: "22/05",
+    texto: "Programação especial para todas as turmas — confira a agenda completa.",
+    tag: "Escola",
+  },
+  {
+    id: 5,
+    titulo: "Formação continuada",
+    data: "28/05",
+    texto: "Workshop sobre práticas pedagógicas inclusivas. Inscrições abertas.",
+    tag: "Professores",
+  },
 ];
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -87,17 +125,34 @@ const ProfessorDashboard = () => {
     enabled: !!schoolId,
   });
 
-  const { data: assignments = [] } = useQuery({
+  const { data: assignments = [], error } = useQuery({
     queryKey: ["professor-assignments", schoolId, currentTeacher?.id],
+
     queryFn: async () => {
-      if (!schoolId || !currentTeacher?.id) return [];
-      const { data } = await supabase
+      console.log("SCHOOL_ID:", schoolId);
+      console.log("CURRENT_TEACHER:", currentTeacher);
+
+      if (!schoolId || !currentTeacher?.id) {
+        console.log("QUERY BLOQUEADA");
+        return [];
+      }
+
+      const response = await supabase
         .from("teacher_assignments")
-        .select("id, class_id, subject_id")
+        .select("*")
         .eq("school_id", schoolId)
         .eq("teacher_id", currentTeacher.id);
-      return data ?? [];
+
+      console.log("SUPABASE RESPONSE:", response);
+
+      if (response.error) {
+        console.error("SUPABASE ERROR:", response.error);
+        return [];
+      }
+
+      return response.data ?? [];
     },
+
     enabled: !!schoolId && !!currentTeacher?.id,
   });
 
@@ -113,12 +168,25 @@ const ProfessorDashboard = () => {
 
   /* ── Mutations ── */
   const updateIntervention = useMutation({
-    mutationFn: async ({ id, status, action_type, teacher_notes }: { id: string; status: string; action_type?: string; teacher_notes?: string }) => {
-      const { error } = await supabase.from("pedagogical_interventions").update({
-        status,
-        ...(action_type ? { action_type } : {}),
-        ...(teacher_notes ? { teacher_notes } : {}),
-      }).eq("id", id);
+    mutationFn: async ({
+      id,
+      status,
+      action_type,
+      teacher_notes,
+    }: {
+      id: string;
+      status: string;
+      action_type?: string;
+      teacher_notes?: string;
+    }) => {
+      const { error } = await supabase
+        .from("pedagogical_interventions")
+        .update({
+          status,
+          ...(action_type ? { action_type } : {}),
+          ...(teacher_notes ? { teacher_notes } : {}),
+        })
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -134,11 +202,14 @@ const ProfessorDashboard = () => {
     mutationFn: async ({ id, impact, teacher_notes }: { id: string; impact: string; teacher_notes: string }) => {
       if (!teacher_notes.trim()) throw new Error("Informe suas observações antes de concluir.");
       if (!impact) throw new Error("Selecione o impacto.");
-      const { error } = await supabase.from("pedagogical_interventions").update({
-        status: "resolvido",
-        impact,
-        teacher_notes,
-      }).eq("id", id);
+      const { error } = await supabase
+        .from("pedagogical_interventions")
+        .update({
+          status: "resolvido",
+          impact,
+          teacher_notes,
+        })
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -272,12 +343,24 @@ const ProfessorDashboard = () => {
                     <div key={item.id} className="rounded-xl border border-border/50 p-4 space-y-3">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-full flex items-center justify-center ${
-                            item.severity === "critica" ? "bg-destructive/10" : item.severity === "alta" ? "bg-warning/10" : "bg-muted"
-                          }`}>
-                            <User className={`h-4 w-4 ${
-                              item.severity === "critica" ? "text-destructive" : item.severity === "alta" ? "text-warning-foreground" : "text-muted-foreground"
-                            }`} />
+                          <div
+                            className={`w-9 h-9 rounded-full flex items-center justify-center ${
+                              item.severity === "critica"
+                                ? "bg-destructive/10"
+                                : item.severity === "alta"
+                                  ? "bg-warning/10"
+                                  : "bg-muted"
+                            }`}
+                          >
+                            <User
+                              className={`h-4 w-4 ${
+                                item.severity === "critica"
+                                  ? "text-destructive"
+                                  : item.severity === "alta"
+                                    ? "text-warning-foreground"
+                                    : "text-muted-foreground"
+                              }`}
+                            />
                           </div>
                           <div>
                             <p className="text-sm font-semibold text-foreground">{student?.full_name || "Aluno"}</p>
@@ -285,33 +368,62 @@ const ProfessorDashboard = () => {
                           </div>
                         </div>
                         <Badge variant={item.severity === "critica" ? "destructive" : "outline"} className="text-[9px]">
-                          {item.severity === "critica" ? "🔴 Crítico" : item.severity === "alta" ? "🟠 Alto" : "🟡 Médio"}
+                          {item.severity === "critica"
+                            ? "🔴 Crítico"
+                            : item.severity === "alta"
+                              ? "🟠 Alto"
+                              : "🟡 Médio"}
                         </Badge>
                       </div>
 
                       <div className="bg-muted/30 rounded-lg p-3 space-y-1">
                         <p className="text-xs text-foreground font-medium">{item.reason}</p>
-                        {item.recommendation && (
-                          <p className="text-[11px] text-primary">💡 {item.recommendation}</p>
-                        )}
+                        {item.recommendation && <p className="text-[11px] text-primary">💡 {item.recommendation}</p>}
                         <div className="flex gap-3 mt-1">
                           {item.avg_grade != null && (
-                            <span className="text-[10px] text-muted-foreground">Média: {Number(item.avg_grade).toFixed(1)}</span>
+                            <span className="text-[10px] text-muted-foreground">
+                              Média: {Number(item.avg_grade).toFixed(1)}
+                            </span>
                           )}
                           {item.freq_percent != null && (
-                            <span className="text-[10px] text-muted-foreground">Freq: {Number(item.freq_percent).toFixed(0)}%</span>
+                            <span className="text-[10px] text-muted-foreground">
+                              Freq: {Number(item.freq_percent).toFixed(0)}%
+                            </span>
                           )}
                         </div>
                       </div>
 
                       <div className="flex gap-2 flex-wrap">
-                        <Button size="sm" className="text-[11px] h-7 gap-1.5" onClick={() => { setActionModal({ intervention: item, type: "intervencao" }); setNotes(""); }}>
+                        <Button
+                          size="sm"
+                          className="text-[11px] h-7 gap-1.5"
+                          onClick={() => {
+                            setActionModal({ intervention: item, type: "intervencao" });
+                            setNotes("");
+                          }}
+                        >
                           <CheckCircle2 className="h-3 w-3" /> Registrar Ação
                         </Button>
-                        <Button size="sm" variant="outline" className="text-[11px] h-7 gap-1.5" onClick={() => { setActionModal({ intervention: item, type: "observacao" }); setNotes(""); }}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-[11px] h-7 gap-1.5"
+                          onClick={() => {
+                            setActionModal({ intervention: item, type: "observacao" });
+                            setNotes("");
+                          }}
+                        >
                           <MessageSquare className="h-3 w-3" /> Observação
                         </Button>
-                        <Button size="sm" variant="outline" className="text-[11px] h-7 gap-1.5" onClick={() => { setActionModal({ intervention: item, type: "contato_responsavel" }); setNotes(""); }}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-[11px] h-7 gap-1.5"
+                          onClick={() => {
+                            setActionModal({ intervention: item, type: "contato_responsavel" });
+                            setNotes("");
+                          }}
+                        >
                           <PhoneCall className="h-3 w-3" /> Contato Responsável
                         </Button>
                       </div>
@@ -344,10 +456,16 @@ const ProfessorDashboard = () => {
                         <p className="text-[10px] text-muted-foreground truncate">{item.reason}</p>
                         {item.action_type && (
                           <Badge variant="outline" className="text-[9px] mt-0.5">
-                            {item.action_type === "intervencao" ? "Intervenção" : item.action_type === "observacao" ? "Observação" : "Contato Resp."}
+                            {item.action_type === "intervencao"
+                              ? "Intervenção"
+                              : item.action_type === "observacao"
+                                ? "Observação"
+                                : "Contato Resp."}
                           </Badge>
                         )}
-                        {item.teacher_notes && <p className="text-[10px] text-foreground mt-1">📝 {item.teacher_notes}</p>}
+                        {item.teacher_notes && (
+                          <p className="text-[10px] text-foreground mt-1">📝 {item.teacher_notes}</p>
+                        )}
                       </div>
                       <Button
                         size="sm"
@@ -387,19 +505,35 @@ const ProfessorDashboard = () => {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{student?.full_name || "Aluno"}</p>
                         <p className="text-[10px] text-muted-foreground truncate">{item.reason}</p>
-                        {item.teacher_notes && <p className="text-[10px] text-foreground mt-1">📝 {item.teacher_notes}</p>}
+                        {item.teacher_notes && (
+                          <p className="text-[10px] text-foreground mt-1">📝 {item.teacher_notes}</p>
+                        )}
                       </div>
                       <div className="flex flex-col items-end gap-1 shrink-0">
                         {item.impact && (
-                          <span className={`text-[10px] font-semibold ${
-                            item.impact === "melhorou" ? "text-secondary" : item.impact === "piorou" ? "text-destructive" : "text-muted-foreground"
-                          }`}>
-                            {item.impact === "melhorou" ? "↑ Melhorou" : item.impact === "piorou" ? "↓ Piorou" : "— Sem mudança"}
+                          <span
+                            className={`text-[10px] font-semibold ${
+                              item.impact === "melhorou"
+                                ? "text-secondary"
+                                : item.impact === "piorou"
+                                  ? "text-destructive"
+                                  : "text-muted-foreground"
+                            }`}
+                          >
+                            {item.impact === "melhorou"
+                              ? "↑ Melhorou"
+                              : item.impact === "piorou"
+                                ? "↓ Piorou"
+                                : "— Sem mudança"}
                           </span>
                         )}
                         {item.action_type && (
                           <Badge variant="outline" className="text-[8px]">
-                            {item.action_type === "intervencao" ? "Intervenção" : item.action_type === "observacao" ? "Observação" : "Contato Resp."}
+                            {item.action_type === "intervencao"
+                              ? "Intervenção"
+                              : item.action_type === "observacao"
+                                ? "Observação"
+                                : "Contato Resp."}
                           </Badge>
                         )}
                       </div>
@@ -446,13 +580,21 @@ const ProfessorDashboard = () => {
       </div>
 
       {/* ── Action Modal (aberto → em_andamento) ── */}
-      <Dialog open={!!actionModal} onOpenChange={() => { setActionModal(null); setNotes(""); }}>
+      <Dialog
+        open={!!actionModal}
+        onOpenChange={() => {
+          setActionModal(null);
+          setNotes("");
+        }}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-sm font-bold">
-              {actionModal?.type === "intervencao" ? "Registrar Intervenção"
-                : actionModal?.type === "observacao" ? "Registrar Observação"
-                : "Solicitar Contato com Responsável"}
+              {actionModal?.type === "intervencao"
+                ? "Registrar Intervenção"
+                : actionModal?.type === "observacao"
+                  ? "Registrar Observação"
+                  : "Solicitar Contato com Responsável"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
@@ -488,7 +630,14 @@ const ProfessorDashboard = () => {
       </Dialog>
 
       {/* ── Resolve Modal (em_andamento → resolvido) ── */}
-      <Dialog open={!!resolveModal} onOpenChange={() => { setResolveModal(null); setResolveNotes(""); setResolveImpact(""); }}>
+      <Dialog
+        open={!!resolveModal}
+        onOpenChange={() => {
+          setResolveModal(null);
+          setResolveNotes("");
+          setResolveImpact("");
+        }}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-sm font-bold flex items-center gap-2">
