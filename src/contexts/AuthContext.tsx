@@ -227,6 +227,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const profileRole = normalizeRole(profile?.role);
       if (profileRole) return profileRole;
 
+      // Fonte correta para usuários operacionais (professor, secretaria, etc.).
+      // A RPC é SECURITY DEFINER e evita que a RLS de account_members bloqueie
+      // a leitura da própria role, o que enviava usuários válidos para /sem-acesso.
+      const { data: userAccess, error: userAccessError } = await supabase.rpc("get_user_access");
+
+      if (userAccessError) {
+        console.warn("[Auth] erro ao buscar get_user_access:", userAccessError);
+      }
+
+      const accessRow = Array.isArray(userAccess) ? userAccess[0] : userAccess;
+      const accessRole = normalizeRole(accessRow?.role ?? null);
+      if (accessRole) return accessRole;
+
       const { data: accountMember, error: accountMemberError } = await supabase
         .from("account_members")
         .select("role")
