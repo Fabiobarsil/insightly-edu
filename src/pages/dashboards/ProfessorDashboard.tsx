@@ -175,6 +175,37 @@ const ProfessorDashboard = () => {
           </p>
         </div>
 
+        {/* Quadro de Avisos */}
+        <Card className="rounded-2xl border-border/50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-bold flex items-center gap-2 text-primary">
+              <Megaphone className="h-4 w-4" />
+              Quadro de Avisos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="divide-y divide-border/60">
+              {avisos.map((a) => (
+                <li key={a.id} className="py-3 flex items-start gap-3">
+                  <span className="text-xs font-semibold text-secondary min-w-[44px] pt-0.5">{a.data}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-semibold text-foreground">{a.titulo}</p>
+                      <Badge
+                        variant="outline"
+                        className={`text-[9px] ${a.tag === "Professores" ? "border-primary/40 text-primary" : "border-border text-muted-foreground"}`}
+                      >
+                        {a.tag}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{a.texto}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+
         {/* KPI cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="rounded-2xl border-border/50">
