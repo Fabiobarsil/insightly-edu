@@ -955,6 +955,51 @@ export type Database = {
         }
         Relationships: []
       }
+      school_announcements: {
+        Row: {
+          audience: string
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          intervention_id: string | null
+          priority: string
+          school_id: string
+          source: string
+          target_user_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          audience: string
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          intervention_id?: string | null
+          priority?: string
+          school_id: string
+          source?: string
+          target_user_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          audience?: string
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          intervention_id?: string | null
+          priority?: string
+          school_id?: string
+          source?: string
+          target_user_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       school_grades: {
         Row: {
           created_at: string | null
