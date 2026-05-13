@@ -734,14 +734,29 @@ const CoordinationDashboard = () => {
                 {openInterventions.map((item) => {
                   const student = students.find((st) => st.id === item.student_id);
                   const teacher = teachers.find((t) => t.id === item.teacher_id);
-                  return (
+                   return (
                     <div key={item.id} className="flex items-center gap-3 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3">
                       <Clock className="h-4 w-4 text-amber-700 shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-900 truncate">{student?.full_name || "Aluno"}</p>
+                        <button
+                          onClick={() => student && navigate(`/admin/alunos/${student.id}/prontuario`)}
+                          className="text-sm font-semibold text-slate-900 hover:text-primary hover:underline truncate text-left"
+                        >
+                          {student?.full_name || "Aluno"}
+                        </button>
                         <p className="text-[10px] text-slate-500 truncate">{item.reason}</p>
                         {teacher && <p className="text-[10px] text-slate-700">Prof. {teacher.full_name}</p>}
                       </div>
+                      {student && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => navigate(`/admin/alunos/${student.id}/prontuario`)}
+                          className="h-7 px-2 text-[10px] shrink-0"
+                        >
+                          <Eye className="h-3 w-3 mr-1" /> Prontuário
+                        </Button>
+                      )}
                       <Badge variant="outline" className="text-[9px] shrink-0 bg-amber-100 border-amber-300 text-amber-800">
                         ⏳ Aguardando professor
                       </Badge>
