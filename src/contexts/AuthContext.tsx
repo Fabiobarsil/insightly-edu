@@ -331,52 +331,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     const initializeAuth = async () => {
-      if (initializedRef.current) return;
-      initializedRef.current = true;
-
       try {
         setLoading(true);
-        await withTimeout(processAuthCallbackFromUrl(), "[Auth] processamento do callback");
 
         const {
-          data: { session: restoredSession },
-          error,
-        } = await withTimeout(supabase.auth.getSession(), "[Auth] getSession");
+          data: { session },
+        } = await supabase.auth.getSession();
 
-        if (error) {
-          console.error("[Auth] getSession error:", error);
-          const message = `${error.message ?? ""}`.toLowerCase();
-          if (message.includes("refresh") || message.includes("jwt") || message.includes("token")) {
-            clearSupabaseStorage();
-          }
-        }
+        console.log("[AUTH SESSION]", session?.user?.id);
 
-        if (!mountedRef.current) return;
+        setSession(session);
 
-        roleRequestRef.current += 1;
-        const requestId = roleRequestRef.current;
-
-        console.log("[Auth] initializeAuth → SESSION USER ID:", restoredSession?.user?.id ?? null);
-
-        sessionUserIdRef.current = restoredSession?.user?.id ?? null;
-        setSession(restoredSession);
-        setRole(null);
-
-        if (restoredSession?.user) {
-          await loadRoleForUser(restoredSession.user.id, requestId);
-        } else if (mountedRef.current && roleRequestRef.current === requestId) {
-          setLoading(false);
+        if (session?.user) {
+          const nextRole = await resolveRole(session.user.id);
+          setRole(nextRole);
         }
       } catch (err) {
-        console.error("[Auth] initializeAuth error:", err);
-        if (mountedRef.current) {
-          clearSupabaseStorage();
-          roleRequestRef.current += 1;
-          sessionUserIdRef.current = null;
-          setSession(null);
-          setRole(null);
-          setLoading(false);
-        }
+        console.error("[AUTH ERROR]", err);
+
+        setSession(null);
+        setRole(null);
+      } finally {
+        setLoading(false);
       }
     };
 
