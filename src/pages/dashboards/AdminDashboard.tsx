@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import RoleLayout from "@/components/layout/RoleLayout";
 import SecretaryQuickActionsBar from "@/components/admin-dashboard/SecretaryQuickActionsBar";
 import SecretaryCounters, { type CounterFilter } from "@/components/admin-dashboard/SecretaryCounters";
-import SecretaryAlertsBar from "@/components/admin-dashboard/SecretaryAlertsBar";
+import CentralOperacional from "@/components/admin-dashboard/CentralOperacional";
 import SecretaryKanban from "@/components/admin-dashboard/SecretaryKanban";
 import AdminAgenda from "@/components/admin-dashboard/AdminAgenda";
 import MomentoCertus from "@/components/admin-dashboard/MomentoCertus";
@@ -58,8 +58,8 @@ const AdminDashboard = () => {
         {/* Indicadores clicáveis (filtram a fila) */}
         <SecretaryCounters active={filter} onChange={setFilter} />
 
-        {/* Prioridades do Dia (alertas críticos) */}
-        <SecretaryAlertsBar />
+        {/* Central Operacional — feed institucional */}
+        <CentralOperacional />
 
         {/* Fila Operacional — bloco principal, ocupa toda a largura */}
         <div id="kanban-section" className="min-w-0">
