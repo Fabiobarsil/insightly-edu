@@ -428,6 +428,7 @@ const Settings = () => {
         .select();
 
       console.log("UPDATED:", data);
+      console.log("ERROR:", error);
 
       if (error) throw error;
       if (error) throw error;
