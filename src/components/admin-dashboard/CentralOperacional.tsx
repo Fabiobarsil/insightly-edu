@@ -84,12 +84,12 @@ const CentralOperacional = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("school_announcements")
-        .select("id, title, content, audience, source, priority, created_at, intervention_id, target_user_id")
+        .select("id, title, content, audience, source, priority, created_at, intervention_id, target_user_id, pedagogical_interventions(student_id)")
         .eq("school_id", schoolId!)
         .order("created_at", { ascending: false })
         .limit(20);
       if (error) throw error;
-      return (data ?? []) as Announcement[];
+      return (data ?? []) as unknown as Announcement[];
     },
   });
 
