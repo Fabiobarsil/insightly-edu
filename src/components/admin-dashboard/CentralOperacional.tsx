@@ -670,7 +670,7 @@ const NewAnnouncementModal = ({
       return;
     }
     setSaving(true);
-    const { error } = await supabase.from("school_announcements").insert({
+    const payload: SchoolAnnouncementInsert = {
       school_id: schoolId,
       title: title.trim(),
       content: content.trim(),
@@ -680,7 +680,8 @@ const NewAnnouncementModal = ({
       status,
       responsible_user_id: responsibleId === "none" ? null : responsibleId,
       created_by: userId,
-    } as any);
+    };
+    const { error } = await supabase.from("school_announcements").insert(payload);
     setSaving(false);
     if (error) {
       toast.error(error.message);
