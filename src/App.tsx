@@ -414,8 +414,15 @@ const App = () => (
                 </RoleRoute>
               }
             />
+            <Route
+              path="/admin/acessos"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin"]}>
+                  <AccessRequests />
+                </RoleRoute>
+              }
+            />
 
-            {/* Secretaria routes */}
             <Route path="/secretaria/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
             <Route
               path="/secretaria/alunos"
