@@ -69,6 +69,7 @@ const ProfessorDashboard = () => {
   const queryClient = useQueryClient();
   const [actionModal, setActionModal] = useState<{ intervention: any; type: string } | null>(null);
   const [resolveModal, setResolveModal] = useState<any | null>(null);
+  const [diaryAssignment, setDiaryAssignment] = useState<any | null>(null);
   const [notes, setNotes] = useState("");
   const [resolveNotes, setResolveNotes] = useState("");
   const [resolveImpact, setResolveImpact] = useState("");
