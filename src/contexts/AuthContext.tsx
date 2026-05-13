@@ -42,122 +42,7 @@ const KNOWN_ROLES: AppRole[] = [
   "auxiliar",
 ];
 
-const AUTH_TIMEOUT_MS = 10000;
-const AUTH_CALLBACK_PATHS = new Set(["/aceitar-convite", "/reset-password"]);
-type AuthOtpType = "signup" | "invite" | "magiclink" | "recovery" | "email_change" | "email";
-const OTP_TYPES: AuthOtpType[] = ["signup", "invite", "magiclink", "recovery", "email_change", "email"];
 
-const normalizeRole = (value?: string | null): AppRole | null => {
-  if (!value) return null;
-  const role = value.toLowerCase() as AppRole;
-  return KNOWN_ROLES.includes(role) ? role : null;
-};
-
-const normalizeOtpType = (value: string | null): AuthOtpType | null => {
-  if (!value) return null;
-  return OTP_TYPES.includes(value as AuthOtpType) ? (value as AuthOtpType) : null;
-};
-
-const withTimeout = async <T,>(promise: Promise<T>, label: string): Promise<T> => {
-  let timeoutId: ReturnType<typeof setTimeout> | undefined;
-
-  const timeout = new Promise<never>((_, reject) => {
-    timeoutId = setTimeout(() => reject(new Error(`${label} excedeu o tempo limite`)), AUTH_TIMEOUT_MS);
-  });
-
-  try {
-    return await Promise.race([promise, timeout]);
-  } finally {
-    if (timeoutId) clearTimeout(timeoutId);
-  }
-};
-
-const getUrlParams = () => {
-  const url = new URL(window.location.href);
-  const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash;
-  return {
-    url,
-    hashParams: new URLSearchParams(hash),
-    queryParams: url.searchParams,
-  };
-};
-
-const hasAuthParams = () => {
-  if (typeof window === "undefined") return false;
-  const { hashParams, queryParams } = getUrlParams();
-  return (
-    queryParams.has("code") ||
-    queryParams.has("token_hash") ||
-    queryParams.has("type") ||
-    queryParams.has("error") ||
-    queryParams.has("error_description") ||
-    hashParams.has("access_token") ||
-    hashParams.has("refresh_token") ||
-    hashParams.has("type") ||
-    hashParams.has("error") ||
-    hashParams.has("error_description")
-  );
-};
-
-const cleanAuthParamsFromUrl = () => {
-  if (typeof window === "undefined" || !hasAuthParams()) return;
-
-  const { url } = getUrlParams();
-  const authQueryParams = [
-    "code",
-    "token_hash",
-    "type",
-    "error",
-    "error_code",
-    "error_description",
-    "access_token",
-    "refresh_token",
-    "expires_in",
-    "expires_at",
-    "token_type",
-  ];
-
-  authQueryParams.forEach((param) => url.searchParams.delete(param));
-  const nextSearch = url.searchParams.toString();
-  const nextUrl = `${url.pathname}${nextSearch ? `?${nextSearch}` : ""}`;
-  window.history.replaceState(null, "", nextUrl);
-};
-
-const processAuthCallbackFromUrl = async () => {
-  if (typeof window === "undefined" || !hasAuthParams()) return;
-
-  const pathname = window.location.pathname;
-  if (AUTH_CALLBACK_PATHS.has(pathname)) return;
-
-  const { hashParams, queryParams } = getUrlParams();
-  const errorDescription = hashParams.get("error_description") || queryParams.get("error_description");
-  const errorCode = hashParams.get("error") || queryParams.get("error");
-
-  if (errorDescription || errorCode) {
-    console.error("[Auth] callback retornou erro:", errorCode, errorDescription);
-    cleanAuthParamsFromUrl();
-    return;
-  }
-
-  const code = queryParams.get("code");
-  if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (error) console.error("[Auth] exchangeCodeForSession error:", error);
-  }
-
-  const tokenHash = queryParams.get("token_hash");
-  const otpType = normalizeOtpType(queryParams.get("type"));
-  if (tokenHash && otpType) {
-    const { error } = await supabase.auth.verifyOtp({
-      token_hash: tokenHash,
-      type: otpType,
-    });
-    if (error) console.error("[Auth] verifyOtp error:", error);
-  }
-
-  await new Promise((resolve) => setTimeout(resolve, 0));
-  cleanAuthParamsFromUrl();
-};
 
 export const getDashboardPath = (role: DashboardRole) => {
   const paths: Record<DashboardRole, string> = {
@@ -272,7 +157,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     async (userId: string, requestId: number) => {
       try {
         console.log("[Auth] resolvendo role para SESSION USER ID:", userId, "req:", requestId);
-        const nextRole = await withTimeout(resolveRole(userId), "[Auth] carregamento de permissões");
+        const nextRole = await resolveRole(userId); "[Auth] carregamento de permissões");
         if (mountedRef.current && roleRequestRef.current === requestId) {
           console.log("[Auth] ROLE RESOLVIDA:", nextRole, "para AUTH USER ID:", userId);
           setRole(nextRole);
