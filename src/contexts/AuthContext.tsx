@@ -251,7 +251,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       mountedRef.current = false;
       subscription.unsubscribe();
     };
-  }, [loadRoleForUser]);
+  }, [loadRoleForUser, resolveRole]);
 
   const clearSupabaseStorage = () => {
     if (typeof window === "undefined") return;
