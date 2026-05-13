@@ -13,6 +13,7 @@ import {
   Inbox,
   ArrowRight,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolId } from "@/hooks/useSchoolId";
 import { Button } from "@/components/ui/button";
@@ -58,7 +59,7 @@ const PRIORITY_STYLES: Record<string, { wrap: string; bar: string; pill: string;
   },
 };
 
-const SOURCE_META: Record<string, { label: string; icon: any; cls: string }> = {
+const SOURCE_META: Record<string, { label: string; icon: LucideIcon; cls: string }> = {
   secretaria: { label: "Secretaria", icon: Building2, cls: "bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300" },
   coordenacao: { label: "Coordenação", icon: GraduationCap, cls: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300" },
   direcao: { label: "Direção", icon: Building2, cls: "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300" },
