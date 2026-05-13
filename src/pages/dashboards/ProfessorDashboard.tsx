@@ -240,20 +240,25 @@ const ProfessorDashboard = () => {
           </CardHeader>
           <CardContent>
             <ul className="divide-y divide-border/60">
-              {avisos.map((a) => (
+              {avisos.map((a: any) => (
                 <li key={a.id} className="py-3 flex items-start gap-3">
-                  <span className="text-xs font-semibold text-secondary min-w-[44px] pt-0.5">{a.data}</span>
+                  <span className="text-xs font-semibold text-secondary min-w-[44px] pt-0.5">
+                    {new Date(a.created_at).toLocaleDateString("pt-BR", {
+                      day: "2-digit",
+                      month: "2-digit",
+                    })}
+                  </span>
+
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-semibold text-foreground">{a.titulo}</p>
-                      <Badge
-                        variant="outline"
-                        className={`text-[9px] ${a.tag === "Professores" ? "border-primary/40 text-primary" : "border-border text-muted-foreground"}`}
-                      >
-                        {a.tag}
+                      <p className="text-sm font-semibold text-foreground">{a.title}</p>
+
+                      <Badge variant="outline" className="text-[9px] border-primary/40 text-primary">
+                        {a.audience === "todos" ? "Escola" : "Professores"}
                       </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground">{a.texto}</p>
+
+                    <p className="text-sm text-muted-foreground">{a.content}</p>
                   </div>
                 </li>
               ))}
