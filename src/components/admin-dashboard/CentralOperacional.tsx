@@ -28,7 +28,7 @@ type Announcement = {
   created_at: string;
   intervention_id: string | null;
   target_user_id: string | null;
-  pedagogical_interventions?: { student_id: string | null } | null;
+  student_id?: string | null;
 };
 
 const PRIORITY_STYLES: Record<string, { wrap: string; bar: string; pill: string; label: string }> = {
@@ -84,12 +84,35 @@ const CentralOperacional = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("school_announcements")
-        .select("id, title, content, audience, source, priority, created_at, intervention_id, target_user_id, pedagogical_interventions(student_id)")
+        .select("id, title, content, audience, source, priority, created_at, intervention_id, target_user_id")
         .eq("school_id", schoolId!)
         .order("created_at", { ascending: false })
         .limit(20);
       if (error) throw error;
-      return (data ?? []) as unknown as Announcement[];
+
+      const announcements = (data ?? []) as Announcement[];
+      const interventionIds = Array.from(
+        new Set(announcements.map((item) => item.intervention_id).filter(Boolean)),
+      ) as string[];
+
+      if (interventionIds.length === 0) return announcements;
+
+      const { data: interventions, error: interventionsError } = await supabase
+        .from("pedagogical_interventions")
+        .select("id, student_id")
+        .eq("school_id", schoolId!)
+        .in("id", interventionIds);
+
+      if (interventionsError) throw interventionsError;
+
+      const studentByIntervention = new Map(
+        (interventions ?? []).map((intervention) => [intervention.id, intervention.student_id]),
+      );
+
+      return announcements.map((item) => ({
+        ...item,
+        student_id: item.intervention_id ? studentByIntervention.get(item.intervention_id) ?? null : null,
+      }));
     },
   });
 
@@ -175,7 +198,7 @@ const CentralOperacional = () => {
 
                 <div className="flex flex-col gap-1.5 shrink-0">
                   {(() => {
-                    const studentId = it.pedagogical_interventions?.student_id ?? null;
+                    const studentId = it.student_id ?? null;
                     if (studentId) {
                       return (
                         <Button
@@ -191,7 +214,7 @@ const CentralOperacional = () => {
                       return (
                         <Button
                           size="sm"
-                          onClick={() => navigate(`/coordenacao/dashboard`)}
+                          onClick={() => navigate("/admin/coordenacao")}
                           className="h-7 px-2.5 text-[11px] gap-1 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
                         >
                           Abrir <ArrowRight className="h-3 w-3" />
