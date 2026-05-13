@@ -42,6 +42,12 @@ const KNOWN_ROLES: AppRole[] = [
   "auxiliar",
 ];
 
+const normalizeRole = (value: string | null | undefined): AppRole | null => {
+  if (!value) return null;
+  const v = value.toLowerCase().trim() as AppRole;
+  return KNOWN_ROLES.includes(v) ? v : null;
+};
+
 export const getDashboardPath = (role: DashboardRole) => {
   const paths: Record<DashboardRole, string> = {
     superadmin: "/superadmin/dashboard",
