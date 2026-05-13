@@ -161,7 +161,7 @@ const CentralOperacional = () => {
                     <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded", prio.pill)}>
                       {prio.label}
                     </span>
-                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">
                       {AUDIENCE_LABEL[it.audience] ?? it.audience}
                     </span>
                   </div>
