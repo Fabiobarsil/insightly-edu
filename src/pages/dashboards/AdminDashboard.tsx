@@ -58,8 +58,8 @@ const AdminDashboard = () => {
         {/* Indicadores clicáveis (filtram a fila) */}
         <SecretaryCounters active={filter} onChange={setFilter} />
 
-        {/* Prioridades do Dia (alertas críticos) */}
-        <SecretaryAlertsBar />
+        {/* Central Operacional — feed institucional */}
+        <CentralOperacional />
 
         {/* Fila Operacional — bloco principal, ocupa toda a largura */}
         <div id="kanban-section" className="min-w-0">
