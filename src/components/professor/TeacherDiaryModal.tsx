@@ -202,10 +202,29 @@ const TeacherDiaryModal = ({ open, onOpenChange, assignment }: Props) => {
           <p className="text-sm text-muted-foreground py-8 text-center">Nenhum aluno ativo nesta turma.</p>
         ) : (
           <Tabs defaultValue="notas" className="w-full">
-            <TabsList className="grid grid-cols-3 w-full">
-              <TabsTrigger value="notas"><BookOpen className="h-3 w-3 mr-1" />Notas</TabsTrigger>
-              <TabsTrigger value="faltas"><ClipboardCheck className="h-3 w-3 mr-1" />Faltas</TabsTrigger>
-              <TabsTrigger value="obs"><MessageSquare className="h-3 w-3 mr-1" />Observações</TabsTrigger>
+            <TabsList className="grid grid-cols-3 w-full h-auto p-1.5 gap-1 bg-muted/60 rounded-xl border border-border/60">
+              <TabsTrigger
+                value="notas"
+                className="flex items-center justify-center gap-2 py-2.5 px-3 text-sm font-semibold text-muted-foreground rounded-lg transition-all duration-200 hover:text-foreground hover:bg-background/60 cursor-pointer data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-border data-[state=active]:[&>svg]:text-primary"
+              >
+                <BookOpen className="h-[18px] w-[18px]" strokeWidth={2.25} />
+                Notas
+              </TabsTrigger>
+              <TabsTrigger
+                value="faltas"
+                className="flex items-center justify-center gap-2 py-2.5 px-3 text-sm font-semibold text-muted-foreground rounded-lg transition-all duration-200 hover:text-foreground hover:bg-background/60 cursor-pointer data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-border data-[state=active]:[&>svg]:text-primary"
+              >
+                <ClipboardCheck className="h-[18px] w-[18px]" strokeWidth={2.25} />
+                Faltas
+              </TabsTrigger>
+              <TabsTrigger
+                value="obs"
+                className="flex items-center justify-center gap-2 py-2.5 px-3 text-sm font-semibold text-muted-foreground rounded-lg transition-all duration-200 hover:text-foreground hover:bg-background/60 cursor-pointer data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-border data-[state=active]:[&>svg]:text-primary"
+              >
+                <MessageSquare className="h-[18px] w-[18px]" strokeWidth={2.25} />
+                <span className="hidden sm:inline">Observações</span>
+                <span className="sm:hidden">Obs.</span>
+              </TabsTrigger>
             </TabsList>
 
             {/* NOTAS */}
