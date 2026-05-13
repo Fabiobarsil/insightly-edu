@@ -82,7 +82,7 @@ export default function AccessRequests() {
         action === "approve" ? "active" :
         action === "reject" ? "rejected" :
         action === "suspend" ? "suspended" : "active";
-      const patch: Record<string, unknown> = { status };
+      const patch: { status: typeof status; approved_at?: string; role?: AppRole } = { status };
       if (action === "approve") {
         patch.approved_at = new Date().toISOString();
         if (role) patch.role = role;
