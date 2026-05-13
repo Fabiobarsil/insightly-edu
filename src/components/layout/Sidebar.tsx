@@ -45,18 +45,26 @@ const Sidebar = () => (
       </div>
     </div>
 
-    <nav className="flex-1 p-4 px-[10px] overflow-hidden">
-      {navItems.map((item) => (
-        <NavLink
-          key={item.label}
-          to={item.to}
-          end={item.to === "/"}
-          className="w-full flex items-center gap-[10px] px-3 py-[10px] rounded-[12px] text-sidebar-foreground/55 mb-1 transition-all duration-200 text-left text-sm hover:bg-sidebar-foreground/5 hover:text-sidebar-foreground/85"
-          activeClassName="bg-secondary/15 text-secondary"
-        >
-          <i className={cn(item.icon, "text-lg")} />
-          {item.label}
-        </NavLink>
+    <nav className="flex-1 p-4 px-[10px] overflow-y-auto">
+      {navItems.map((section) => (
+        <div key={section.section} className="mb-6">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/30 px-3 mb-2">
+            {section.section}
+          </p>
+
+          {section.items.map((item) => (
+            <NavLink
+              key={item.label}
+              to={item.to}
+              end={item.to === "/"}
+              className="w-full flex items-center gap-[10px] px-3 py-[10px] rounded-[12px] text-sidebar-foreground/55 mb-1 transition-all duration-200 text-left text-sm hover:bg-sidebar-foreground/5 hover:text-sidebar-foreground/85"
+              activeClassName="bg-secondary/15 text-secondary"
+            >
+              <i className={cn(item.icon, "text-lg")} />
+              {item.label}
+            </NavLink>
+          ))}
+        </div>
       ))}
     </nav>
 
