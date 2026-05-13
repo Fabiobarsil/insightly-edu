@@ -37,10 +37,8 @@ const ProfessorDashboard = () => {
   const [resolveNotes, setResolveNotes] = useState("");
   const [resolveImpact, setResolveImpact] = useState("");
   const { data: avisos = [] } = useQuery({
-    queryKey: ["professor-announcements", schoolId],
+    queryKey: ["professor-announcements"],
     queryFn: async () => {
-      if (!schoolId) return [];
-
       const { data, error } = await supabase
         .from("school_announcements")
         .select("*")
@@ -51,11 +49,12 @@ const ProfessorDashboard = () => {
 
       if (error) throw error;
 
+      console.log("DATA ANNOUNCEMENTS:", data);
+
       return data ?? [];
     },
-    enabled: !!schoolId,
   });
-
+  console.log("AVISOS:", avisos);
   /* ── Find teacher record for current user ── */
   const { data: currentTeacher } = useQuery({
     queryKey: ["professor-teacher", schoolId, session?.user?.id],
