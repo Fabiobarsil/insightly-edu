@@ -229,8 +229,8 @@ const Login = () => {
             <div className="mt-6 pt-5 border-t border-border/60">
               <p className="text-center text-sm text-muted-foreground">
                 Ainda não tem uma conta?{" "}
-                <Link to="/landing" className="text-primary font-semibold hover:underline">
-                  Conheça o CertusEdu
+                <Link to="/cadastro" className="text-primary font-semibold hover:underline">
+                  Solicitar acesso
                 </Link>
               </p>
             </div>
