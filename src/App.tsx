@@ -8,9 +8,12 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import RoleRoute from "@/components/auth/RoleRoute";
 
 import Login from "./pages/auth/Login.tsx";
+import Signup from "./pages/auth/Signup.tsx";
+import PendingApproval from "./pages/auth/PendingApproval.tsx";
 import NoAccess from "./pages/auth/NoAccess.tsx";
 import AcceptInvite from "./pages/auth/AcceptInvite.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import AccessRequests from "./pages/admin/AccessRequests.tsx";
 
 import SuperadminDashboard from "./pages/dashboards/SuperadminDashboard.tsx";
 import SchoolsList from "./pages/schools/SchoolsList.tsx";
@@ -70,9 +73,8 @@ const queryClient = new QueryClient({
 });
 
 const RootRedirect = () => {
-  const { session, loading, dashboardRole } = useAuth();
+  const { session, loading, dashboardRole, status } = useAuth();
 
-  // Aguarda hidratação do auth
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -81,17 +83,10 @@ const RootRedirect = () => {
     );
   }
 
-  // Sem login
-  if (!session) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // Sessão carregada, mas sem vínculo/role reconhecida
-  if (!dashboardRole) {
-    return <Navigate to="/sem-acesso" replace />;
-  }
-
-  // Redireciona corretamente conforme role
+  if (!session) return <Navigate to="/login" replace />;
+  if (status === "pending") return <Navigate to="/aguardando-aprovacao" replace />;
+  if (status === "rejected" || status === "suspended") return <Navigate to="/sem-acesso" replace />;
+  if (!dashboardRole) return <Navigate to="/sem-acesso" replace />;
   return <Navigate to={getDashboardPath(dashboardRole)} replace />;
 };
 
@@ -142,6 +137,8 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/cadastro" element={<Signup />} />
+            <Route path="/aguardando-aprovacao" element={<PendingApproval />} />
             <Route path="/sem-acesso" element={<NoAccess />} />
             <Route path="/aceitar-convite" element={<AcceptInvite />} />
             <Route path="/reset-password" element={<AcceptInvite />} />
@@ -409,8 +406,15 @@ const App = () => (
                 </RoleRoute>
               }
             />
+            <Route
+              path="/admin/acessos"
+              element={
+                <RoleRoute allowedRoles={["owner", "admin"]}>
+                  <AccessRequests />
+                </RoleRoute>
+              }
+            />
 
-            {/* Secretaria routes */}
             <Route path="/secretaria/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
             <Route
               path="/secretaria/alunos"

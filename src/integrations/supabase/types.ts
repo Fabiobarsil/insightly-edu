@@ -2269,6 +2269,56 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          requested_role: Database["public"]["Enums"]["app_role"] | null
+          role: Database["public"]["Enums"]["app_role"]
+          school_id: string | null
+          status: Database["public"]["Enums"]["role_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          requested_role?: Database["public"]["Enums"]["app_role"] | null
+          role: Database["public"]["Enums"]["app_role"]
+          school_id?: string | null
+          status?: Database["public"]["Enums"]["role_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          requested_role?: Database["public"]["Enums"]["app_role"] | null
+          role?: Database["public"]["Enums"]["app_role"]
+          school_id?: string | null
+          status?: Database["public"]["Enums"]["role_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       class_avg: {
@@ -2920,6 +2970,15 @@ export type Database = {
             Returns: string
           }
       get_effective_role: { Args: never; Returns: string }
+      get_my_access: {
+        Args: never
+        Returns: {
+          is_superadmin: boolean
+          role: string
+          school_id: string
+          status: string
+        }[]
+      }
       get_student_historico: { Args: { student_uuid: string }; Returns: Json }
       get_user_access: {
         Args: never
@@ -2929,8 +2988,18 @@ export type Database = {
         }[]
       }
       has_permission: { Args: { action: string }; Returns: boolean }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _school_id: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
       is_member_of_school: { Args: { _school_id: string }; Returns: boolean }
-      is_superadmin: { Args: never; Returns: boolean }
+      is_superadmin:
+        | { Args: never; Returns: boolean }
+        | { Args: { _user_id?: string }; Returns: boolean }
       process_rematricula: { Args: { p_year: number }; Returns: number }
       process_rematricula_with_class: {
         Args: { p_year: number }
