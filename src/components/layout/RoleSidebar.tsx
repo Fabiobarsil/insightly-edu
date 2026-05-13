@@ -31,17 +31,28 @@ const menusByAccessRole: Record<string, NavItem[]> = {
   ],
   owner: [
     { icon: "ri-home-smile-2-fill", label: "Secretaria", to: "/admin/dashboard", color: "text-emerald-400" },
-    { icon: "ri-team-fill", label: "Alunos", to: "/admin/alunos", color: "text-sky-400" },
-    { icon: "ri-book-2-fill", label: "Turmas", to: "/admin/turmas", color: "text-indigo-400" },
-    { icon: "ri-booklet-fill", label: "Disciplinas", to: "/admin/disciplinas", color: "text-fuchsia-400" },
-    { icon: "ri-graduation-cap-fill", label: "Professores", to: "/admin/professores", color: "text-emerald-400" },
-    { icon: "ri-presentation-fill", label: "Sala dos Professores", to: "/professor/dashboard", color: "text-teal-400" },
-    { icon: "ri-mental-health-fill", label: "Psicologia", to: "/psicologia/dashboard", color: "text-purple-400" },
-    { icon: "ri-compass-3-fill", label: "Coordenação", to: "/admin/coordenacao", color: "text-blue-400" },
+
     { icon: "ri-shield-star-fill", label: "Direção", to: "/admin/direcao", color: "text-amber-400" },
-    { icon: "ri-file-text-fill", label: "Documentos", to: "/admin/documentos", color: "text-rose-400" },
+
+    { icon: "ri-compass-3-fill", label: "Coordenação", to: "/admin/coordenacao", color: "text-blue-400" },
+
+    { icon: "ri-graduation-cap-fill", label: "Professores", to: "/admin/professores", color: "text-emerald-400" },
+
+    { icon: "ri-mental-health-fill", label: "Psicologia", to: "/psicologia/dashboard", color: "text-purple-400" },
+
     { icon: "ri-chat-smile-3-fill", label: "Comunicação", to: "/admin/comunicacao", color: "text-cyan-400" },
+
     { icon: "ri-settings-4-fill", label: "Administração", to: "/admin/configuracoes", color: "text-violet-400" },
+
+    { icon: "ri-file-text-fill", label: "Documentos", to: "/admin/documentos", color: "text-rose-400" },
+
+    { icon: "ri-presentation-fill", label: "Sala dos Professores", to: "/professor/dashboard", color: "text-teal-400" },
+
+    { icon: "ri-team-fill", label: "Alunos", to: "/admin/alunos", color: "text-sky-400" },
+
+    { icon: "ri-book-2-fill", label: "Turmas", to: "/admin/turmas", color: "text-indigo-400" },
+
+    { icon: "ri-booklet-fill", label: "Disciplinas", to: "/admin/disciplinas", color: "text-fuchsia-400" },
   ],
   // Menu COMPLETO para owner/diretor/coordenador/secretaria
   secretaria: [
@@ -69,9 +80,9 @@ const menusByAccessRole: Record<string, NavItem[]> = {
 };
 
 // Diretor e coordenador veem o menu completo (mesmo do owner/secretaria)
-menusByAccessRole.diretor = menusByAccessRole.owner;
-menusByAccessRole.coordenador = menusByAccessRole.owner;
-
+menusByAccessRole.diretor = [...menusByAccessRole.owner];
+menusByAccessRole.coordenador = [...menusByAccessRole.owner];
+menusByAccessRole.secretaria = [...menusByAccessRole.owner];
 /**
  * Fallback: quando ainda não há registro em account_members, usa o menu
  * derivado do AuthContext (school_memberships/profiles) para não bloquear
