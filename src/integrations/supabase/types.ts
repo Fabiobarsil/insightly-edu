@@ -2947,6 +2947,10 @@ export type Database = {
         | "coordenador"
         | "professor"
         | "auxiliar"
+        | "superadmin"
+        | "administracao"
+        | "diretor"
+        | "psicologo"
       enrollment_status: "ativo" | "transferido" | "trancado" | "cancelado"
       role_status: "pending" | "active" | "rejected" | "suspended"
       school_user_status: "ativo" | "inativo"
@@ -3090,6 +3094,10 @@ export const Constants = {
         "coordenador",
         "professor",
         "auxiliar",
+        "superadmin",
+        "administracao",
+        "diretor",
+        "psicologo",
       ],
       enrollment_status: ["ativo", "transferido", "trancado", "cancelado"],
       role_status: ["pending", "active", "rejected", "suspended"],
