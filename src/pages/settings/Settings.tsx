@@ -411,15 +411,25 @@ const Settings = () => {
     }
     setSaving(true);
     try {
-      const { error } = await supabase
+      const payload = {
+        role: userForm.role,
+        department: userForm.department.trim() || null,
+        access_type: userForm.access_type,
+        access_expires_at: userForm.access_type === "temporary" ? userForm.access_expires_at : null,
+      };
+
+      console.log("EDITING MEMBER:", editingMember);
+      console.log("PAYLOAD:", payload);
+
+      const { data, error } = await supabase
         .from("account_members")
-        .update({
-          role: userForm.role,
-          department: userForm.department.trim() || null,
-          access_type: userForm.access_type,
-          access_expires_at: userForm.access_type === "temporary" ? userForm.access_expires_at : null,
-        })
-        .eq("id", editingMember.id);
+        .update(payload)
+        .eq("user_id", editingMember.user_id)
+        .select();
+
+      console.log("UPDATED:", data);
+
+      if (error) throw error;
       if (error) throw error;
       toast.success("Acesso atualizado!");
       setModalOpen(false);
