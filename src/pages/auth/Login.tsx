@@ -7,7 +7,7 @@ import { useAuth, getDashboardPath } from "@/contexts/AuthContext";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { session, loading: authLoading, dashboardRole } = useAuth();
+  const { session, loading: authLoading, dashboardRole, status } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -15,12 +15,16 @@ const Login = () => {
 
   useEffect(() => {
     if (authLoading || !session) return;
-    if (dashboardRole) {
+    if (status === "pending") {
+      navigate("/aguardando-aprovacao", { replace: true });
+    } else if (status === "rejected" || status === "suspended") {
+      navigate("/sem-acesso", { replace: true });
+    } else if (dashboardRole) {
       navigate(getDashboardPath(dashboardRole), { replace: true });
     } else {
       navigate("/sem-acesso", { replace: true });
     }
-  }, [authLoading, session, dashboardRole, navigate]);
+  }, [authLoading, session, dashboardRole, status, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
