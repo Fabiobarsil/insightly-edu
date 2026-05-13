@@ -307,7 +307,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (event === "TOKEN_REFRESHED" && sessionUserIdRef.current === nextUserId) {
         setSession(nextSession);
-        setLoading(false);
         return;
       }
 
