@@ -26,11 +26,17 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
 
-    // Garante que qualquer sessão anterior seja descartada antes do novo login
+    // Limpa apenas o cache local de auth antes do login, sem chamar signOut remoto.
+    // Isso evita reutilizar refresh_token antigo/inválido e não dispara eventos duplicados.
     try {
-      await supabase.auth.signOut({ scope: "local" });
+      const keys: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith("sb-") || key.includes("supabase.auth"))) keys.push(key);
+      }
+      keys.forEach((key) => localStorage.removeItem(key));
     } catch (err) {
-      console.warn("[Login] signOut prévio falhou:", err);
+      console.warn("[Login] limpeza local de sessão falhou:", err);
     }
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });

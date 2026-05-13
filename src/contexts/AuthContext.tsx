@@ -155,16 +155,6 @@ const processAuthCallbackFromUrl = async () => {
     if (error) console.error("[Auth] verifyOtp error:", error);
   }
 
-  const accessToken = hashParams.get("access_token");
-  const refreshToken = hashParams.get("refresh_token");
-  if (accessToken && refreshToken) {
-    const { error } = await supabase.auth.setSession({
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    });
-    if (error) console.error("[Auth] setSession from URL error:", error);
-  }
-
   await new Promise((resolve) => setTimeout(resolve, 0));
   cleanAuthParamsFromUrl();
 };
@@ -207,6 +197,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const mountedRef = useRef(true);
   const roleRequestRef = useRef(0);
   const sessionUserIdRef = useRef<string | null>(null);
+  const initializedRef = useRef(false);
 
   const resolveRole = useCallback(async (userId: string): Promise<AppRole | null> => {
     try {
@@ -343,6 +334,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     const initializeAuth = async () => {
+      if (initializedRef.current) return;
+      initializedRef.current = true;
+
       try {
         setLoading(true);
         await withTimeout(processAuthCallbackFromUrl(), "[Auth] processamento do callback");
@@ -354,6 +348,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         if (error) {
           console.error("[Auth] getSession error:", error);
+          const message = `${error.message ?? ""}`.toLowerCase();
+          if (message.includes("refresh") || message.includes("jwt") || message.includes("token")) {
+            clearSupabaseStorage();
+          }
         }
 
         if (!mountedRef.current) return;
@@ -375,6 +373,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } catch (err) {
         console.error("[Auth] initializeAuth error:", err);
         if (mountedRef.current) {
+          clearSupabaseStorage();
           roleRequestRef.current += 1;
           sessionUserIdRef.current = null;
           setSession(null);

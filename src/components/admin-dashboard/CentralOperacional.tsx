@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
@@ -64,6 +64,22 @@ type Announcement = {
 
 type ProfileLite = { id: string; full_name: string | null };
 type StudentLite = { id: string; full_name: string };
+
+const normalizeAnnouncement = (row: Partial<Announcement>): Announcement => ({
+  id: row.id ?? "",
+  title: row.title ?? "",
+  content: row.content ?? "",
+  audience: row.audience ?? "geral",
+  source: row.source ?? "secretaria",
+  priority: row.priority ?? "media",
+  status: row.status ?? "aberto",
+  created_at: row.created_at ?? new Date().toISOString(),
+  intervention_id: row.intervention_id ?? null,
+  target_user_id: row.target_user_id ?? null,
+  responsible_user_id: row.responsible_user_id ?? null,
+  created_by: row.created_by ?? null,
+  student_id: row.student_id ?? null,
+});
 
 const PRIORITY_STYLES: Record<string, { wrap: string; bar: string; pill: string; label: string }> = {
   urgente: {
@@ -133,7 +149,6 @@ const CentralOperacional = () => {
   const [forwardTarget, setForwardTarget] = useState<Announcement | null>(null);
 
   const queryKey = useMemo(() => ["central-operacional", schoolId] as const, [schoolId]);
-  const realtimeInvalidateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: items = [], isLoading } = useQuery({
     queryKey,
@@ -151,7 +166,7 @@ const CentralOperacional = () => {
         .limit(50);
       if (error) throw error;
 
-      const announcements = (data ?? []) as Announcement[];
+      const announcements = ((data ?? []) as Announcement[]).map(normalizeAnnouncement);
       const interventionIds = Array.from(
         new Set(announcements.map((it) => it.intervention_id).filter(Boolean)),
       ) as string[];
@@ -180,19 +195,29 @@ const CentralOperacional = () => {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "school_announcements", filter: `school_id=eq.${schoolId}` },
-        () => {
-          if (realtimeInvalidateTimerRef.current) clearTimeout(realtimeInvalidateTimerRef.current);
-          realtimeInvalidateTimerRef.current = setTimeout(() => {
-            queryClient.invalidateQueries({ queryKey });
-          }, 300);
+        (payload) => {
+          queryClient.setQueryData<Announcement[]>(queryKey, (current = []) => {
+            if (payload.eventType === "DELETE") {
+              const oldId = (payload.old as Partial<Announcement>)?.id;
+              return oldId ? current.filter((item) => item.id !== oldId) : current;
+            }
+
+            const next = normalizeAnnouncement(payload.new as Partial<Announcement>);
+            if (!next.id) return current;
+
+            const exists = current.some((item) => item.id === next.id);
+            const merged = exists
+              ? current.map((item) => (item.id === next.id ? { ...item, ...next, student_id: item.student_id ?? next.student_id } : item))
+              : [next, ...current];
+
+            return merged
+              .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+              .slice(0, 50);
+          });
         },
       )
       .subscribe();
     return () => {
-      if (realtimeInvalidateTimerRef.current) {
-        clearTimeout(realtimeInvalidateTimerRef.current);
-        realtimeInvalidateTimerRef.current = null;
-      }
       supabase.removeChannel(channel);
     };
   }, [schoolId, queryClient, queryKey]);
