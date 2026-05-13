@@ -8,9 +8,12 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import RoleRoute from "@/components/auth/RoleRoute";
 
 import Login from "./pages/auth/Login.tsx";
+import Signup from "./pages/auth/Signup.tsx";
+import PendingApproval from "./pages/auth/PendingApproval.tsx";
 import NoAccess from "./pages/auth/NoAccess.tsx";
 import AcceptInvite from "./pages/auth/AcceptInvite.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import AccessRequests from "./pages/admin/AccessRequests.tsx";
 
 import SuperadminDashboard from "./pages/dashboards/SuperadminDashboard.tsx";
 import SchoolsList from "./pages/schools/SchoolsList.tsx";
