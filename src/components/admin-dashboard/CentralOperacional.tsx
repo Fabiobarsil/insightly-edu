@@ -28,6 +28,7 @@ type Announcement = {
   created_at: string;
   intervention_id: string | null;
   target_user_id: string | null;
+  pedagogical_interventions?: { student_id: string | null } | null;
 };
 
 const PRIORITY_STYLES: Record<string, { wrap: string; bar: string; pill: string; label: string }> = {
@@ -83,12 +84,12 @@ const CentralOperacional = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("school_announcements")
-        .select("id, title, content, audience, source, priority, created_at, intervention_id, target_user_id")
+        .select("id, title, content, audience, source, priority, created_at, intervention_id, target_user_id, pedagogical_interventions(student_id)")
         .eq("school_id", schoolId!)
         .order("created_at", { ascending: false })
         .limit(20);
       if (error) throw error;
-      return (data ?? []) as Announcement[];
+      return (data ?? []) as unknown as Announcement[];
     },
   });
 
@@ -160,7 +161,7 @@ const CentralOperacional = () => {
                     <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded", prio.pill)}>
                       {prio.label}
                     </span>
-                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">
                       {AUDIENCE_LABEL[it.audience] ?? it.audience}
                     </span>
                   </div>
@@ -173,25 +174,43 @@ const CentralOperacional = () => {
                 </div>
 
                 <div className="flex flex-col gap-1.5 shrink-0">
-                  {it.intervention_id ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => navigate(`/coordenacao/dashboard`)}
-                      className="h-7 px-2.5 text-[11px] gap-1"
-                    >
-                      Abrir <ArrowRight className="h-3 w-3" />
-                    </Button>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => navigate(`#kanban-section`)}
-                      className="h-7 px-2.5 text-[11px] gap-1"
-                    >
-                      Ver detalhes <ArrowRight className="h-3 w-3" />
-                    </Button>
-                  )}
+                  {(() => {
+                    const studentId = it.pedagogical_interventions?.student_id ?? null;
+                    if (studentId) {
+                      return (
+                        <Button
+                          size="sm"
+                          onClick={() => navigate(`/admin/alunos/${studentId}/prontuario`)}
+                          className="h-7 px-2.5 text-[11px] gap-1 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+                        >
+                          Abrir ficha <ArrowRight className="h-3 w-3" />
+                        </Button>
+                      );
+                    }
+                    if (it.intervention_id) {
+                      return (
+                        <Button
+                          size="sm"
+                          onClick={() => navigate(`/coordenacao/dashboard`)}
+                          className="h-7 px-2.5 text-[11px] gap-1 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+                        >
+                          Abrir <ArrowRight className="h-3 w-3" />
+                        </Button>
+                      );
+                    }
+                    return (
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          const el = document.getElementById("kanban-section");
+                          el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                        }}
+                        className="h-7 px-2.5 text-[11px] gap-1 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+                      >
+                        Ver detalhes <ArrowRight className="h-3 w-3" />
+                      </Button>
+                    );
+                  })()}
                 </div>
               </li>
             );
