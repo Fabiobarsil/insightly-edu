@@ -42,14 +42,14 @@ const ProfessorDashboard = () => {
       const { data, error } = await supabase
         .from("school_announcements")
         .select("*")
-        .eq("school_id", "d877c9e1-5c64-401d-ac6d-ff6ed1a87a71")
-        .in("audience", ["todos", "professor"])
-        .order("created_at", { ascending: false })
-        .limit(10);
+        .order("created_at", { ascending: false });
+
+      console.log("SUPABASE RESPONSE:", {
+        data,
+        error,
+      });
 
       if (error) throw error;
-
-      console.log("DATA ANNOUNCEMENTS:", data);
 
       return data ?? [];
     },
