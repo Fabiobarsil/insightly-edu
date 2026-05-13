@@ -164,6 +164,20 @@ const StudentRecord = () => {
     enabled: !!id,
   });
 
+  const { data: interventionActions = [] } = useQuery({
+    queryKey: ["student-record-intervention-actions", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("intervention_actions")
+        .select("*, pedagogical_interventions!inner(student_id)")
+        .eq("pedagogical_interventions.student_id", id!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+    enabled: !!id,
+  });
+
   const { data: teachers = [] } = useQuery({
     queryKey: ["teachers-list-record"],
     queryFn: async () => {
