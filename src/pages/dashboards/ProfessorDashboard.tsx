@@ -17,43 +17,6 @@ import {
   Megaphone,
 } from "lucide-react";
 
-const avisos = [
-  {
-    id: 1,
-    titulo: "Reunião pedagógica",
-    data: "05/05",
-    texto: "Alinhamento geral com a coordenação sobre o bimestre.",
-    tag: "Escola",
-  },
-  {
-    id: 2,
-    titulo: "Entrega de notas do bimestre",
-    data: "10/05",
-    texto: "Prazo final para lançamento de notas no sistema. Confira pendências em suas turmas.",
-    tag: "Professores",
-  },
-  {
-    id: 3,
-    titulo: "Conselho de classe",
-    data: "15/05",
-    texto: "Participação obrigatória dos professores titulares. Levar relatórios de acompanhamento.",
-    tag: "Professores",
-  },
-  {
-    id: 4,
-    titulo: "Semana cultural",
-    data: "22/05",
-    texto: "Programação especial para todas as turmas — confira a agenda completa.",
-    tag: "Escola",
-  },
-  {
-    id: 5,
-    titulo: "Formação continuada",
-    data: "28/05",
-    texto: "Workshop sobre práticas pedagógicas inclusivas. Inscrições abertas.",
-    tag: "Professores",
-  },
-];
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -73,6 +36,25 @@ const ProfessorDashboard = () => {
   const [notes, setNotes] = useState("");
   const [resolveNotes, setResolveNotes] = useState("");
   const [resolveImpact, setResolveImpact] = useState("");
+  const { data: avisos = [] } = useQuery({
+    queryKey: ["professor-announcements", schoolId],
+    queryFn: async () => {
+      if (!schoolId) return [];
+
+      const { data, error } = await supabase
+        .from("school_announcements")
+        .select("*")
+        .eq("school_id", schoolId)
+        .in("audience", ["todos", "professor"])
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+
+      return data ?? [];
+    },
+    enabled: !!schoolId,
+  });
 
   /* ── Find teacher record for current user ── */
   const { data: currentTeacher } = useQuery({
