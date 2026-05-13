@@ -675,6 +675,44 @@ export type Database = {
           },
         ]
       }
+      intervention_actions: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          intervention_id: string
+          school_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          intervention_id: string
+          school_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          intervention_id?: string
+          school_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intervention_actions_intervention_id_fkey"
+            columns: ["intervention_id"]
+            isOneToOne: false
+            referencedRelation: "pedagogical_interventions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_templates: {
         Row: {
           category: string
