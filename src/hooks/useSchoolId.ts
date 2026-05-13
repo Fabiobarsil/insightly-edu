@@ -81,7 +81,7 @@ export function useSchoolId() {
     return () => {
       mounted = false;
     };
-  }, [authLoading, user]);
+  }, [authLoading, user?.id]);
 
   return { schoolId, loading, isLoading: loading };
 }
