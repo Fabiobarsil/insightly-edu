@@ -294,21 +294,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     mountedRef.current = true;
 
     const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, nextSession) => {
-      if (!mountedRef.current) return;
-
-      const nextUserId = nextSession?.user?.id ?? null;
-      console.log("[Auth] onAuthStateChange:", event, "user:", nextUserId);
-
-      if (event === "INITIAL_SESSION") {
-        return;
-      }
-
-      if (event === "TOKEN_REFRESHED" && sessionUserIdRef.current === nextUserId) {
-        setSession(nextSession);
-        return;
-      }
+  data: { subscription },
+} = supabase.auth.onAuthStateChange(() => {});
 
       // Invalida qualquer resolução de role em andamento (sessão anterior)
       roleRequestRef.current += 1;
