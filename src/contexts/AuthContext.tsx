@@ -42,6 +42,22 @@ const KNOWN_ROLES: AppRole[] = [
   "auxiliar",
 ];
 
+const AUTH_REQUEST_TIMEOUT_MS = 8_000;
+
+const withAuthTimeout = async <T,>(promise: PromiseLike<T>, label: string): Promise<T> => {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      Promise.resolve(promise),
+      new Promise<T>((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error(`[Auth] timeout em ${label}`)), AUTH_REQUEST_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+};
+
 const normalizeRole = (value: string | null | undefined): AppRole | null => {
   if (!value) return null;
   const v = value.toLowerCase().trim() as AppRole;
@@ -111,7 +127,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Fonte correta para usuários operacionais (professor, secretaria, etc.).
       // A RPC é SECURITY DEFINER e evita que a RLS de account_members bloqueie
       // a leitura da própria role, o que enviava usuários válidos para /sem-acesso.
-      const { data: userAccess, error: userAccessError } = await supabase.rpc("get_user_access");
+      const { data: userAccess, error: userAccessError } = await withAuthTimeout(
+        supabase.rpc("get_user_access"),
+        "get_user_access",
+      );
 
       if (userAccessError) {
         console.warn("[Auth] erro ao buscar get_user_access:", userAccessError);
@@ -225,7 +244,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         const {
           data: { session },
-        } = await supabase.auth.getSession();
+        } = await withAuthTimeout(supabase.auth.getSession(), "getSession");
 
         console.log("[AUTH SESSION]", session?.user?.id);
 
