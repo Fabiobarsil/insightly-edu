@@ -131,6 +131,7 @@ interface MemberRow {
   access_type: string;
   access_expires_at: string | null;
   created_at: string;
+  account_id?: string | null;
   email?: string | null;
   full_name?: string | null;
 }
@@ -418,20 +419,26 @@ const Settings = () => {
         access_expires_at: userForm.access_type === "temporary" ? userForm.access_expires_at : null,
       };
 
-      console.log("EDITING MEMBER:", editingMember);
-      console.log("PAYLOAD:", payload);
+      console.log("[update-member] EDITING MEMBER:", editingMember);
+      console.log("[update-member] PAYLOAD:", payload);
 
-      const { data, error } = await supabase
-        .from("account_members")
-        .update(payload)
-        .eq("user_id", editingMember.user_id)
-        .select();
+      const query = supabase.from("account_members").update(payload);
+      // Prefer the row PK when available; fallback to (account_id, user_id)
+      const filtered = editingMember.id
+        ? query.eq("id", editingMember.id)
+        : query.eq("account_id", editingMember.account_id).eq("user_id", editingMember.user_id);
 
-      console.log("UPDATED:", data);
-      console.log("ERROR:", error);
+      const { data, error } = await filtered.select();
+
+      console.log("[update-member] UPDATED:", data);
+      console.log("[update-member] ERROR:", error);
 
       if (error) throw error;
-      if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error(
+          "Nenhum registro foi atualizado. Verifique se você tem permissão (owner/admin) para alterar este acesso."
+        );
+      }
       toast.success("Acesso atualizado!");
       setModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ["account-members-enriched"] });
