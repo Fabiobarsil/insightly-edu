@@ -42,8 +42,6 @@ const KNOWN_ROLES: AppRole[] = [
   "auxiliar",
 ];
 
-
-
 export const getDashboardPath = (role: DashboardRole) => {
   const paths: Record<DashboardRole, string> = {
     superadmin: "/superadmin/dashboard",
@@ -157,7 +155,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     async (userId: string, requestId: number) => {
       try {
         console.log("[Auth] resolvendo role para SESSION USER ID:", userId, "req:", requestId);
-        const nextRole = await resolveRole(userId); "[Auth] carregamento de permissões");
+        const nextRole = await resolveRole(userId);
         if (mountedRef.current && roleRequestRef.current === requestId) {
           console.log("[Auth] ROLE RESOLVIDA:", nextRole, "para AUTH USER ID:", userId);
           setRole(nextRole);
