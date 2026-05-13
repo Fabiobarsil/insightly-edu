@@ -61,6 +61,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import TeacherDiaryModal from "@/components/professor/TeacherDiaryModal";
 
 const ProfessorDashboard = () => {
   const { schoolId } = useSchoolId();
@@ -68,6 +69,7 @@ const ProfessorDashboard = () => {
   const queryClient = useQueryClient();
   const [actionModal, setActionModal] = useState<{ intervention: any; type: string } | null>(null);
   const [resolveModal, setResolveModal] = useState<any | null>(null);
+  const [diaryAssignment, setDiaryAssignment] = useState<any | null>(null);
   const [notes, setNotes] = useState("");
   const [resolveNotes, setResolveNotes] = useState("");
   const [resolveImpact, setResolveImpact] = useState("");
@@ -562,15 +564,21 @@ const ProfessorDashboard = () => {
                   const cls = classes.find((c) => c.id === a.class_id);
                   const sub = subjects.find((s) => s.id === a.subject_id);
                   return (
-                    <div key={a.id} className="rounded-xl bg-muted/30 p-4 flex items-center gap-3">
+                    <button
+                      key={a.id}
+                      type="button"
+                      onClick={() => setDiaryAssignment({ ...a, className: cls?.name, subjectName: sub?.name })}
+                      className="rounded-xl bg-muted/30 hover:bg-muted/60 border border-transparent hover:border-primary/40 p-4 flex items-center gap-3 text-left transition-colors"
+                    >
                       <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
                         <BookOpen className="h-4 w-4 text-primary" />
                       </div>
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground">{cls?.name || "Turma"}</p>
                         <p className="text-[10px] text-muted-foreground">{sub?.name || "Disciplina"}</p>
                       </div>
-                    </div>
+                      <span className="text-[10px] font-bold text-primary">Abrir diário →</span>
+                    </button>
                   );
                 })}
               </div>
@@ -696,6 +704,11 @@ const ProfessorDashboard = () => {
           </div>
         </DialogContent>
       </Dialog>
+      <TeacherDiaryModal
+        open={!!diaryAssignment}
+        onOpenChange={(v) => !v && setDiaryAssignment(null)}
+        assignment={diaryAssignment}
+      />
     </RoleLayout>
   );
 };
