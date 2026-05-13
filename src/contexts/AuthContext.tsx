@@ -268,41 +268,51 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const loadRoleForUser = useCallback(async (userId: string, requestId: number) => {
-    try {
-      console.log("[Auth] resolvendo role para SESSION USER ID:", userId, "req:", requestId);
-      const nextRole = await withTimeout(resolveRole(userId), "[Auth] carregamento de permissões");
-      if (mountedRef.current && roleRequestRef.current === requestId) {
-        console.log("[Auth] ROLE RESOLVIDA:", nextRole, "para AUTH USER ID:", userId);
-        setRole(nextRole);
-      } else {
-        console.log("[Auth] descartando role (request stale)", { requestId, current: roleRequestRef.current });
+  const loadRoleForUser = useCallback(
+    async (userId: string, requestId: number) => {
+      try {
+        console.log("[Auth] resolvendo role para SESSION USER ID:", userId, "req:", requestId);
+        const nextRole = await withTimeout(resolveRole(userId), "[Auth] carregamento de permissões");
+        if (mountedRef.current && roleRequestRef.current === requestId) {
+          console.log("[Auth] ROLE RESOLVIDA:", nextRole, "para AUTH USER ID:", userId);
+          setRole(nextRole);
+        } else {
+          console.log("[Auth] descartando role (request stale)", { requestId, current: roleRequestRef.current });
+        }
+      } catch (err) {
+        console.error("[Auth] falha ao carregar permissões:", err);
+        if (mountedRef.current && roleRequestRef.current === requestId) {
+          setRole(null);
+        }
+      } finally {
+        if (mountedRef.current && roleRequestRef.current === requestId) {
+          setLoading(false);
+        }
       }
-    } catch (err) {
-      console.error("[Auth] falha ao carregar permissões:", err);
-      if (mountedRef.current && roleRequestRef.current === requestId) {
-        setRole(null);
-      }
-    } finally {
-      if (mountedRef.current && roleRequestRef.current === requestId) {
-        setLoading(false);
-      }
-    }
-  }, [resolveRole]);
+    },
+    [resolveRole],
+  );
 
   useEffect(() => {
     mountedRef.current = true;
 
     const {
-  data: { subscription },
-} = supabase.auth.onAuthStateChange(() => {});
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (!mountedRef.current) return;
 
-      // Invalida qualquer resolução de role em andamento (sessão anterior)
+      console.log("[Auth] onAuthStateChange:", event);
+
+      // evita loop no INITIAL_SESSION
+      if (event === "INITIAL_SESSION") {
+        return;
+      }
+
       roleRequestRef.current += 1;
       const requestId = roleRequestRef.current;
 
-      // Reseta sempre — evita stale role entre trocas de usuário
-      sessionUserIdRef.current = nextUserId;
+      sessionUserIdRef.current = nextSession?.user?.id ?? null;
+
       setSession(nextSession);
       setRole(null);
 
@@ -312,7 +322,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       setLoading(true);
-      // microtask: evita deadlock dentro do callback do Supabase
+
       setTimeout(() => {
         if (mountedRef.current && roleRequestRef.current === requestId) {
           void loadRoleForUser(nextSession.user.id, requestId);
