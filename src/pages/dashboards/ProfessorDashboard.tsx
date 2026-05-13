@@ -704,6 +704,11 @@ const ProfessorDashboard = () => {
           </div>
         </DialogContent>
       </Dialog>
+      <TeacherDiaryModal
+        open={!!diaryAssignment}
+        onOpenChange={(v) => !v && setDiaryAssignment(null)}
+        assignment={diaryAssignment}
+      />
     </RoleLayout>
   );
 };
