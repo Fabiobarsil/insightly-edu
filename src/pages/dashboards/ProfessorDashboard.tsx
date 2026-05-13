@@ -36,6 +36,9 @@ const ProfessorDashboard = () => {
   const [notes, setNotes] = useState("");
   const [resolveNotes, setResolveNotes] = useState("");
   const [resolveImpact, setResolveImpact] = useState("");
+  const [actionDescription, setActionDescription] = useState("");
+  const [actionType, setActionType] = useState("observacao");
+  const [savingAction, setSavingAction] = useState(false);
   const { data: avisos = [] } = useQuery({
     queryKey: ["professor-announcements"],
     queryFn: async () => {
