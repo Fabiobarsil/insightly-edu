@@ -174,25 +174,43 @@ const CentralOperacional = () => {
                 </div>
 
                 <div className="flex flex-col gap-1.5 shrink-0">
-                  {it.intervention_id ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => navigate(`/coordenacao/dashboard`)}
-                      className="h-7 px-2.5 text-[11px] gap-1"
-                    >
-                      Abrir <ArrowRight className="h-3 w-3" />
-                    </Button>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => navigate(`#kanban-section`)}
-                      className="h-7 px-2.5 text-[11px] gap-1"
-                    >
-                      Ver detalhes <ArrowRight className="h-3 w-3" />
-                    </Button>
-                  )}
+                  {(() => {
+                    const studentId = it.pedagogical_interventions?.student_id ?? null;
+                    if (studentId) {
+                      return (
+                        <Button
+                          size="sm"
+                          onClick={() => navigate(`/admin/alunos/${studentId}/prontuario`)}
+                          className="h-7 px-2.5 text-[11px] gap-1 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+                        >
+                          Abrir ficha <ArrowRight className="h-3 w-3" />
+                        </Button>
+                      );
+                    }
+                    if (it.intervention_id) {
+                      return (
+                        <Button
+                          size="sm"
+                          onClick={() => navigate(`/coordenacao/dashboard`)}
+                          className="h-7 px-2.5 text-[11px] gap-1 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+                        >
+                          Abrir <ArrowRight className="h-3 w-3" />
+                        </Button>
+                      );
+                    }
+                    return (
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          const el = document.getElementById("kanban-section");
+                          el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                        }}
+                        className="h-7 px-2.5 text-[11px] gap-1 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+                      >
+                        Ver detalhes <ArrowRight className="h-3 w-3" />
+                      </Button>
+                    );
+                  })()}
                 </div>
               </li>
             );
