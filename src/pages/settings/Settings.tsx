@@ -131,6 +131,7 @@ interface MemberRow {
   access_type: string;
   access_expires_at: string | null;
   created_at: string;
+  account_id?: string | null;
   email?: string | null;
   full_name?: string | null;
 }
