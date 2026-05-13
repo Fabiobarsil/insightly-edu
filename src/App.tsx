@@ -59,7 +59,15 @@ import CertificadoPage from "./pages/certificates/CertificadoPage.tsx";
 import CertificadoPreview from "./pages/admin/CertificadoPreview.tsx";
 import Indicadores from "./pages/admin/Indicadores.tsx";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+    },
+  },
+});
 
 const RootRedirect = () => {
   const { session, loading, dashboardRole } = useAuth();
