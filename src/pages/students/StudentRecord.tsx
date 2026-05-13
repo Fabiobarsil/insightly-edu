@@ -61,6 +61,15 @@ const statusColor: Record<string, string> = {
   resolvido: "bg-emerald-100 text-emerald-800 border border-emerald-300",
 };
 
+function actionTypeColor(type?: string) {
+  const t = (type || "").toLowerCase();
+  if (t.includes("coorden")) return { bg: "bg-amber-100", text: "text-amber-800", border: "border-amber-300", dot: "bg-amber-500", label: "Coordenação" };
+  if (t.includes("professor") || t.includes("reforço") || t.includes("nota")) return { bg: "bg-blue-100", text: "text-blue-800", border: "border-blue-300", dot: "bg-blue-500", label: "Professor" };
+  if (t.includes("psicolog") || t.includes("psicologia") || t.includes("encaminhamento")) return { bg: "bg-purple-100", text: "text-purple-800", border: "border-purple-300", dot: "bg-purple-500", label: "Psicologia" };
+  if (t.includes("secretaria") || t.includes("responsável") || t.includes("contato")) return { bg: "bg-emerald-100", text: "text-emerald-800", border: "border-emerald-300", dot: "bg-emerald-500", label: "Secretaria" };
+  return { bg: "bg-slate-100", text: "text-slate-800", border: "border-slate-300", dot: "bg-slate-500", label: "Geral" };
+}
+
 function getSituation(media: number, freq: number) {
   if (media < 5 || freq < 60) return { label: "Em risco crítico", color: "text-red-700 font-semibold", bg: "bg-red-100 border border-red-300", badge: "bg-red-200 text-red-800 font-semibold", icon: "ri-alert-fill", level: "critico" };
   if (media < 6 || freq < 75) return { label: "Em recuperação", color: "text-amber-800 font-semibold", bg: "bg-amber-100 border border-amber-300", badge: "bg-amber-200 text-amber-800 font-semibold", icon: "ri-error-warning-line", level: "atencao" };
