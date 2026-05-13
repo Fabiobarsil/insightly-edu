@@ -2,16 +2,33 @@ import { cn } from "@/lib/utils";
 import { NavLink } from "@/components/NavLink";
 
 const navItems = [
-  { icon: "ri-dashboard-3-line", label: "Dashboard", to: "/" },
-  { icon: "ri-group-line", label: "Alunos", to: "/alunos" },
-  { icon: "ri-user-star-line", label: "Professores", to: "/professores" },
-  { icon: "ri-book-open-line", label: "Turmas", to: "/turmas" },
-  { icon: "ri-calendar-check-line", label: "Frequência", to: "/frequencia" },
-  { icon: "ri-bar-chart-box-line", label: "Notas", to: "/notas" },
-  { icon: "ri-file-text-line", label: "Documentos", to: "/documentos" },
-  { icon: "ri-draft-line", label: "Docs Oficiais", to: "/documentos-oficiais" },
-  { icon: "ri-notification-3-line", label: "Comunicação", to: "/comunicacao" },
-  { icon: "ri-settings-3-line", label: "Administração", to: "/configuracoes" },
+  {
+    section: "GESTÃO",
+    items: [
+      { icon: "ri-building-4-line", label: "Secretaria", to: "/" },
+      { icon: "ri-shield-star-line", label: "Direção", to: "/direcao" },
+      { icon: "ri-team-line", label: "Coordenação", to: "/coordenacao" },
+      { icon: "ri-mental-health-line", label: "Psicologia", to: "/psicologia" },
+      { icon: "ri-notification-3-line", label: "Comunicação", to: "/comunicacao" },
+      { icon: "ri-settings-3-line", label: "Administração", to: "/configuracoes" },
+    ],
+  },
+
+  {
+    section: "AMBIENTE PEDAGÓGICO",
+    items: [{ icon: "ri-presentation-line", label: "Sala dos Professores", to: "/professor/dashboard" }],
+  },
+
+  {
+    section: "CADASTROS ACADÊMICOS",
+    items: [
+      { icon: "ri-group-line", label: "Alunos", to: "/alunos" },
+      { icon: "ri-book-open-line", label: "Turmas", to: "/turmas" },
+      { icon: "ri-book-2-line", label: "Disciplinas", to: "/disciplinas" },
+      { icon: "ri-user-star-line", label: "Professores", to: "/professores" },
+      { icon: "ri-file-text-line", label: "Documentos", to: "/documentos" },
+    ],
+  },
 ];
 
 const Sidebar = () => (
@@ -43,9 +60,7 @@ const Sidebar = () => (
       ))}
     </nav>
 
-    <div className="p-4 border-t border-sidebar-border text-[13px] text-sidebar-foreground/45">
-      © 2024 Certus Edu
-    </div>
+    <div className="p-4 border-t border-sidebar-border text-[13px] text-sidebar-foreground/45">© 2024 Certus Edu</div>
   </aside>
 );
 
