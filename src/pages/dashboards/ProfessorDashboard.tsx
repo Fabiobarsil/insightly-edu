@@ -212,14 +212,41 @@ const ProfessorDashboard = () => {
   const inProgress = interventions.filter((i: any) => i.status === "em_andamento");
   const resolved = interventions.filter((i: any) => i.status === "resolvido");
 
-  const handleAction = (type: string) => {
+  const handleAction = async (type: string) => {
     if (!actionModal) return;
-    updateIntervention.mutate({
-      id: actionModal.intervention.id,
-      status: "em_andamento",
-      action_type: type,
-      teacher_notes: notes || undefined,
-    });
+
+    try {
+      setSavingAction(true);
+
+      // 1 - atualiza intervenção
+      await updateIntervention.mutateAsync({
+        id: actionModal.intervention.id,
+        status: "em_andamento",
+        action_type: type,
+        teacher_notes: notes || undefined,
+      });
+
+      // 2 - registra histórico da ação
+      const { error } = await supabase.from("intervention_actions").insert({
+        intervention_id: actionModal.intervention.id,
+        school_id: schoolId,
+        action_type: type,
+        description: notes || "Ação registrada pelo professor",
+        created_by: session?.user?.id,
+      });
+
+      if (error) {
+        console.error("ERRO ACTIONS:", error);
+        throw error;
+      }
+
+      toast.success("Ação registrada com sucesso!");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Erro ao registrar ação");
+    } finally {
+      setSavingAction(false);
+    }
   };
 
   return (
