@@ -61,6 +61,15 @@ const statusColor: Record<string, string> = {
   resolvido: "bg-emerald-100 text-emerald-800 border border-emerald-300",
 };
 
+function actionTypeColor(type?: string) {
+  const t = (type || "").toLowerCase();
+  if (t.includes("coorden")) return { bg: "bg-amber-100", text: "text-amber-800", border: "border-amber-300", dot: "bg-amber-500", label: "Coordenação" };
+  if (t.includes("professor") || t.includes("reforço") || t.includes("nota")) return { bg: "bg-blue-100", text: "text-blue-800", border: "border-blue-300", dot: "bg-blue-500", label: "Professor" };
+  if (t.includes("psicolog") || t.includes("psicologia") || t.includes("encaminhamento")) return { bg: "bg-purple-100", text: "text-purple-800", border: "border-purple-300", dot: "bg-purple-500", label: "Psicologia" };
+  if (t.includes("secretaria") || t.includes("responsável") || t.includes("contato")) return { bg: "bg-emerald-100", text: "text-emerald-800", border: "border-emerald-300", dot: "bg-emerald-500", label: "Secretaria" };
+  return { bg: "bg-slate-100", text: "text-slate-800", border: "border-slate-300", dot: "bg-slate-500", label: "Geral" };
+}
+
 function getSituation(media: number, freq: number) {
   if (media < 5 || freq < 60) return { label: "Em risco crítico", color: "text-red-700 font-semibold", bg: "bg-red-100 border border-red-300", badge: "bg-red-200 text-red-800 font-semibold", icon: "ri-alert-fill", level: "critico" };
   if (media < 6 || freq < 75) return { label: "Em recuperação", color: "text-amber-800 font-semibold", bg: "bg-amber-100 border border-amber-300", badge: "bg-amber-200 text-amber-800 font-semibold", icon: "ri-error-warning-line", level: "atencao" };
@@ -160,6 +169,20 @@ const StudentRecord = () => {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data || []) as Intervention[];
+    },
+    enabled: !!id,
+  });
+
+  const { data: interventionActions = [] } = useQuery({
+    queryKey: ["student-record-intervention-actions", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("intervention_actions")
+        .select("*, pedagogical_interventions!inner(student_id)")
+        .eq("pedagogical_interventions.student_id", id!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []) as any[];
     },
     enabled: !!id,
   });
@@ -671,6 +694,70 @@ ${interventionsHtml}
                   </span>
                 </div>
               ))}
+            </div>
+          )}
+        </section>
+
+        {/* ═══ 5.5 TIMELINE PEDAGÓGICA ═══════════════════════════════ */}
+        <section className="bg-white border border-slate-200 rounded-lg p-6">
+          <div className="mb-5">
+            <h2 className="text-base font-bold text-primary flex items-center gap-2">
+              <i className="ri-time-line text-secondary" /> Timeline Pedagógica
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Histórico operacional e pedagógico do aluno
+            </p>
+          </div>
+
+          {interventionActions.length === 0 ? (
+            <div className="text-center py-10 space-y-3">
+              <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mx-auto">
+                <i className="ri-history-line text-2xl text-slate-400" />
+              </div>
+              <p className="text-sm font-medium text-primary">Nenhum registro na timeline</p>
+              <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                Ações e observações registradas pelos setores aparecerão aqui automaticamente.
+              </p>
+            </div>
+          ) : (
+            <div className="relative pl-4">
+              {/* vertical line */}
+              <div className="absolute left-[19px] top-2 bottom-2 w-px bg-slate-200" />
+              <div className="space-y-5">
+                {interventionActions.map((action: any) => {
+                  const color = actionTypeColor(action.action_type);
+                  return (
+                    <div key={action.id} className="relative flex gap-4">
+                      {/* dot */}
+                      <div className={cn("relative z-10 w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ring-4 ring-white", color.dot)} />
+                      <div className="flex-1 min-w-0 pb-1">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full border", color.bg, color.text, color.border)}>
+                            {color.label}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {new Date(action.created_at).toLocaleDateString("pt-BR", {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
+                        <p className="text-xs font-semibold text-slate-900">
+                          {action.action_type || "Ação registrada"}
+                        </p>
+                        {action.description && (
+                          <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                            {action.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </section>
