@@ -1,38 +1,33 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function useSchoolId() {
+  const { user, loading: authLoading } = useAuth();
   const [schoolId, setSchoolId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
 
+    if (authLoading) {
+      setLoading(true);
+      return () => {
+        mounted = false;
+      };
+    }
+
+    if (!user) {
+      setSchoolId(null);
+      setLoading(false);
+      return () => {
+        mounted = false;
+      };
+    }
+
     const fetchSchoolId = async () => {
+      setLoading(true);
       try {
-        const {
-          data: { user },
-          error: authError,
-        } = await supabase.auth.getUser();
-
-        if (authError) {
-          console.error("[useSchoolId] auth error:", authError);
-          if (mounted) {
-            setSchoolId(null);
-            setLoading(false);
-          }
-          return;
-        }
-
-        if (!user) {
-          console.log("[useSchoolId] no authenticated user");
-          if (mounted) {
-            setSchoolId(null);
-            setLoading(false);
-          }
-          return;
-        }
-
         console.log("AUTH USER:", user.id);
 
         // 1ª tentativa: ler school_id direto do profile
@@ -86,7 +81,7 @@ export function useSchoolId() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [authLoading, user]);
 
   return { schoolId, loading, isLoading: loading };
 }

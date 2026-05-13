@@ -206,6 +206,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [role, setRole] = useState<AppRole | null>(null);
   const mountedRef = useRef(true);
   const roleRequestRef = useRef(0);
+  const sessionUserIdRef = useRef<string | null>(null);
 
   const resolveRole = useCallback(async (userId: string): Promise<AppRole | null> => {
     try {
@@ -306,13 +307,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!mountedRef.current) return;
 
-      console.log("[Auth] onAuthStateChange:", event, "user:", nextSession?.user?.id ?? null);
+      const nextUserId = nextSession?.user?.id ?? null;
+      console.log("[Auth] onAuthStateChange:", event, "user:", nextUserId);
+
+      if (event === "INITIAL_SESSION") {
+        return;
+      }
+
+      if (event === "TOKEN_REFRESHED" && sessionUserIdRef.current === nextUserId) {
+        setSession(nextSession);
+        return;
+      }
 
       // Invalida qualquer resolução de role em andamento (sessão anterior)
       roleRequestRef.current += 1;
       const requestId = roleRequestRef.current;
 
       // Reseta sempre — evita stale role entre trocas de usuário
+      sessionUserIdRef.current = nextUserId;
       setSession(nextSession);
       setRole(null);
 
@@ -351,6 +363,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         console.log("[Auth] initializeAuth → SESSION USER ID:", restoredSession?.user?.id ?? null);
 
+        sessionUserIdRef.current = restoredSession?.user?.id ?? null;
         setSession(restoredSession);
         setRole(null);
 
@@ -363,6 +376,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.error("[Auth] initializeAuth error:", err);
         if (mountedRef.current) {
           roleRequestRef.current += 1;
+          sessionUserIdRef.current = null;
           setSession(null);
           setRole(null);
           setLoading(false);
@@ -398,6 +412,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     roleRequestRef.current += 1;
+    sessionUserIdRef.current = null;
     setSession(null);
     setRole(null);
     try {
