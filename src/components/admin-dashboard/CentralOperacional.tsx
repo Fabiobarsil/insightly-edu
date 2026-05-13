@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
@@ -132,11 +132,14 @@ const CentralOperacional = () => {
   const [newOpen, setNewOpen] = useState(false);
   const [forwardTarget, setForwardTarget] = useState<Announcement | null>(null);
 
-  const queryKey = ["central-operacional", schoolId] as const;
+  const queryKey = useMemo(() => ["central-operacional", schoolId] as const, [schoolId]);
+  const realtimeInvalidateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: items = [], isLoading } = useQuery({
     queryKey,
     enabled: !!schoolId,
+    staleTime: 30_000,
+    retry: 1,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("school_announcements")
@@ -177,13 +180,22 @@ const CentralOperacional = () => {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "school_announcements", filter: `school_id=eq.${schoolId}` },
-        () => queryClient.invalidateQueries({ queryKey }),
+        () => {
+          if (realtimeInvalidateTimerRef.current) clearTimeout(realtimeInvalidateTimerRef.current);
+          realtimeInvalidateTimerRef.current = setTimeout(() => {
+            queryClient.invalidateQueries({ queryKey });
+          }, 300);
+        },
       )
       .subscribe();
     return () => {
+      if (realtimeInvalidateTimerRef.current) {
+        clearTimeout(realtimeInvalidateTimerRef.current);
+        realtimeInvalidateTimerRef.current = null;
+      }
       supabase.removeChannel(channel);
     };
-  }, [schoolId, queryClient]);
+  }, [schoolId, queryClient, queryKey]);
 
   // Profiles batch fetch
   const profileIds = useMemo(() => {
@@ -198,6 +210,8 @@ const CentralOperacional = () => {
   const { data: profilesMap = new Map<string, ProfileLite>() } = useQuery({
     queryKey: ["central-op-profiles", profileIds.sort().join(",")],
     enabled: profileIds.length > 0,
+    staleTime: 60_000,
+    retry: 1,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
