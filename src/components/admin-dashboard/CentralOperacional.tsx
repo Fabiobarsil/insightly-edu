@@ -28,6 +28,7 @@ type Announcement = {
   created_at: string;
   intervention_id: string | null;
   target_user_id: string | null;
+  pedagogical_interventions?: { student_id: string | null } | null;
 };
 
 const PRIORITY_STYLES: Record<string, { wrap: string; bar: string; pill: string; label: string }> = {
