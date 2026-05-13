@@ -73,9 +73,8 @@ const queryClient = new QueryClient({
 });
 
 const RootRedirect = () => {
-  const { session, loading, dashboardRole } = useAuth();
+  const { session, loading, dashboardRole, status } = useAuth();
 
-  // Aguarda hidratação do auth
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -84,17 +83,10 @@ const RootRedirect = () => {
     );
   }
 
-  // Sem login
-  if (!session) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // Sessão carregada, mas sem vínculo/role reconhecida
-  if (!dashboardRole) {
-    return <Navigate to="/sem-acesso" replace />;
-  }
-
-  // Redireciona corretamente conforme role
+  if (!session) return <Navigate to="/login" replace />;
+  if (status === "pending") return <Navigate to="/aguardando-aprovacao" replace />;
+  if (status === "rejected" || status === "suspended") return <Navigate to="/sem-acesso" replace />;
+  if (!dashboardRole) return <Navigate to="/sem-acesso" replace />;
   return <Navigate to={getDashboardPath(dashboardRole)} replace />;
 };
 
