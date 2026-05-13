@@ -422,23 +422,22 @@ const Settings = () => {
       console.log("[update-member] EDITING MEMBER:", editingMember);
       console.log("[update-member] PAYLOAD:", payload);
 
-      const query = supabase.from("account_members").update(payload);
-      // Prefer the row PK when available; fallback to (account_id, user_id)
-      const filtered = editingMember.id
-        ? query.eq("id", editingMember.id)
-        : query.eq("account_id", editingMember.account_id).eq("user_id", editingMember.user_id);
+      const { data, error } = await supabase.functions.invoke("update-member", {
+        body: {
+          member_id: editingMember.id,
+          role: payload.role,
+          department: payload.department,
+          access_type: payload.access_type,
+          access_expires_at: payload.access_expires_at,
+        },
+      });
 
-      const { data, error } = await filtered.select();
-
-      console.log("[update-member] UPDATED:", data);
+      console.log("[update-member] RESPONSE:", data);
       console.log("[update-member] ERROR:", error);
 
       if (error) throw error;
-      if (!data || data.length === 0) {
-        throw new Error(
-          "Nenhum registro foi atualizado. Verifique se você tem permissão (owner/admin) para alterar este acesso."
-        );
-      }
+      if (data?.error) throw new Error(data.error);
+
       toast.success("Acesso atualizado!");
       setModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ["account-members-enriched"] });
