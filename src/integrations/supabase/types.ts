@@ -1005,8 +1005,10 @@ export type Database = {
           id: string
           intervention_id: string | null
           priority: string
+          responsible_user_id: string | null
           school_id: string
           source: string
+          status: string | null
           target_user_id: string | null
           title: string
           updated_at: string
@@ -1019,8 +1021,10 @@ export type Database = {
           id?: string
           intervention_id?: string | null
           priority?: string
+          responsible_user_id?: string | null
           school_id: string
           source?: string
+          status?: string | null
           target_user_id?: string | null
           title: string
           updated_at?: string
@@ -1033,8 +1037,10 @@ export type Database = {
           id?: string
           intervention_id?: string | null
           priority?: string
+          responsible_user_id?: string | null
           school_id?: string
           source?: string
+          status?: string | null
           target_user_id?: string | null
           title?: string
           updated_at?: string
