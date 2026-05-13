@@ -145,6 +145,8 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/cadastro" element={<Signup />} />
+            <Route path="/aguardando-aprovacao" element={<PendingApproval />} />
             <Route path="/sem-acesso" element={<NoAccess />} />
             <Route path="/aceitar-convite" element={<AcceptInvite />} />
             <Route path="/reset-password" element={<AcceptInvite />} />
