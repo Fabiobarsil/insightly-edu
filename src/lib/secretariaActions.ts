@@ -41,10 +41,10 @@ export async function updateRequestStatus(
 ): Promise<void> {
   const fromStatus = request.status;
 
-  // PASSO 1: update do status
+  // PASSO 1: update do status na tabela canônica
   const { error: updateError } = await supabase
-    .from("secretaria_requests")
-    .update({ status: newStatus })
+    .from("secretary_requests")
+    .update({ status: newStatus, updated_at: new Date().toISOString() })
     .eq("id", request.id);
   if (updateError) throw updateError;
 
@@ -72,3 +72,4 @@ export async function updateRequestStatus(
     console.error("[secretariaActions] falha ao registrar ação:", actionError);
   }
 }
+

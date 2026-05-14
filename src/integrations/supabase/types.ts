@@ -1227,20 +1227,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "secretaria_actions_request_id_fkey"
-            columns: ["request_id"]
-            isOneToOne: false
-            referencedRelation: "secretaria_demands"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "secretaria_actions_request_id_fkey"
-            columns: ["request_id"]
-            isOneToOne: false
-            referencedRelation: "secretaria_requests"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "secretaria_actions_school_id_fkey"
             columns: ["school_id"]
             isOneToOne: false
