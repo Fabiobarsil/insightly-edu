@@ -32,44 +32,32 @@ const PRIORITY_ORDER: Record<string, number> = {
 };
 
 /**
- * Documentos considerados obrigatórios para fins de priorização automática.
- * Se a demanda for de um destes documentos pendentes, ela é marcada como ALTA.
+ * Normaliza o status livre de `secretary_requests` em uma das 3 colunas do Kanban.
+ * Tudo que não for "em_andamento"/"concluido"/"resolvido" cai em "aberto" (inclui
+ * legados como "pendente"/null) — garantindo que TODA demanda apareça na fila.
  */
-const MANDATORY_DOC_TYPES = new Set([
-  "certidao_nascimento",
-  "rg",
-  "cpf",
-  "comprovante_residencia",
-  "historico_escolar",
-  "foto_3x4",
-]);
+function normalizeStatus(s: string | null | undefined): KanbanStatus {
+  const v = (s ?? "").toLowerCase();
+  if (v === "em_andamento") return "em_andamento";
+  if (v === "concluido" || v === "resolvido") return "concluido";
+  return "aberto";
+}
 
 /**
- * Calcula a prioridade da demanda automaticamente, conforme regra do produto:
- * - alta:  aberta há > 3 dias OU documento obrigatório pendente
- * - media: aberta há 1 a 3 dias
- * - baixa: aberta hoje
+ * Normaliza a prioridade do banco (urgente/alta/media/baixa) para os 3 níveis
+ * do Kanban. "urgente" colapsa em "alta".
  */
-function computePriority(
-  createdAt: string,
-  documentType: string | null,
-  type: string | null
-): ComputedPriority {
-  const days = Math.max(0, differenceInCalendarDays(new Date(), new Date(createdAt)));
-  const isMandatoryDoc =
-    !!documentType &&
-    MANDATORY_DOC_TYPES.has(documentType) &&
-    (type ?? "").toLowerCase().includes("document");
-  if (days > 3 || isMandatoryDoc) return "alta";
-  if (days >= 1) return "media";
-  return "baixa";
+function normalizePriority(p: string | null | undefined): ComputedPriority {
+  const v = (p ?? "").toLowerCase();
+  if (v === "urgente" || v === "alta") return "alta";
+  if (v === "baixa") return "baixa";
+  return "media";
 }
 
 /**
  * Hook do Kanban da Secretaria Digital.
- * - Lê de `secretaria_requests` filtrando por school_id.
- * - Enriquece com nome do aluno, turma/série e tipo de documento.
- * - Calcula prioridade automaticamente (regra única do produto).
+ * - Lê de `secretary_requests` (tabela canônica onde TODA demanda é gravada).
+ * - Enriquece com nome do aluno, turma/série.
  * - Mantém na coluna "Concluído" apenas itens concluídos no dia atual; os
  *   demais saem da fila e ficam disponíveis no histórico.
  */
@@ -89,8 +77,10 @@ export function useSecretariaKanban() {
       if (!schoolId) return [];
 
       const { data, error } = await supabase
-        .from("secretaria_requests")
-        .select("id, school_id, student_id, student_document_id, title, type, status, priority, created_at")
+        .from("secretary_requests")
+        .select(
+          "id, school_id, student_id, student_name, class_id, request_type, description, status, priority, created_at, updated_at"
+        )
         .eq("school_id", schoolId)
         .order("created_at", { ascending: true });
 
@@ -115,7 +105,10 @@ export function useSecretariaKanban() {
 
       // Busca nome da turma + série
       const classIds = Array.from(
-        new Set(Object.values(studentMap).map((s) => s.class_id).filter(Boolean))
+        new Set([
+          ...rawRows.map((r) => r.class_id).filter(Boolean),
+          ...Object.values(studentMap).map((s) => s.class_id).filter(Boolean),
+        ])
       ) as string[];
       const classMap: Record<string, { name: string; grade: string | null }> = {};
       if (classIds.length > 0) {
@@ -128,75 +121,44 @@ export function useSecretariaKanban() {
         });
       }
 
-      // Busca document_type para enriquecer demandas de documento
-      const docIds = Array.from(
-        new Set(rawRows.map((r) => r.student_document_id).filter(Boolean))
-      ) as string[];
-      const docTypeMap: Record<string, string> = {};
-      if (docIds.length > 0) {
-        const { data: docs } = await supabase
-          .from("student_documents")
-          .select("id, document_type")
-          .in("id", docIds);
-        (docs || []).forEach((d: any) => {
-          docTypeMap[d.id] = d.document_type;
-        });
-      }
-
       const rows: KanbanRequest[] = rawRows.map((r) => {
-        const docType = r.student_document_id ? docTypeMap[r.student_document_id] ?? null : null;
         const student = r.student_id ? studentMap[r.student_id] : null;
-        const klass = student?.class_id ? classMap[student.class_id] : null;
+        const klassId = r.class_id ?? student?.class_id ?? null;
+        const klass = klassId ? classMap[klassId] : null;
         const days = Math.max(0, differenceInCalendarDays(new Date(), new Date(r.created_at)));
+        const title =
+          (r.description && String(r.description).trim()) ||
+          r.request_type ||
+          "Solicitação";
         return {
           id: r.id,
           school_id: r.school_id,
           student_id: r.student_id,
-          student_name: student?.full_name ?? null,
+          student_name: student?.full_name ?? r.student_name ?? null,
           student_class: klass?.name ?? null,
           student_grade: klass?.grade ?? null,
-          title: r.title,
-          type: r.type,
-          status: (r.status ?? "aberto") as KanbanStatus,
-          priority: computePriority(r.created_at, docType, r.type),
+          title,
+          type: r.request_type ?? null,
+          status: normalizeStatus(r.status),
+          priority: normalizePriority(r.priority),
           created_at: r.created_at,
-          student_document_id: r.student_document_id ?? null,
-          document_type: docType,
+          student_document_id: null,
+          document_type: null,
           days_open: days,
+          // anexamos updated_at para o filtro de "concluído hoje"
+          // (não exposto no tipo público porque é interno)
+          // @ts-expect-error
+          _updated_at: r.updated_at ?? r.created_at,
         };
       });
 
-      // Concluídos antigos (não hoje) saem da fila → ficam só no histórico
+      // Concluídos: só permanecem na fila se foram resolvidos hoje (via updated_at).
       const today = new Date();
-      const filtered = rows.filter((r) => {
-        if (r.status !== "concluido") return true;
-        return isSameDay(new Date(r.created_at), today) || isSameDay(new Date(r.created_at), today)
-          ? true
-          : false;
-      });
-
-      // Para concluídos: usar created_at como proxy de "concluído hoje" não é ideal.
-      // Como `secretaria_requests` não tem updated_at, usamos a tabela de ações para
-      // descobrir quando foi concluído. Buscamos a última ação 'concluiu' por request.
-      const concluidoIds = rows.filter((r) => r.status === "concluido").map((r) => r.id);
-      const concludedTodaySet = new Set<string>();
-      if (concluidoIds.length > 0) {
-        const startOfToday = new Date();
-        startOfToday.setHours(0, 0, 0, 0);
-        const { data: acts } = await supabase
-          .from("secretaria_actions")
-          .select("request_id, created_at, to_status")
-          .in("request_id", concluidoIds)
-          .eq("to_status", "concluido")
-          .gte("created_at", startOfToday.toISOString());
-        (acts || []).forEach((a: any) => {
-          if (a.request_id) concludedTodaySet.add(a.request_id);
-        });
-      }
-
       const finalRows = rows.filter((r) => {
         if (r.status !== "concluido") return true;
-        return concludedTodaySet.has(r.id);
+        // @ts-expect-error campo interno
+        const updated = r._updated_at as string;
+        return isSameDay(new Date(updated), today);
       });
 
       // Ordenação: prioridade desc, depois mais antigos primeiro
@@ -254,6 +216,8 @@ export function useSecretariaKanban() {
       queryClient.invalidateQueries({ queryKey: ["secretary-counters"] });
       queryClient.invalidateQueries({ queryKey: ["secretary-alerts-bar"] });
       queryClient.invalidateQueries({ queryKey: ["secretary-actions-history"] });
+      queryClient.invalidateQueries({ queryKey: ["secretary-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-cards"] });
     },
   });
 
