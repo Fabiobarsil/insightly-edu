@@ -1,4 +1,5 @@
 @import url("https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
 @font-face {
   font-family: "Amoresa";
@@ -14,51 +15,57 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 215 19% 22%;
+    /* Certus Dark SaaS Executive */
+    --background: 222 47% 11%;        /* #0F172A */
+    --foreground: 210 40% 98%;        /* #F8FAFC */
 
-    --card: 0 0% 100%;
-    --card-foreground: 215 19% 22%;
+    --card: 217 33% 17%;              /* #1E293B */
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 215 19% 22%;
+    --popover: 217 33% 17%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 216 8% 22%;
-    --primary-foreground: 0 0% 100%;
+    /* Primary = dark surface (sidebar/headers/text emphasis) */
+    --primary: 217 33% 17%;           /* #1E293B */
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 142 71% 45%;
+    /* Secondary = brand green (ações principais) */
+    --secondary: 142 76% 36%;         /* #16A34A */
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 215 16% 47%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 215 20% 65%;             /* #94A3B8 */
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 210 40% 96%;
-    --accent-foreground: 216 8% 22%;
+    --accent: 221 39% 11%;            /* #111827 */
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 51%;         /* #DC2626 */
     --destructive-foreground: 0 0% 100%;
 
-    --warning: 48 96% 53%;
-    --warning-foreground: 40 60% 30%;
+    --warning: 38 92% 50%;            /* #F59E0B */
+    --warning-foreground: 0 0% 100%;
 
-    --success: 142 71% 45%;
+    --success: 142 76% 36%;           /* #16A34A */
     --success-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 142 71% 45%;
+    --info: 221 83% 53%;              /* #2563EB */
+    --info-foreground: 0 0% 100%;
 
-    --radius: 16px;
+    --border: 215 25% 27%;            /* #334155 */
+    --input: 215 25% 27%;
+    --ring: 142 71% 45%;              /* #22C55E */
 
-    --sidebar-background: 216 8% 22%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 142 71% 45%;
+    --radius: 12px;
+
+    --sidebar-background: 222 47% 8%;            /* deeper than bg */
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 142 76% 36%;              /* brand green */
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 216 8% 27%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 216 8% 27%;
+    --sidebar-accent: 142 64% 24% / 0.25;        /* verde translúcido (item ativo) */
+    --sidebar-accent-foreground: 142 71% 75%;
+    --sidebar-border: 215 25% 18%;
     --sidebar-ring: 142 71% 45%;
-    --sidebar-muted: 0 0% 100% / 0.45;
+    --sidebar-muted: 215 20% 65%;
   }
 }
 
@@ -67,15 +74,18 @@
     @apply border-border;
   }
 
-  body {
+  html, body {
     @apply bg-background text-foreground;
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
 @layer components {
   .certus-shadow {
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.25);
   }
 }
 /* ===== PDF CERTIFICADO ===== */
