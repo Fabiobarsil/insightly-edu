@@ -198,11 +198,18 @@ const AcceptInvite = () => {
       }
 
       // 3) Update profile row
-      const profilePatch: { full_name: string; phone: string | null; avatar_url?: string } = {
+      const profilePatch: {
+        full_name: string;
+        phone: string | null;
+        avatar_url?: string;
+      } = {
         full_name: fullName.trim(),
-        phone: phone.trim() || null,
+        phone: phone?.trim() || null,
       };
-      if (avatarUrl) profilePatch.avatar_url = avatarUrl;
+
+      if (avatarUrl) {
+        profilePatch.avatar_url = avatarUrl;
+      }
 
       const { error: profileErr } = await supabase
         .from("profiles")
@@ -210,10 +217,16 @@ const AcceptInvite = () => {
         .eq("id", userId)
         .select()
         .single();
-      if (profileErr) console.warn("[accept-invite] profile update warn:", profileErr);
+
+      if (profileErr) {
+        console.warn("[accept-invite] profile update warn:", profileErr);
+      }
 
       toast.success("Cadastro concluído! Bem-vindo(a).");
-      navigate("/admin/dashboard", { replace: true });
+
+      navigate("/admin/dashboard", {
+        replace: true,
+      });
     } catch (err: unknown) {
       console.error("[accept-invite] error:", err);
       toast.error(err instanceof Error ? err.message : "Erro ao concluir o cadastro");
