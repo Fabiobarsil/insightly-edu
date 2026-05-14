@@ -54,7 +54,7 @@ const Topbar = ({ title, breadcrumbs }: TopbarProps) => {
   });
 
   return (
-    <header className="sticky top-0 bg-sidebar px-8 py-4 flex items-center justify-between z-[5] rounded-tl-2xl max-[900px]:rounded-none max-[900px]:px-5 max-[640px]:flex-col max-[640px]:items-start max-[640px]:gap-4">
+    <header className="sticky top-0 bg-sidebar px-8 py-4 flex items-center justify-between z-[5] max-[900px]:px-5 max-[640px]:flex-col max-[640px]:items-start max-[640px]:gap-4">
       <div>
         <h2 className="text-lg font-semibold text-sidebar-foreground tracking-tight">
           {getGreeting()}, {firstName}
