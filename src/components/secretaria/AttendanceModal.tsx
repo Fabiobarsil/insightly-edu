@@ -316,11 +316,11 @@ const AttendanceModal = ({ open, onOpenChange, request }: Props) => {
               <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  onClick={() => updateMutation.mutate("aberto")}
+                  onClick={() => updateMutation.mutate("pendente")}
                   disabled={isLoading}
                   className="gap-1.5"
                 >
-                  {isLoading && updateMutation.variables === "aberto" ? (
+                  {isLoading && updateMutation.variables === "pendente" ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <RotateCcw className="h-4 w-4" />
