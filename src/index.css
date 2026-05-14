@@ -15,56 +15,56 @@
 
 @layer base {
   :root {
-    /* Certus Dark SaaS Executive */
-    --background: 222 47% 11%;        /* #0F172A */
-    --foreground: 210 40% 98%;        /* #F8FAFC */
+    /* Certus SaaS Premium Clean Executive */
+    --background: 210 40% 98%;        /* #F8FAFC */
+    --foreground: 222 47% 11%;        /* #0F172A */
 
-    --card: 217 33% 17%;              /* #1E293B */
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 100%;                /* #FFFFFF */
+    --card-foreground: 222 47% 11%;
 
-    --popover: 217 33% 17%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
 
-    /* Primary = dark surface (sidebar/headers/text emphasis) */
-    --primary: 217 33% 17%;           /* #1E293B */
+    /* Primary = dark navy (sidebar/header surface) */
+    --primary: 222 47% 11%;           /* #0F172A */
     --primary-foreground: 210 40% 98%;
 
     /* Secondary = brand green (ações principais) */
     --secondary: 142 76% 36%;         /* #16A34A */
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 215 20% 65%;             /* #94A3B8 */
-    --muted-foreground: 215 20% 65%;
+    --muted: 215 16% 47%;             /* #64748B */
+    --muted-foreground: 215 16% 47%;
 
-    --accent: 221 39% 11%;            /* #111827 */
-    --accent-foreground: 210 40% 98%;
+    --accent: 210 40% 96%;            /* #F1F5F9 */
+    --accent-foreground: 222 47% 11%;
 
     --destructive: 0 72% 51%;         /* #DC2626 */
     --destructive-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;            /* #F59E0B */
+    --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --success: 142 76% 36%;           /* #16A34A */
+    --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
 
-    --info: 221 83% 53%;              /* #2563EB */
+    --info: 221 83% 53%;
     --info-foreground: 0 0% 100%;
 
-    --border: 215 25% 27%;            /* #334155 */
-    --input: 215 25% 27%;
-    --ring: 142 71% 45%;              /* #22C55E */
+    --border: 214 32% 91%;            /* #E2E8F0 */
+    --input: 214 32% 91%;
+    --ring: 142 76% 36%;              /* #16A34A */
 
     --radius: 12px;
 
-    --sidebar-background: 222 47% 8%;            /* deeper than bg */
+    --sidebar-background: 222 47% 11%;           /* #0F172A — same as header */
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 142 76% 36%;              /* brand green */
+    --sidebar-primary: 142 76% 36%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 142 64% 24% / 0.25;        /* verde translúcido (item ativo) */
+    --sidebar-accent: 142 64% 24% / 0.25;
     --sidebar-accent-foreground: 142 71% 75%;
-    --sidebar-border: 215 25% 18%;
-    --sidebar-ring: 142 71% 45%;
+    --sidebar-border: 222 47% 11%;               /* invisible — same as bg */
+    --sidebar-ring: 142 76% 36%;
     --sidebar-muted: 215 20% 65%;
   }
 }
