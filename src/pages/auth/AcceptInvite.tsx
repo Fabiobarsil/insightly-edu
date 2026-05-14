@@ -204,7 +204,12 @@ const AcceptInvite = () => {
       };
       if (avatarUrl) profilePatch.avatar_url = avatarUrl;
 
-      const { error: profileErr } = await supabase.from("profiles").update(profilePatch).eq("id", userId);
+      const { error: profileErr } = await supabase
+        .from("profiles")
+        .update(profilePatch)
+        .eq("id", userId)
+        .select()
+        .single();
       if (profileErr) console.warn("[accept-invite] profile update warn:", profileErr);
 
       toast.success("Cadastro concluído! Bem-vindo(a).");
