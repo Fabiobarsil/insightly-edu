@@ -19,6 +19,7 @@ import {
   Loader2,
   FileText,
   GraduationCap,
+  Inbox,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -37,24 +38,24 @@ const COLUMNS = [
     id: "aberto" as KanbanStatus,
     title: "A Fazer",
     icon: Clock,
-    accent: "border-t-amber-500",
-    iconClass: "bg-amber-500/10 text-amber-600",
+    accent: "bg-amber-500",
+    iconClass: "bg-amber-50 text-amber-600",
     next: "em_andamento" as KanbanStatus,
   },
   {
     id: "em_andamento" as KanbanStatus,
     title: "Em Andamento",
     icon: PlayCircle,
-    accent: "border-t-primary",
-    iconClass: "bg-primary/10 text-primary",
+    accent: "bg-blue-500",
+    iconClass: "bg-blue-50 text-blue-600",
     next: "concluido" as KanbanStatus,
   },
   {
     id: "concluido" as KanbanStatus,
     title: "Concluído (hoje)",
     icon: CheckCircle2,
-    accent: "border-t-emerald-500",
-    iconClass: "bg-emerald-500/10 text-emerald-600",
+    accent: "bg-emerald-500",
+    iconClass: "bg-emerald-50 text-emerald-600",
     next: null as KanbanStatus | null,
   },
 ] as const;
@@ -245,31 +246,34 @@ const KanbanColumn = ({ column, items, onAdvance, onCardClick }: ColumnProps) =>
     <div
       ref={setNodeRef}
       className={cn(
-        "bg-muted/30 border border-border/50 border-t-4 rounded-lg flex flex-col min-h-[420px] transition-colors",
-        column.accent,
-        isOver && "bg-muted/60 ring-1 ring-primary/30"
+        "relative bg-card border border-border rounded-xl flex flex-col min-h-[420px] overflow-hidden transition-colors",
+        isOver && "ring-2 ring-ring/30"
       )}
     >
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border/40">
+      <span className={cn("absolute top-0 left-0 right-0 h-[3px]", column.accent)} />
+      <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2">
           <span
             className={cn(
-              "w-7 h-7 rounded-md flex items-center justify-center",
+              "w-6 h-6 rounded-md flex items-center justify-center",
               column.iconClass
             )}
           >
-            <Icon className="w-4 h-4" />
+            <Icon className="w-3.5 h-3.5" />
           </span>
-          <h4 className="text-sm font-semibold text-foreground">{column.title}</h4>
+          <h4 className="text-[13px] font-semibold text-foreground">{column.title}</h4>
         </div>
         <span className="text-xs font-medium text-muted-foreground tabular-nums">
           {items.length}
         </span>
       </div>
 
-      <div className="flex-1 flex flex-col gap-2 p-3">
+      <div className="flex-1 flex flex-col gap-2 px-3 pb-3">
         {items.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center text-center px-2 py-8">
+          <div className="flex-1 flex flex-col items-center justify-center text-center px-2 py-8 gap-2">
+            <div className="w-10 h-10 rounded-full bg-muted/40 flex items-center justify-center">
+              <Inbox className="w-4 h-4 text-muted-foreground/60" />
+            </div>
             <p className="text-xs text-muted-foreground/70">
               Nenhuma demanda nesta coluna
             </p>
