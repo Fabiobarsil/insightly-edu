@@ -39,9 +39,7 @@ const AcceptInvite = () => {
     const init = async () => {
       try {
         const url = new URL(window.location.href);
-        const hash = window.location.hash.startsWith("#")
-          ? window.location.hash.slice(1)
-          : window.location.hash;
+        const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash;
         const hashParams = new URLSearchParams(hash);
         const queryParams = url.searchParams;
 
@@ -206,14 +204,11 @@ const AcceptInvite = () => {
       };
       if (avatarUrl) profilePatch.avatar_url = avatarUrl;
 
-      const { error: profileErr } = await supabase
-        .from("profiles")
-        .update(profilePatch)
-        .eq("id", userId);
+      const { error: profileErr } = await supabase.from("profiles").update(profilePatch).eq("id", userId);
       if (profileErr) console.warn("[accept-invite] profile update warn:", profileErr);
 
       toast.success("Cadastro concluído! Bem-vindo(a).");
-      navigate("/", { replace: true });
+      navigate("/admin/dashboard", { replace: true });
     } catch (err: unknown) {
       console.error("[accept-invite] error:", err);
       toast.error(err instanceof Error ? err.message : "Erro ao concluir o cadastro");
@@ -269,8 +264,8 @@ const AcceptInvite = () => {
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-foreground mb-1">Bem-vindo(a)!</h1>
             <p className="text-sm text-muted-foreground">
-              Você foi convidado para <strong className="text-foreground">{email}</strong>. Preencha as informações abaixo
-              para concluir seu acesso.
+              Você foi convidado para <strong className="text-foreground">{email}</strong>. Preencha as informações
+              abaixo para concluir seu acesso.
             </p>
           </div>
 
@@ -292,13 +287,7 @@ const AcceptInvite = () => {
                   ALTERAR
                 </span>
               </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoChange}
-                className="hidden"
-              />
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
               <p className="text-xs text-muted-foreground mt-2">Foto de perfil (opcional)</p>
             </div>
 
