@@ -1,11 +1,11 @@
 import { useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { differenceInCalendarDays, isSameDay } from "date-fns";
+import { differenceInCalendarDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchoolContext } from "./useSchoolContext";
 import { updateRequestStatus } from "@/lib/secretariaActions";
 
-export type KanbanStatus = "aberto" | "em_andamento" | "concluido";
+export type KanbanStatus = "pendente" | "em_andamento" | "concluido";
 export type ComputedPriority = "alta" | "media" | "baixa";
 
 export interface KanbanRequest {
@@ -17,7 +17,7 @@ export interface KanbanRequest {
   student_grade: string | null;
   title: string;
   type: string | null;
-  status: KanbanStatus;
+  request_status: KanbanStatus;
   priority: ComputedPriority;
   created_at: string;
   student_document_id: string | null;
@@ -32,21 +32,16 @@ const PRIORITY_ORDER: Record<string, number> = {
 };
 
 /**
- * Normaliza o status livre de `secretary_requests` em uma das 3 colunas do Kanban.
- * Tudo que não for "em_andamento"/"concluido"/"resolvido" cai em "aberto" (inclui
- * legados como "pendente"/null) — garantindo que TODA demanda apareça na fila.
+ * Normaliza o `request_status` vindo da view `secretaria_demands` para uma
+ * das 3 colunas oficiais do Kanban: pendente | em_andamento | concluido.
  */
 function normalizeStatus(s: string | null | undefined): KanbanStatus {
   const v = (s ?? "").toLowerCase();
   if (v === "em_andamento") return "em_andamento";
   if (v === "concluido" || v === "resolvido") return "concluido";
-  return "aberto";
+  return "pendente";
 }
 
-/**
- * Normaliza a prioridade do banco (urgente/alta/media/baixa) para os 3 níveis
- * do Kanban. "urgente" colapsa em "alta".
- */
 function normalizePriority(p: string | null | undefined): ComputedPriority {
   const v = (p ?? "").toLowerCase();
   if (v === "urgente" || v === "alta") return "alta";
@@ -56,10 +51,8 @@ function normalizePriority(p: string | null | undefined): ComputedPriority {
 
 /**
  * Hook do Kanban da Secretaria Digital.
- * - Lê de `secretary_requests` (tabela canônica onde TODA demanda é gravada).
- * - Enriquece com nome do aluno, turma/série.
- * - Mantém na coluna "Concluído" apenas itens concluídos no dia atual; os
- *   demais saem da fila e ficam disponíveis no histórico.
+ * - Lê da view `secretaria_demands` (campo `request_status`).
+ * - Enriquece com prioridade/tipo de `secretaria_requests` e dados do aluno.
  */
 export function useSecretariaKanban() {
   const { schoolId, loading: schoolLoading } = useSchoolContext();
@@ -77,18 +70,33 @@ export function useSecretariaKanban() {
       if (!schoolId) return [];
 
       const { data, error } = await supabase
-        .from("secretary_requests")
+        .from("secretaria_demands" as any)
         .select(
-          "id, school_id, student_id, student_name, class_id, request_type, description, status, priority, created_at, updated_at"
+          "id, school_id, student_id, title, request_status, document_type, created_at"
         )
         .eq("school_id", schoolId)
         .order("created_at", { ascending: true });
 
       if (error) throw error;
-
       const rawRows = (data || []) as any[];
+      if (rawRows.length === 0) return [];
 
-      // Busca nome + turma do aluno em uma única query
+      // Enriquecimento: prioridade/tipo de secretaria_requests
+      const ids = rawRows.map((r) => r.id);
+      const extrasMap: Record<string, { priority: string | null; type: string | null; student_document_id: string | null }> = {};
+      const { data: extras } = await supabase
+        .from("secretaria_requests" as any)
+        .select("id, priority, type, student_document_id")
+        .in("id", ids);
+      (extras || []).forEach((e: any) => {
+        extrasMap[e.id] = {
+          priority: e.priority ?? null,
+          type: e.type ?? null,
+          student_document_id: e.student_document_id ?? null,
+        };
+      });
+
+      // Dados do aluno
       const studentIds = Array.from(
         new Set(rawRows.map((r) => r.student_id).filter(Boolean))
       ) as string[];
@@ -103,12 +111,9 @@ export function useSecretariaKanban() {
         });
       }
 
-      // Busca nome da turma + série
+      // Turmas
       const classIds = Array.from(
-        new Set([
-          ...rawRows.map((r) => r.class_id).filter(Boolean),
-          ...Object.values(studentMap).map((s) => s.class_id).filter(Boolean),
-        ])
+        new Set(Object.values(studentMap).map((s) => s.class_id).filter(Boolean))
       ) as string[];
       const classMap: Record<string, { name: string; grade: string | null }> = {};
       if (classIds.length > 0) {
@@ -123,51 +128,36 @@ export function useSecretariaKanban() {
 
       const rows: KanbanRequest[] = rawRows.map((r) => {
         const student = r.student_id ? studentMap[r.student_id] : null;
-        const klassId = r.class_id ?? student?.class_id ?? null;
+        const klassId = student?.class_id ?? null;
         const klass = klassId ? classMap[klassId] : null;
         const days = Math.max(0, differenceInCalendarDays(new Date(), new Date(r.created_at)));
-        const title =
-          (r.description && String(r.description).trim()) ||
-          r.request_type ||
-          "Solicitação";
+        const extra = extrasMap[r.id] || { priority: null, type: null, student_document_id: null };
         return {
           id: r.id,
           school_id: r.school_id,
           student_id: r.student_id,
-          student_name: student?.full_name ?? r.student_name ?? null,
+          student_name: student?.full_name ?? null,
           student_class: klass?.name ?? null,
           student_grade: klass?.grade ?? null,
-          title,
-          type: r.request_type ?? null,
-          status: normalizeStatus(r.status),
-          priority: normalizePriority(r.priority),
+          title: r.title || extra.type || "Solicitação",
+          type: extra.type,
+          request_status: normalizeStatus(r.request_status),
+          priority: normalizePriority(extra.priority),
           created_at: r.created_at,
-          student_document_id: null,
-          document_type: null,
+          student_document_id: extra.student_document_id,
+          document_type: r.document_type ?? null,
           days_open: days,
-          // anexamos updated_at para o filtro de "concluído hoje"
-          // (não exposto no tipo público porque é interno)
-          _updated_at: r.updated_at ?? r.created_at,
-        } as KanbanRequest & { _updated_at: string };
+        };
       });
 
-      // Concluídos: só permanecem na fila se foram resolvidos hoje (via updated_at).
-      const today = new Date();
-      const finalRows = rows.filter((r) => {
-        if (r.status !== "concluido") return true;
-        const updated = (r as KanbanRequest & { _updated_at?: string })._updated_at ?? r.created_at;
-        return isSameDay(new Date(updated), today);
-      });
-
-      // Ordenação: prioridade desc, depois mais antigos primeiro
-      finalRows.sort((a, b) => {
+      rows.sort((a, b) => {
         const pa = PRIORITY_ORDER[a.priority] ?? 0;
         const pb = PRIORITY_ORDER[b.priority] ?? 0;
         if (pb !== pa) return pb - pa;
         return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       });
 
-      return finalRows;
+      return rows;
     },
   });
 
@@ -191,7 +181,7 @@ export function useSecretariaKanban() {
           id: current.id,
           school_id: current.school_id,
           student_id: current.student_id,
-          status: current.status,
+          status: current.request_status,
         },
         status,
         notes ?? null
@@ -201,7 +191,7 @@ export function useSecretariaKanban() {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<KanbanRequest[]>(queryKey);
       queryClient.setQueryData<KanbanRequest[]>(queryKey, (old) =>
-        (old || []).map((r) => (r.id === id ? { ...r, status } : r))
+        (old || []).map((r) => (r.id === id ? { ...r, request_status: status } : r))
       );
       return { previous };
     },
