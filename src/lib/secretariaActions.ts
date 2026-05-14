@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type RequestStatus = "aberto" | "em_andamento" | "concluido" | string;
+export type RequestStatus = "pendente" | "em_andamento" | "concluido" | string;
 
 export interface SecretariaRequestRef {
   id: string;
@@ -18,11 +18,11 @@ export const mapActionType = (
   to: RequestStatus
 ): string | null => {
   if (from === to) return null;
-  if (from === "aberto" && to === "em_andamento") return "iniciou";
+  if (from === "pendente" && to === "em_andamento") return "iniciou";
   if (from === "em_andamento" && to === "concluido") return "concluiu";
-  if (from === "em_andamento" && to === "aberto") return "retornou";
-  if (from === "aberto" && to === "concluido") return "concluiu";
-  if (from === "concluido" && to === "aberto") return "reabriu";
+  if (from === "em_andamento" && to === "pendente") return "retornou";
+  if (from === "pendente" && to === "concluido") return "concluiu";
+  if (from === "concluido" && to === "pendente") return "reabriu";
   if (from === "concluido" && to === "em_andamento") return "reabriu";
   return "alterou";
 };
@@ -41,10 +41,10 @@ export async function updateRequestStatus(
 ): Promise<void> {
   const fromStatus = request.status;
 
-  // PASSO 1: update do status na tabela canônica
+  // PASSO 1: update do status na tabela base da view `secretaria_demands`
   const { error: updateError } = await supabase
-    .from("secretary_requests")
-    .update({ status: newStatus, updated_at: new Date().toISOString() })
+    .from("secretaria_requests" as any)
+    .update({ status: newStatus })
     .eq("id", request.id);
   if (updateError) throw updateError;
 

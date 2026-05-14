@@ -37,7 +37,7 @@ const SecretaryAlertsBar = () => {
 
   const prioridades = useMemo(() => {
     return requests.filter(
-      (r) => r.priority === "alta" && r.status !== "concluido"
+      (r) => r.priority === "alta" && r.request_status !== "concluido"
     );
   }, [requests]);
 

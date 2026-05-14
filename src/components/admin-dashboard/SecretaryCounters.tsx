@@ -36,15 +36,15 @@ const SecretaryCounters = ({ active, onChange }: Props) => {
   });
 
   const filaOperacional = requests.filter(
-    (r) => r.status === "aberto" || r.status === "em_andamento"
+    (r) => r.request_status === "pendente" || r.request_status === "em_andamento"
   ).length;
   const documentosPendentes = requests.filter(
-    (r) => (r.type ?? "").toLowerCase().includes("document") && r.status !== "concluido"
+    (r) => (r.type ?? "").toLowerCase().includes("document") && r.request_status !== "concluido"
   ).length;
   const alertasCriticos = requests.filter(
-    (r) => r.priority === "alta" && r.status !== "concluido"
+    (r) => r.priority === "alta" && r.request_status !== "concluido"
   ).length;
-  const concluidas = requests.filter((r) => r.status === "concluido").length;
+  const concluidas = requests.filter((r) => r.request_status === "concluido").length;
   const totalReqs = filaOperacional + concluidas;
   const completionPct = totalReqs > 0 ? Math.round((concluidas / totalReqs) * 100) : 100;
 

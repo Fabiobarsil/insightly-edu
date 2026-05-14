@@ -35,7 +35,7 @@ import type { CounterFilter } from "./SecretaryCounters";
 
 const COLUMNS = [
   {
-    id: "aberto" as KanbanStatus,
+    id: "pendente" as KanbanStatus,
     title: "A Fazer",
     icon: Clock,
     accent: "bg-amber-500",
@@ -110,10 +110,10 @@ const SecretaryKanban = ({ filter = "all" }: Props) => {
     switch (filter) {
       case "alerts":
         return requests.filter(
-          (r) => r.priority === "alta" && r.status !== "concluido"
+          (r) => r.priority === "alta" && r.request_status !== "concluido"
         );
       case "queue":
-        return requests.filter((r) => r.status !== "concluido");
+        return requests.filter((r) => r.request_status !== "concluido");
       case "documents":
         return requests.filter((r) =>
           /document|histor|certif|declar/i.test(`${r.type ?? ""} ${r.title}`)
@@ -126,12 +126,12 @@ const SecretaryKanban = ({ filter = "all" }: Props) => {
   }, [requests, filter]);
 
   const grouped: Record<KanbanStatus, KanbanRequest[]> = {
-    aberto: [],
+    pendente: [],
     em_andamento: [],
     concluido: [],
   };
   filtered.forEach((r) => {
-    if (grouped[r.status]) grouped[r.status].push(r);
+    if (grouped[r.request_status]) grouped[r.request_status].push(r);
   });
 
   const filterLabel: Record<CounterFilter, string> = {
@@ -154,8 +154,8 @@ const SecretaryKanban = ({ filter = "all" }: Props) => {
     const id = String(active.id);
     const overId = String(over.id) as KanbanStatus;
     const item = requests.find((r) => r.id === id);
-    if (!item || item.status === overId) return;
-    if (!["aberto", "em_andamento", "concluido"].includes(overId)) return;
+    if (!item || item.request_status === overId) return;
+    if (!["pendente", "em_andamento", "concluido"].includes(overId)) return;
 
     try {
       await updateStatus(id, overId);
