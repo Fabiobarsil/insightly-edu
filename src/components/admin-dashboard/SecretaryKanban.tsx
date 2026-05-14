@@ -19,6 +19,7 @@ import {
   Loader2,
   FileText,
   GraduationCap,
+  Inbox,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
