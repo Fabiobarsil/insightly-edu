@@ -54,27 +54,26 @@ const Topbar = ({ title, breadcrumbs }: TopbarProps) => {
   });
 
   return (
-    <header className="sticky top-0 bg-card border-b border-border/60 px-8 py-5 flex items-center justify-between z-[5] max-[900px]:px-5 max-[640px]:flex-col max-[640px]:items-start max-[640px]:gap-4">
+    <header className="sticky top-0 bg-sidebar px-8 py-4 flex items-center justify-between z-[5] max-[900px]:px-5 max-[640px]:flex-col max-[640px]:items-start max-[640px]:gap-4">
       <div>
-        <h2 className="text-2xl font-bold text-primary">
-          {getGreeting()}, {firstName} 👋
+        <h2 className="text-lg font-semibold text-sidebar-foreground tracking-tight">
+          {getGreeting()}, {firstName}
         </h2>
-        <p className="text-[13px] italic text-muted-foreground/70 mt-1">{motivationalQuote}</p>
-        <p className="text-xs text-muted mt-1 capitalize">{today}</p>
+        <p className="text-[12px] text-sidebar-foreground/60 mt-0.5 capitalize">{today} · {motivationalQuote}</p>
       </div>
       <div className="flex items-center gap-3">
         <div className="text-right max-[640px]:hidden">
-          <p className="text-sm font-semibold text-foreground">{profileName || firstName}</p>
-          <p className="text-[11px] text-muted">{user?.email}</p>
+          <p className="text-sm font-medium text-sidebar-foreground">{profileName || firstName}</p>
+          <p className="text-[11px] text-sidebar-foreground/50">{user?.email}</p>
         </div>
         {avatarUrl ? (
           <img
             src={avatarUrl}
             alt={firstName}
-            className="w-10 h-10 rounded-full object-cover border-2 border-primary/20"
+            className="w-9 h-9 rounded-full object-cover ring-1 ring-sidebar-foreground/15"
           />
         ) : (
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm border-2 border-primary/20">
+          <div className="w-9 h-9 rounded-full bg-sidebar-foreground/10 flex items-center justify-center text-sidebar-foreground font-semibold text-sm ring-1 ring-sidebar-foreground/15">
             {firstName[0]?.toUpperCase()}
           </div>
         )}

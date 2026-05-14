@@ -109,41 +109,41 @@ const RoleSidebar = () => {
       [];
 
   return (
-    <aside className="fixed left-0 top-0 w-60 h-screen bg-primary flex flex-col z-10 max-[900px]:static max-[900px]:w-full max-[900px]:h-auto">
-      <div className="p-5 border-b border-sidebar-border">
+    <aside className="fixed left-0 top-0 w-60 h-screen bg-sidebar flex flex-col z-10 max-[900px]:static max-[900px]:w-full max-[900px]:h-auto">
+      <div className="px-5 py-4">
         <div className="flex items-center gap-3">
           <img src={logoCertus} alt="CertusEdu" className="h-8 w-auto rounded-[10px]" />
           <div>
-            <h1 className="text-[15px] font-bold text-sidebar-foreground leading-tight">CertusEdu</h1>
+            <h1 className="text-[15px] font-semibold text-sidebar-foreground leading-tight tracking-tight">CertusEdu</h1>
             <p className="text-[11px] text-sidebar-foreground/45">Gestão Escolar</p>
           </div>
         </div>
       </div>
 
-      <nav className="sidebar-scroll flex-1 min-h-0 p-4 px-[10px] overflow-y-auto">
+      <nav className="sidebar-scroll flex-1 min-h-0 px-3 pb-2 overflow-y-auto">
         {items.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             end={item.to.endsWith("/dashboard")}
-            className="w-full flex items-center gap-[10px] px-3 py-2 rounded-[12px] text-sidebar-foreground/55 mb-0.5 transition-all duration-200 text-left text-sm hover:bg-sidebar-foreground/5 hover:text-sidebar-foreground/85"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-[10px] text-sidebar-foreground/65 mb-0.5 transition-colors text-left text-[13px] font-medium hover:bg-sidebar-foreground/[0.06] hover:text-sidebar-foreground"
             activeClassName="bg-secondary/15 text-secondary"
           >
-            <i className={cn(item.icon, "text-lg", item.color)} />
+            <i className={cn(item.icon, "text-[17px]", item.color)} />
             {item.label}
           </NavLink>
         ))}
       </nav>
 
-      <div className="p-4 border-t border-sidebar-border flex flex-col gap-3">
+      <div className="px-3 pb-4 pt-2 flex flex-col gap-2">
         <button
           onClick={signOut}
-          className="w-full flex items-center gap-2 px-3 py-2 rounded-[12px] text-sidebar-foreground/55 hover:bg-destructive/15 hover:text-destructive transition-colors text-sm font-medium"
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-[10px] text-sidebar-foreground/65 hover:bg-destructive/15 hover:text-destructive transition-colors text-[13px] font-medium"
         >
-          <i className="ri-logout-box-r-line text-lg" />
+          <i className="ri-logout-box-r-line text-[17px]" />
           Sair
         </button>
-        <span className="text-[13px] text-sidebar-foreground/45">© 2026 CertusEdu</span>
+        <span className="text-[11px] text-sidebar-foreground/35 px-3">© 2026 CertusEdu</span>
       </div>
     </aside>
   );
