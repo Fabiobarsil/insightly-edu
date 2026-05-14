@@ -23,7 +23,6 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
 import { useSchoolId } from "@/hooks/useSchoolId";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -65,10 +64,6 @@ type Announcement = {
 
 type ProfileLite = { id: string; full_name: string | null };
 type StudentLite = { id: string; full_name: string };
-type SchoolAnnouncementInsert = Database["public"]["Tables"]["school_announcements"]["Insert"];
-type SchoolAnnouncementUpdate = Database["public"]["Tables"]["school_announcements"]["Update"];
-
-const getErrorMessage = (err: unknown, fallback: string) => (err instanceof Error ? err.message : fallback);
 
 const normalizeAnnouncement = (row: Partial<Announcement>): Announcement => ({
   id: row.id ?? "",
@@ -267,17 +262,17 @@ const CentralOperacional = () => {
 
   // Mutations
   const updateMut = useMutation({
-    mutationFn: async (payload: { id: string; patch: SchoolAnnouncementUpdate }) => {
+    mutationFn: async (payload: { id: string; patch: Partial<Announcement> }) => {
       const { error } = await supabase
         .from("school_announcements")
-        .update(payload.patch)
+        .update(payload.patch as any)
         .eq("id", payload.id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
     },
-    onError: (err: unknown) => toast.error(getErrorMessage(err, "Erro ao atualizar")),
+    onError: (err: any) => toast.error(err?.message ?? "Erro ao atualizar"),
   });
 
   const handleAssumir = (it: Announcement) => {
@@ -670,7 +665,7 @@ const NewAnnouncementModal = ({
       return;
     }
     setSaving(true);
-    const payload: SchoolAnnouncementInsert = {
+    const { error } = await supabase.from("school_announcements").insert({
       school_id: schoolId,
       title: title.trim(),
       content: content.trim(),
@@ -680,8 +675,7 @@ const NewAnnouncementModal = ({
       status,
       responsible_user_id: responsibleId === "none" ? null : responsibleId,
       created_by: userId,
-    };
-    const { error } = await supabase.from("school_announcements").insert(payload);
+    } as any);
     setSaving(false);
     if (error) {
       toast.error(error.message);

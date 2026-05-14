@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useRef, ReactNode, useCallback } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -15,12 +15,6 @@ export type AppRole =
   | "auxiliar";
 
 export type DashboardRole = "superadmin" | "admin" | "secretaria" | "professor" | "psicologo";
-export type AccessStatus = "pending" | "active" | "rejected" | "suspended";
-
-const KNOWN_ROLES: AppRole[] = [
-  "superadmin", "owner", "admin", "administracao", "secretaria",
-  "coordenador", "diretor", "professor", "psicologo", "auxiliar",
-];
 
 const roleToDashboard: Record<AppRole, DashboardRole> = {
   superadmin: "superadmin",
@@ -35,6 +29,136 @@ const roleToDashboard: Record<AppRole, DashboardRole> = {
   psicologo: "psicologo",
 };
 
+const KNOWN_ROLES: AppRole[] = [
+  "superadmin",
+  "owner",
+  "admin",
+  "administracao",
+  "secretaria",
+  "coordenador",
+  "diretor",
+  "professor",
+  "psicologo",
+  "auxiliar",
+];
+
+const AUTH_TIMEOUT_MS = 10000;
+const AUTH_CALLBACK_PATHS = new Set(["/aceitar-convite", "/reset-password"]);
+type AuthOtpType = "signup" | "invite" | "magiclink" | "recovery" | "email_change" | "email";
+const OTP_TYPES: AuthOtpType[] = ["signup", "invite", "magiclink", "recovery", "email_change", "email"];
+
+const normalizeRole = (value?: string | null): AppRole | null => {
+  if (!value) return null;
+  const role = value.toLowerCase() as AppRole;
+  return KNOWN_ROLES.includes(role) ? role : null;
+};
+
+const normalizeOtpType = (value: string | null): AuthOtpType | null => {
+  if (!value) return null;
+  return OTP_TYPES.includes(value as AuthOtpType) ? (value as AuthOtpType) : null;
+};
+
+const withTimeout = async <T,>(promise: Promise<T>, label: string): Promise<T> => {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(`${label} excedeu o tempo limite`)), AUTH_TIMEOUT_MS);
+  });
+
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+};
+
+const getUrlParams = () => {
+  const url = new URL(window.location.href);
+  const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash;
+  return {
+    url,
+    hashParams: new URLSearchParams(hash),
+    queryParams: url.searchParams,
+  };
+};
+
+const hasAuthParams = () => {
+  if (typeof window === "undefined") return false;
+  const { hashParams, queryParams } = getUrlParams();
+  return (
+    queryParams.has("code") ||
+    queryParams.has("token_hash") ||
+    queryParams.has("type") ||
+    queryParams.has("error") ||
+    queryParams.has("error_description") ||
+    hashParams.has("access_token") ||
+    hashParams.has("refresh_token") ||
+    hashParams.has("type") ||
+    hashParams.has("error") ||
+    hashParams.has("error_description")
+  );
+};
+
+const cleanAuthParamsFromUrl = () => {
+  if (typeof window === "undefined" || !hasAuthParams()) return;
+
+  const { url } = getUrlParams();
+  const authQueryParams = [
+    "code",
+    "token_hash",
+    "type",
+    "error",
+    "error_code",
+    "error_description",
+    "access_token",
+    "refresh_token",
+    "expires_in",
+    "expires_at",
+    "token_type",
+  ];
+
+  authQueryParams.forEach((param) => url.searchParams.delete(param));
+  const nextSearch = url.searchParams.toString();
+  const nextUrl = `${url.pathname}${nextSearch ? `?${nextSearch}` : ""}`;
+  window.history.replaceState(null, "", nextUrl);
+};
+
+const processAuthCallbackFromUrl = async () => {
+  if (typeof window === "undefined" || !hasAuthParams()) return;
+
+  const pathname = window.location.pathname;
+  if (AUTH_CALLBACK_PATHS.has(pathname)) return;
+
+  const { hashParams, queryParams } = getUrlParams();
+  const errorDescription = hashParams.get("error_description") || queryParams.get("error_description");
+  const errorCode = hashParams.get("error") || queryParams.get("error");
+
+  if (errorDescription || errorCode) {
+    console.error("[Auth] callback retornou erro:", errorCode, errorDescription);
+    cleanAuthParamsFromUrl();
+    return;
+  }
+
+  const code = queryParams.get("code");
+  if (code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error) console.error("[Auth] exchangeCodeForSession error:", error);
+  }
+
+  const tokenHash = queryParams.get("token_hash");
+  const otpType = normalizeOtpType(queryParams.get("type"));
+  if (tokenHash && otpType) {
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: otpType,
+    });
+    if (error) console.error("[Auth] verifyOtp error:", error);
+  }
+
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  cleanAuthParamsFromUrl();
+};
+
 export const getDashboardPath = (role: DashboardRole) => {
   const paths: Record<DashboardRole, string> = {
     superadmin: "/superadmin/dashboard",
@@ -46,21 +170,12 @@ export const getDashboardPath = (role: DashboardRole) => {
   return paths[role];
 };
 
-const normalizeRole = (value: string | null | undefined): AppRole | null => {
-  if (!value) return null;
-  const v = value.toLowerCase().trim() as AppRole;
-  return KNOWN_ROLES.includes(v) ? v : null;
-};
-
 interface AuthContextType {
   session: Session | null;
   user: User | null;
   loading: boolean;
   role: AppRole | null;
   dashboardRole: DashboardRole | null;
-  schoolId: string | null;
-  status: AccessStatus | null;
-  refreshAccess: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -70,96 +185,136 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   role: null,
   dashboardRole: null,
-  schoolId: null,
-  status: null,
-  refreshAccess: async () => {},
   signOut: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
 
-const TIMEOUT_MS = 8000;
-const withTimeout = async <T,>(p: PromiseLike<T>, label: string): Promise<T> => {
-  let t: ReturnType<typeof setTimeout> | undefined;
-  try {
-    return await Promise.race([
-      Promise.resolve(p),
-      new Promise<T>((_, reject) => {
-        t = setTimeout(() => reject(new Error(`[Auth] timeout em ${label}`)), TIMEOUT_MS);
-      }),
-    ]);
-  } finally {
-    if (t) clearTimeout(t);
-  }
-};
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<AppRole | null>(null);
-  const [schoolId, setSchoolId] = useState<string | null>(null);
-  const [status, setStatus] = useState<AccessStatus | null>(null);
   const mountedRef = useRef(true);
-  const requestIdRef = useRef(0);
+  const roleRequestRef = useRef(0);
+  const sessionUserIdRef = useRef<string | null>(null);
+  const initializedRef = useRef(false);
 
-  const fetchAccessFor = async (userId: string, requestId: number) => {
+  const resolveRole = useCallback(async (userId: string): Promise<AppRole | null> => {
     try {
-      const { data, error } = await withTimeout(supabase.rpc("get_my_access"), "get_my_access");
-      if (!mountedRef.current || requestIdRef.current !== requestId) return;
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role, is_superadmin, status")
+        .eq("id", userId)
+        .maybeSingle();
 
-      if (error) {
-        console.warn("[Auth] get_my_access erro:", error);
-        setRole(null);
-        setSchoolId(null);
-        setStatus(null);
-        return;
+      if (profileError) {
+        console.warn("[Auth] erro ao buscar profiles:", profileError);
       }
 
-      const row = Array.isArray(data) ? data[0] : data;
-      if (!row) {
-        setRole(null);
-        setSchoolId(null);
-        setStatus(null);
-        return;
+      if (profile?.is_superadmin || normalizeRole(profile?.role) === "superadmin") {
+        console.log("[Auth] SUPERADMIN DETECTADO");
+        return "superadmin";
       }
 
-      setRole(normalizeRole(row.role));
-      setSchoolId((row.school_id as string | null) ?? null);
-      setStatus(((row.status as AccessStatus | null) ?? null));
+      const profileRole = normalizeRole(profile?.role);
+      if (profileRole) return profileRole;
+
+      // Fonte correta para usuários operacionais (professor, secretaria, etc.).
+      // A RPC é SECURITY DEFINER e evita que a RLS de account_members bloqueie
+      // a leitura da própria role, o que enviava usuários válidos para /sem-acesso.
+      const { data: userAccess, error: userAccessError } = await supabase.rpc("get_user_access");
+
+      if (userAccessError) {
+        console.warn("[Auth] erro ao buscar get_user_access:", userAccessError);
+      }
+
+      const accessRow = Array.isArray(userAccess) ? userAccess[0] : userAccess;
+      const accessRole = normalizeRole(accessRow?.role ?? null);
+      if (accessRole) return accessRole;
+
+      const { data: accountMember, error: accountMemberError } = await supabase
+        .from("account_members")
+        .select("role")
+        .eq("user_id", userId)
+        .limit(1)
+        .maybeSingle();
+
+      if (accountMemberError) {
+        console.warn("[Auth] erro ao buscar account_members:", accountMemberError);
+      }
+
+      const accountRole = normalizeRole(accountMember?.role);
+      if (accountRole) return accountRole;
+
+      const { data: membership, error: membershipError } = await supabase
+        .from("school_memberships")
+        .select("role")
+        .eq("user_id", userId)
+        .limit(1)
+        .maybeSingle();
+
+      if (membershipError) {
+        console.warn("[Auth] erro ao buscar school_memberships:", membershipError);
+      }
+
+      const membershipRole = normalizeRole(membership?.role as string | null);
+      if (membershipRole) return membershipRole;
+
+      console.warn("[Auth] usuário autenticado, mas sem permissão no sistema");
+      return null;
     } catch (err) {
-      console.error("[Auth] erro ao carregar acesso:", err);
-      if (mountedRef.current && requestIdRef.current === requestId) {
-        setRole(null);
-        setSchoolId(null);
-        setStatus(null);
-      }
-    } finally {
-      if (mountedRef.current && requestIdRef.current === requestId) {
-        setLoading(false);
-      }
+      console.error("[Auth] resolveRole error:", err);
+      return null;
     }
-  };
+  }, []);
 
-  const refreshAccess = async () => {
-    if (!session?.user) return;
-    requestIdRef.current += 1;
-    await fetchAccessFor(session.user.id, requestIdRef.current);
-  };
+  const loadRoleForUser = useCallback(
+    async (userId: string, requestId: number) => {
+      try {
+        console.log("[Auth] resolvendo role para SESSION USER ID:", userId, "req:", requestId);
+        const nextRole = await withTimeout(resolveRole(userId), "[Auth] carregamento de permissões");
+        if (mountedRef.current && roleRequestRef.current === requestId) {
+          console.log("[Auth] ROLE RESOLVIDA:", nextRole, "para AUTH USER ID:", userId);
+          setRole(nextRole);
+        } else {
+          console.log("[Auth] descartando role (request stale)", { requestId, current: roleRequestRef.current });
+        }
+      } catch (err) {
+        console.error("[Auth] falha ao carregar permissões:", err);
+        if (mountedRef.current && roleRequestRef.current === requestId) {
+          setRole(null);
+        }
+      } finally {
+        if (mountedRef.current && roleRequestRef.current === requestId) {
+          setLoading(false);
+        }
+      }
+    },
+    [resolveRole],
+  );
 
   useEffect(() => {
     mountedRef.current = true;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!mountedRef.current) return;
-      if (event === "INITIAL_SESSION") return;
 
-      requestIdRef.current += 1;
-      const reqId = requestIdRef.current;
+      console.log("[Auth] onAuthStateChange:", event);
+
+      // evita loop no INITIAL_SESSION
+      if (event === "INITIAL_SESSION") {
+        return;
+      }
+
+      roleRequestRef.current += 1;
+      const requestId = roleRequestRef.current;
+
+      sessionUserIdRef.current = nextSession?.user?.id ?? null;
 
       setSession(nextSession);
       setRole(null);
-      setSchoolId(null);
-      setStatus(null);
 
       if (event === "SIGNED_OUT" || !nextSession?.user) {
         setLoading(false);
@@ -167,46 +322,73 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       setLoading(true);
-      // Defer to break out of supabase callback
+
       setTimeout(() => {
-        if (mountedRef.current && requestIdRef.current === reqId) {
-          void fetchAccessFor(nextSession.user.id, reqId);
+        if (mountedRef.current && roleRequestRef.current === requestId) {
+          void loadRoleForUser(nextSession.user.id, requestId);
         }
       }, 0);
     });
 
-    (async () => {
+    const initializeAuth = async () => {
+      if (initializedRef.current) return;
+      initializedRef.current = true;
+
       try {
         setLoading(true);
-        const { data: { session: s } } = await withTimeout(supabase.auth.getSession(), "getSession");
+        await withTimeout(processAuthCallbackFromUrl(), "[Auth] processamento do callback");
+
+        const {
+          data: { session: restoredSession },
+          error,
+        } = await withTimeout(supabase.auth.getSession(), "[Auth] getSession");
+
+        if (error) {
+          console.error("[Auth] getSession error:", error);
+          const message = `${error.message ?? ""}`.toLowerCase();
+          if (message.includes("refresh") || message.includes("jwt") || message.includes("token")) {
+            clearSupabaseStorage();
+          }
+        }
+
         if (!mountedRef.current) return;
-        setSession(s);
-        if (s?.user) {
-          requestIdRef.current += 1;
-          await fetchAccessFor(s.user.id, requestIdRef.current);
-        } else {
+
+        roleRequestRef.current += 1;
+        const requestId = roleRequestRef.current;
+
+        console.log("[Auth] initializeAuth → SESSION USER ID:", restoredSession?.user?.id ?? null);
+
+        sessionUserIdRef.current = restoredSession?.user?.id ?? null;
+        setSession(restoredSession);
+        setRole(null);
+
+        if (restoredSession?.user) {
+          await loadRoleForUser(restoredSession.user.id, requestId);
+        } else if (mountedRef.current && roleRequestRef.current === requestId) {
           setLoading(false);
         }
       } catch (err) {
-        console.error("[Auth] init error:", err);
+        console.error("[Auth] initializeAuth error:", err);
         if (mountedRef.current) {
+          clearSupabaseStorage();
+          roleRequestRef.current += 1;
+          sessionUserIdRef.current = null;
           setSession(null);
           setRole(null);
-          setSchoolId(null);
-          setStatus(null);
           setLoading(false);
         }
       }
-    })();
+    };
+
+    void initializeAuth();
 
     return () => {
       mountedRef.current = false;
       subscription.unsubscribe();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadRoleForUser]);
 
-  const clearLocal = () => {
+  const clearSupabaseStorage = () => {
     if (typeof window === "undefined") return;
     try {
       const keys: string[] = [];
@@ -215,28 +397,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (k && (k.startsWith("sb-") || k.includes("supabase.auth"))) keys.push(k);
       }
       keys.forEach((k) => localStorage.removeItem(k));
-    } catch (e) {
-      console.warn("[Auth] clearLocal:", e);
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const k = sessionStorage.key(i);
+        if (k && (k.startsWith("sb-") || k.includes("supabase.auth"))) sessionStorage.removeItem(k);
+      }
+    } catch (err) {
+      console.warn("[Auth] erro limpando storage:", err);
     }
   };
 
   const signOut = async () => {
-    requestIdRef.current += 1;
+    roleRequestRef.current += 1;
+    sessionUserIdRef.current = null;
     setSession(null);
     setRole(null);
-    setSchoolId(null);
-    setStatus(null);
     try {
       await supabase.auth.signOut({ scope: "global" });
-    } catch (e) {
-      console.warn("[Auth] signOut:", e);
+    } catch (err) {
+      console.warn("[Auth] signOut error:", err);
     }
-    clearLocal();
+    clearSupabaseStorage();
     setLoading(false);
   };
 
-  // Só considera dashboardRole quando o status estiver ativo
-  const dashboardRole = role && status === "active" ? roleToDashboard[role] : null;
+  const dashboardRole = role ? roleToDashboard[role] : null;
 
   return (
     <AuthContext.Provider
@@ -244,11 +428,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         session,
         user: session?.user ?? null,
         loading,
-        role: status === "active" ? role : null,
+        role,
         dashboardRole,
-        schoolId,
-        status,
-        refreshAccess,
         signOut,
       }}
     >
