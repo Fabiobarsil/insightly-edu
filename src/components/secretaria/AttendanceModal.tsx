@@ -48,7 +48,7 @@ const PRIORITY_STYLES: Record<string, string> = {
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  aberto: "A Fazer",
+  pendente: "A Fazer",
   em_andamento: "Em Andamento",
   concluido: "Concluído",
 };
@@ -103,14 +103,14 @@ const AttendanceModal = ({ open, onOpenChange, request }: Props) => {
   };
 
   const updateMutation = useMutation({
-    mutationFn: async (newStatus: "concluido" | "aberto") => {
+    mutationFn: async (newStatus: "concluido" | "pendente") => {
       if (!request) throw new Error("Solicitação ausente");
       await updateRequestStatus(
         {
           id: request.id,
           school_id: request.school_id,
           student_id: request.student_id,
-          status: request.status,
+          status: request.request_status,
         },
         newStatus,
         note.trim() || null
@@ -172,7 +172,7 @@ const AttendanceModal = ({ open, onOpenChange, request }: Props) => {
                     {request.priority}
                   </Badge>
                   <Badge variant="secondary" className="text-[11px] font-semibold">
-                    {STATUS_LABEL[request.status] ?? request.status}
+                    {STATUS_LABEL[request.request_status] ?? request.request_status}
                   </Badge>
                 </div>
               </div>
