@@ -147,17 +147,15 @@ export function useSecretariaKanban() {
           days_open: days,
           // anexamos updated_at para o filtro de "concluído hoje"
           // (não exposto no tipo público porque é interno)
-          // @ts-expect-error
           _updated_at: r.updated_at ?? r.created_at,
-        };
+        } as KanbanRequest & { _updated_at: string };
       });
 
       // Concluídos: só permanecem na fila se foram resolvidos hoje (via updated_at).
       const today = new Date();
       const finalRows = rows.filter((r) => {
         if (r.status !== "concluido") return true;
-        // @ts-expect-error campo interno
-        const updated = r._updated_at as string;
+        const updated = (r as KanbanRequest & { _updated_at?: string })._updated_at ?? r.created_at;
         return isSameDay(new Date(updated), today);
       });
 
