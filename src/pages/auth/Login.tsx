@@ -66,7 +66,7 @@ const Login = () => {
   return (
     <div className="min-h-screen flex bg-background">
       {/* Left side — Branding panel (hidden on mobile) */}
-      <aside className="hidden lg:flex lg:w-[45%] bg-primary relative overflow-hidden">
+      <aside className="hidden lg:flex lg:w-[45%] bg-[hsl(222_47%_11%)] relative overflow-hidden">
         {/* Decorative gradient blobs */}
         <div className="absolute -top-32 -left-32 w-96 h-96 bg-secondary/20 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -right-20 w-[500px] h-[500px] bg-secondary/10 rounded-full blur-3xl" />
@@ -206,7 +206,7 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-primary text-primary-foreground py-2.5 rounded-xl font-bold text-sm hover:opacity-90 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full bg-secondary text-secondary-foreground py-2.5 rounded-xl font-bold text-sm hover:bg-secondary/90 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
