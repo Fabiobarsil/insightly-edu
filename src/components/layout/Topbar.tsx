@@ -30,7 +30,7 @@ const Topbar = ({ title, breadcrumbs }: TopbarProps) => {
   const [profileName, setProfileName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [motivationalQuote] = useState(
-    () => MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)]
+    () => MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)],
   );
   useEffect(() => {
     if (!user) return;
@@ -54,12 +54,14 @@ const Topbar = ({ title, breadcrumbs }: TopbarProps) => {
   });
 
   return (
-    <header className="sticky top-0 bg-sidebar px-8 py-4 flex items-center justify-between z-[5] max-[900px]:px-5 max-[640px]:flex-col max-[640px]:items-start max-[640px]:gap-4">
+    <header className="sticky top-0 bg-sidebar px-8 py-2 flex items-center justify-between z-[5] max-[900px]:px-5 max-[640px]:flex-col max-[640px]:items-start max-[640px]:gap-4">
       <div>
         <h2 className="text-lg font-semibold text-sidebar-foreground tracking-tight">
           {getGreeting()}, {firstName}
         </h2>
-        <p className="text-[12px] text-sidebar-foreground/60 mt-0.5 capitalize">{today} · {motivationalQuote}</p>
+        <p className="text-[12px] text-sidebar-foreground/60 mt-0.5 capitalize">
+          {today} · {motivationalQuote}
+        </p>
       </div>
       <div className="flex items-center gap-3">
         <div className="text-right max-[640px]:hidden">
