@@ -139,3 +139,14 @@ html, body {
   overflow-x: hidden;
   max-width: 100%;
 }
+
+/* === Identidade Certus: bg-primary sólido => verde institucional ===
+   Mantém text-primary (navy) intacto para títulos/ícones e preserva
+   variantes translúcidas (bg-primary/10, /20, /5) usadas em badges. */
+@layer utilities {
+  .bg-primary { background-color: hsl(var(--secondary)) !important; }
+  .hover\:bg-primary\/90:hover { background-color: hsl(var(--secondary) / 0.9) !important; }
+  .hover\:bg-primary\/80:hover { background-color: hsl(var(--secondary) / 0.8) !important; }
+  .bg-primary\/90 { background-color: hsl(var(--secondary) / 0.9) !important; }
+  .text-primary-foreground { color: hsl(var(--secondary-foreground)) !important; }
+}
