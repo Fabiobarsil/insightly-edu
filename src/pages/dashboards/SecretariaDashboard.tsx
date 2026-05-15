@@ -60,11 +60,17 @@ const SecretariaDashboard = () => {
     if (!schoolId) return;
     const channel = supabase
       .channel("secretary-requests-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "secretary_requests", filter: `school_id=eq.${schoolId}` }, () => {
-        queryClient.invalidateQueries({ queryKey: ["secretary-requests", schoolId] });
-      })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "secretary_requests", filter: `school_id=eq.${schoolId}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["secretary-requests", schoolId] });
+        },
+      )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [schoolId, queryClient]);
 
   const activeRequests = requests.filter((r) => r.status !== "concluido");
@@ -72,7 +78,7 @@ const SecretariaDashboard = () => {
   const today = new Date().toISOString().split("T")[0];
   const overdueRequests = activeRequests.filter((r) => r.deadline && r.deadline < today);
   const sorted = [...activeRequests].sort(
-    (a, b) => PRIORITY_ORDER.indexOf(a.priority) - PRIORITY_ORDER.indexOf(b.priority)
+    (a, b) => PRIORITY_ORDER.indexOf(a.priority) - PRIORITY_ORDER.indexOf(b.priority),
   );
 
   const urgentCount = activeRequests.filter((r) => r.priority === "urgente").length;
@@ -81,11 +87,15 @@ const SecretariaDashboard = () => {
   const totalResolved = resolvedRequests.length;
   const totalOverdue = overdueRequests.length;
 
-  const healthData = useMemo(() => [
-    { name: "Pendentes", value: totalPending - totalOverdue, color: "#EAB308" },
-    { name: "Resolvidos", value: totalResolved, color: "#22C55E" },
-    { name: "Atrasados", value: totalOverdue, color: "#EF4444" },
-  ].filter((d) => d.value > 0), [totalPending, totalResolved, totalOverdue]);
+  const healthData = useMemo(
+    () =>
+      [
+        { name: "Pendentes", value: totalPending - totalOverdue, color: "#EAB308" },
+        { name: "Resolvidos", value: totalResolved, color: "#22C55E" },
+        { name: "Atrasados", value: totalOverdue, color: "#EF4444" },
+      ].filter((d) => d.value > 0),
+    [totalPending, totalResolved, totalOverdue],
+  );
 
   const healthTotal = totalPending + totalResolved;
 
@@ -124,7 +134,10 @@ const SecretariaDashboard = () => {
       label: "Pendentes",
       value: totalPending,
       icon: Clock,
-      accent: totalPending > 0 ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" : "bg-muted/50 text-muted-foreground",
+      accent:
+        totalPending > 0
+          ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+          : "bg-muted/50 text-muted-foreground",
       onClick: () => setListModal("pendentes"),
     },
     {
@@ -145,13 +158,22 @@ const SecretariaDashboard = () => {
       label: "Da Coordenação",
       value: coordCount,
       icon: Bell,
-      accent: coordCount > 0 ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" : "bg-muted/50 text-muted-foreground",
+      accent:
+        coordCount > 0
+          ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+          : "bg-muted/50 text-muted-foreground",
       onClick: () => {},
     },
   ];
 
-  const modalList = listModal === "pendentes" ? activeRequests : listModal === "atrasados" ? overdueRequests : resolvedRequests;
-  const modalTitle = listModal === "pendentes" ? "Solicitações Pendentes" : listModal === "atrasados" ? "Solicitações Atrasadas" : "Solicitações Resolvidas";
+  const modalList =
+    listModal === "pendentes" ? activeRequests : listModal === "atrasados" ? overdueRequests : resolvedRequests;
+  const modalTitle =
+    listModal === "pendentes"
+      ? "Solicitações Pendentes"
+      : listModal === "atrasados"
+        ? "Solicitações Atrasadas"
+        : "Solicitações Resolvidas";
 
   return (
     <RoleLayout title="Secretaria">
@@ -165,11 +187,20 @@ const SecretariaDashboard = () => {
                 {coordCount} solicitação(ões) da Coordenação Pedagógica
               </p>
               <p className="text-xs text-muted-foreground">
-                {activeRequests.filter((r) => r.origin === "coordenacao").map((r) => r.student_name || r.request_type).slice(0, 3).join(", ")}
+                {activeRequests
+                  .filter((r) => r.origin === "coordenacao")
+                  .map((r) => r.student_name || r.request_type)
+                  .slice(0, 3)
+                  .join(", ")}
                 {coordCount > 3 ? ` e mais ${coordCount - 3}...` : ""}
               </p>
             </div>
-            <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 text-[10px] shrink-0">Nova</Badge>
+            <Badge
+              variant="secondary"
+              className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 text-[10px] shrink-0"
+            >
+              Nova
+            </Badge>
           </div>
         )}
 
@@ -177,9 +208,14 @@ const SecretariaDashboard = () => {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold text-foreground">Secretaria Digital</h2>
-            <p className="text-sm text-muted-foreground">Fila de trabalho unificada — solicitações, prioridades e execução</p>
+            <p className="text-sm text-muted-foreground">
+              Fila de trabalho unificada — solicitações, prioridades e execução
+            </p>
           </div>
-          <Button onClick={() => setModalOpen(true)} className="gap-2">
+          <Button
+            onClick={() => setModalOpen(true)}
+            className="gap-2 bg-[#16A34A] hover:bg-[#15803D] text-white border-0 shadow-sm rounded-xl"
+          >
             <Plus className="h-4 w-4" />
             Nova Solicitação
           </Button>
@@ -232,7 +268,9 @@ const SecretariaDashboard = () => {
                     <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Aluno</th>
                     <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Tipo</th>
                     <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Origem</th>
-                    <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Prioridade</th>
+                    <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">
+                      Prioridade
+                    </th>
                     <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Prazo</th>
                     <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Status</th>
                     <th className="px-4 py-3 text-xs font-bold text-muted-foreground uppercase text-right">Ação</th>
@@ -248,37 +286,48 @@ const SecretariaDashboard = () => {
                         <td className="px-4 py-3 font-medium text-foreground">{r.student_name || "—"}</td>
                         <td className="px-4 py-3 text-foreground">{r.request_type}</td>
                         <td className="px-4 py-3">
-                          <Badge variant="outline" className={r.origin === "coordenacao" ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 text-[10px]" : "text-[10px]"}>
+                          <Badge
+                            variant="outline"
+                            className={
+                              r.origin === "coordenacao"
+                                ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 text-[10px]"
+                                : "text-[10px]"
+                            }
+                          >
                             {r.origin === "coordenacao" ? "Coordenação" : "Secretaria"}
                           </Badge>
                         </td>
                         <td className="px-4 py-3">
-                          <Badge variant="secondary" className={pri.class}>{pri.label}</Badge>
+                          <Badge variant="secondary" className={pri.class}>
+                            {pri.label}
+                          </Badge>
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">
                           {r.deadline ? format(new Date(r.deadline), "dd/MM/yyyy") : "—"}
                         </td>
                         <td className="px-4 py-3">
-                          <Badge variant="secondary" className={st.class}>{st.label}</Badge>
+                          <Badge variant="secondary" className={st.class}>
+                            {st.label}
+                          </Badge>
                         </td>
                         <td className="px-4 py-3 text-right">
-                              {next ? (
-                             <button
-                            onClick={() => {
-                              if (!r.student_id) {
-                                console.error("student_id não encontrado", r);
-                                return;
-                              }
-                          
-                              navigate(`/secretaria/matricula/${r.student_id}`);
-                            }}
-                            className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
-                          >
-                                Atender
-                              </button>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">✓</span>
-                            )}
+                          {next ? (
+                            <button
+                              onClick={() => {
+                                if (!r.student_id) {
+                                  console.error("student_id não encontrado", r);
+                                  return;
+                                }
+
+                                navigate(`/secretaria/matricula/${r.student_id}`);
+                              }}
+                              className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
+                            >
+                              Atender
+                            </button>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">✓</span>
+                          )}
                         </td>
                       </tr>
                     );
@@ -322,15 +371,30 @@ const SecretariaDashboard = () => {
                     </Pie>
                     <Tooltip
                       formatter={(value: number, name: string) => [`${value}`, name]}
-                      contentStyle={{ borderRadius: "8px", fontSize: "12px", border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }}
+                      contentStyle={{
+                        borderRadius: "8px",
+                        fontSize: "12px",
+                        border: "1px solid hsl(var(--border))",
+                        background: "hsl(var(--card))",
+                      }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
               <div className="flex flex-col gap-3">
                 {[
-                  { label: "Pendentes", value: totalPending - totalOverdue, color: "bg-yellow-500", modal: "pendentes" as ListModalType },
-                  { label: "Resolvidos", value: totalResolved, color: "bg-emerald-500", modal: "resolvidos" as ListModalType },
+                  {
+                    label: "Pendentes",
+                    value: totalPending - totalOverdue,
+                    color: "bg-yellow-500",
+                    modal: "pendentes" as ListModalType,
+                  },
+                  {
+                    label: "Resolvidos",
+                    value: totalResolved,
+                    color: "bg-emerald-500",
+                    modal: "resolvidos" as ListModalType,
+                  },
                   { label: "Atrasados", value: totalOverdue, color: "bg-red-500", modal: "atrasados" as ListModalType },
                 ].map((item) => (
                   <button
@@ -348,7 +412,6 @@ const SecretariaDashboard = () => {
           )}
         </div>
 
-
         <Dialog open={!!listModal} onOpenChange={(open) => !open && setListModal(null)}>
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
@@ -365,14 +428,27 @@ const SecretariaDashboard = () => {
                   return (
                     <div key={r.id} className="border border-border/60 rounded-lg p-3 flex items-center gap-3">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-foreground truncate">{r.student_name || "—"} — {r.request_type}</p>
+                        <p className="text-sm font-semibold text-foreground truncate">
+                          {r.student_name || "—"} — {r.request_type}
+                        </p>
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <Badge variant="secondary" className={pri.class + " text-[10px]"}>{pri.label}</Badge>
-                          <Badge variant="secondary" className={st.class + " text-[10px]"}>{st.label}</Badge>
+                          <Badge variant="secondary" className={pri.class + " text-[10px]"}>
+                            {pri.label}
+                          </Badge>
+                          <Badge variant="secondary" className={st.class + " text-[10px]"}>
+                            {st.label}
+                          </Badge>
                           {r.origin === "coordenacao" && (
-                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 text-[10px]">Coordenação</Badge>
+                            <Badge
+                              variant="outline"
+                              className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 text-[10px]"
+                            >
+                              Coordenação
+                            </Badge>
                           )}
-                          <span className="text-[10px] text-muted-foreground">{format(new Date(r.created_at), "dd/MM/yyyy")}</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {format(new Date(r.created_at), "dd/MM/yyyy")}
+                          </span>
                         </div>
                       </div>
                       {next && (listModal === "pendentes" || listModal === "atrasados") && (
@@ -380,7 +456,13 @@ const SecretariaDashboard = () => {
                           onClick={() => advanceStatus.mutate({ id: r.id, newStatus: next })}
                           className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1 shrink-0"
                         >
-                          {next === "concluido" ? <><CheckCircle2 className="h-3.5 w-3.5" /> Resolver</> : <>→ {STATUS_MAP[next]?.label}</>}
+                          {next === "concluido" ? (
+                            <>
+                              <CheckCircle2 className="h-3.5 w-3.5" /> Resolver
+                            </>
+                          ) : (
+                            <>→ {STATUS_MAP[next]?.label}</>
+                          )}
                         </button>
                       )}
                     </div>
@@ -392,11 +474,7 @@ const SecretariaDashboard = () => {
         </Dialog>
 
         {/* Modals */}
-        <RequestFormModal
-          open={modalOpen}
-          onOpenChange={setModalOpen}
-          onCreated={(id) => setClassifyId(id)}
-        />
+        <RequestFormModal open={modalOpen} onOpenChange={setModalOpen} onCreated={(id) => setClassifyId(id)} />
         <PriorityModal
           open={!!classifyId}
           onConfirm={(priority) => classifyId && classifyMutation.mutate({ id: classifyId, priority })}
