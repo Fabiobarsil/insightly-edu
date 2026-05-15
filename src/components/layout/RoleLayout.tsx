@@ -12,9 +12,9 @@ interface RoleLayoutProps {
 
 const RoleLayout = ({ children, title, breadcrumbs }: RoleLayoutProps) => (
   <SidebarProvider>
-    <div className="flex min-h-screen overflow-x-hidden">
+    <div className="flex min-h-screen">
       <RoleSidebar />
-      <main className="flex-1 min-w-0 min-h-screen bg-background overflow-y-auto lg:ml-60">
+      <main className="flex-1 min-w-0 min-h-screen bg-background lg:ml-60">
         <Topbar title={title} breadcrumbs={breadcrumbs} />
         <div className="max-w-[1200px] p-4 sm:p-6 lg:p-8">
           <InternalPageHeader breadcrumbs={breadcrumbs} />

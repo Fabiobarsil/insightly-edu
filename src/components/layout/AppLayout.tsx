@@ -12,7 +12,7 @@ interface AppLayoutProps {
 
 const AppLayout = ({ children, title, breadcrumbs }: AppLayoutProps) => (
   <SidebarProvider>
-    <div className="flex min-h-screen overflow-x-hidden">
+    <div className="flex min-h-screen">
       <RoleSidebar />
       <main className="flex-1 min-w-0 min-h-screen bg-background lg:ml-60">
         <Topbar title={title} breadcrumbs={breadcrumbs} />
