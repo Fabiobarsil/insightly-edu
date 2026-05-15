@@ -57,7 +57,7 @@ const Topbar = (_: TopbarProps) => {
   });
 
   return (
-    <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200/60 px-4 lg:px-6 py-2 flex items-center justify-between gap-3">
+    <header className="sticky top-0 bg-sidebar border-b border-border/60 px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between gap-3 z-20">
       <div className="flex items-center gap-3 min-w-0">
         <button
           onClick={toggle}
