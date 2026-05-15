@@ -80,7 +80,7 @@ const RoleSidebar = () => {
 
       <aside
         className={cn(
-          "fixed left-0 top-0 w-60 h-screen bg-sidebar flex flex-col z-40 transition-transform duration-300 ease-out",
+          "fixed left-0 top-0 w-60 h-screen bg-sidebar border-r border-border flex flex-col z-40 transition-transform duration-300 ease-out",
           "lg:translate-x-0",
           open ? "translate-x-0 shadow-2xl" : "-translate-x-full",
         )}
