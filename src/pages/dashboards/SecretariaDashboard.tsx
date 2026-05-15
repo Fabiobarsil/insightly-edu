@@ -214,7 +214,7 @@ const SecretariaDashboard = () => {
           </div>
           <Button
             onClick={() => setModalOpen(true)}
-            className="gap-2 bg-[#16A34A] hover:bg-[#15803D] text-white border-0 shadow-sm rounded-xl"
+            className="gap-2 !bg-[#16A34A] hover:!bg-[#15803D] !text-white border-0 shadow-sm rounded-xl"
           >
             <Plus className="h-4 w-4" />
             Nova Solicitação
