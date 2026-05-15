@@ -80,23 +80,23 @@ const RoleSidebar = () => {
 
       <aside
         className={cn(
-          "fixed left-0 top-0 w-60 h-screen bg-sidebar flex flex-col z-40 transition-transform duration-300 ease-out",
+          "fixed left-0 top-0 w-60 h-screen bg-sidebar border-r border-border flex flex-col z-40 transition-transform duration-300 ease-out",
           "lg:translate-x-0",
           open ? "translate-x-0 shadow-2xl" : "-translate-x-full",
         )}
       >
-        <div className="px-5 py-4 flex items-center justify-between">
+        <div className="px-5 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src={logoCertus} alt="CertusEdu" className="h-8 w-auto rounded-[10px]" />
             <div>
               <h1 className="text-[15px] font-semibold text-sidebar-foreground leading-tight tracking-tight">CertusEdu</h1>
-              <p className="text-[11px] text-sidebar-foreground/45">Gestão Escolar</p>
+              <p className="text-[11px] text-sidebar-foreground/50">Gestão Escolar</p>
             </div>
           </div>
           <button
             onClick={() => setOpen(false)}
             aria-label="Fechar menu"
-            className="lg:hidden p-1.5 rounded-md text-sidebar-foreground/70 hover:bg-sidebar-foreground/10"
+            className="lg:hidden p-1.5 rounded-md text-sidebar-foreground/60 hover:bg-accent"
           >
             <X className="h-4 w-4" />
           </button>
@@ -108,24 +108,24 @@ const RoleSidebar = () => {
               key={item.to}
               to={item.to}
               end={item.to.endsWith("/dashboard")}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-[10px] text-sidebar-foreground/65 mb-0.5 transition-colors text-left text-[13px] font-medium hover:bg-sidebar-foreground/[0.06] hover:text-sidebar-foreground"
-              activeClassName="bg-secondary/15 text-secondary"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-sidebar-foreground/75 mb-1 transition-colors text-left text-[13px] font-medium hover:bg-accent hover:text-sidebar-foreground"
+              activeClassName="bg-secondary/10 text-secondary hover:bg-secondary/10 hover:text-secondary"
             >
-              <i className={cn(item.icon, "text-[17px]", item.color)} />
+              <i className={cn(item.icon, "text-[17px]")} />
               {item.label}
             </NavLink>
           ))}
         </nav>
 
-        <div className="px-3 pb-4 pt-2 flex flex-col gap-2">
+        <div className="px-3 pb-4 pt-3 border-t border-border/60 flex flex-col gap-2">
           <button
             onClick={signOut}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-[10px] text-sidebar-foreground/65 hover:bg-destructive/15 hover:text-destructive transition-colors text-[13px] font-medium"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-[10px] text-sidebar-foreground/70 hover:bg-destructive/10 hover:text-destructive transition-colors text-[13px] font-medium"
           >
             <i className="ri-logout-box-r-line text-[17px]" />
             Sair
           </button>
-          <span className="text-[11px] text-sidebar-foreground/35 px-3">© 2026 CertusEdu</span>
+          <span className="text-[11px] text-sidebar-foreground/40 px-3">© 2026 CertusEdu</span>
         </div>
       </aside>
     </>
