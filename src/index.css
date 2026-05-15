@@ -16,7 +16,7 @@
 @layer base {
   :root {
     /* Certus SaaS Premium Clean Executive */
-    --background: 210 40% 98%;        /* #F8FAFC */
+    --background: 210 40% 96%;        /* #F1F5F9 */
     --foreground: 222 47% 11%;        /* #0F172A */
 
     --card: 0 0% 100%;                /* #FFFFFF */
