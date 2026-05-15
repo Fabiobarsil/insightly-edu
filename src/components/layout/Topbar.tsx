@@ -1,6 +1,8 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { Menu } from "lucide-react";
+import { useSidebar } from "./SidebarContext";
 
 interface TopbarProps {
   title?: string;
@@ -25,8 +27,9 @@ const getGreeting = () => {
   return "Boa noite";
 };
 
-const Topbar = ({ title, breadcrumbs }: TopbarProps) => {
+const Topbar = (_: TopbarProps) => {
   const { user } = useAuth();
+  const { toggle } = useSidebar();
   const [profileName, setProfileName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [motivationalQuote] = useState(
@@ -54,17 +57,26 @@ const Topbar = ({ title, breadcrumbs }: TopbarProps) => {
   });
 
   return (
-    <header className="sticky top-0 bg-sidebar px-8 py-2 flex items-center justify-between z-[5] max-[900px]:px-5 max-[640px]:flex-col max-[640px]:items-start max-[640px]:gap-4">
-      <div>
-        <h2 className="text-lg font-semibold text-sidebar-foreground tracking-tight">
-          {getGreeting()}, {firstName}
-        </h2>
-        <p className="text-[12px] text-sidebar-foreground/60 mt-0.5 capitalize">
-          {today} · {motivationalQuote}
-        </p>
+    <header className="sticky top-0 bg-sidebar px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-between gap-3 z-20">
+      <div className="flex items-center gap-3 min-w-0">
+        <button
+          onClick={toggle}
+          aria-label="Abrir menu"
+          className="lg:hidden p-2 -ml-1 rounded-md text-sidebar-foreground/80 hover:bg-sidebar-foreground/10 shrink-0"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <div className="min-w-0">
+          <h2 className="text-base sm:text-lg font-semibold text-sidebar-foreground tracking-tight truncate">
+            {getGreeting()}, {firstName}
+          </h2>
+          <p className="text-[11px] sm:text-[12px] text-sidebar-foreground/60 mt-0.5 capitalize truncate hidden sm:block">
+            {today} · {motivationalQuote}
+          </p>
+        </div>
       </div>
-      <div className="flex items-center gap-3">
-        <div className="text-right max-[640px]:hidden">
+      <div className="flex items-center gap-3 shrink-0">
+        <div className="text-right hidden md:block">
           <p className="text-sm font-medium text-sidebar-foreground">{profileName || firstName}</p>
           <p className="text-[11px] text-sidebar-foreground/50">{user?.email}</p>
         </div>
