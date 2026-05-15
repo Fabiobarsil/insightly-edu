@@ -54,7 +54,7 @@ const SecretaryQuickActionsBar = ({
           <Button
             size="sm"
             onClick={() => onNewRequest?.()}
-            className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-600/30 border-0"
+            className="gap-2 bg-secondary hover:bg-secondary/90 text-secondary-foreground shadow-sm shadow-secondary/30 border-0"
           >
             <FilePlus2 className="h-4 w-4" />
             Nova Solicitação
