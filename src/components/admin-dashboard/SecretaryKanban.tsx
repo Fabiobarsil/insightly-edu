@@ -346,7 +346,9 @@ const KanbanCard = ({ item, nextStatus, onAdvance, onClickCard }: CardProps) => 
       }}
       className={cn(
         "group/card relative bg-card border border-border/50 border-l-4 rounded-md px-3 py-2.5 shadow-sm hover:shadow-md hover:border-primary/40 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30",
-        PRIORITY_BORDER[item.priority] || "border-l-muted",
+        item.request_status === "concluido"
+          ? "bg-emerald-50/70 border-emerald-200 border-l-emerald-500 hover:border-emerald-300"
+          : PRIORITY_BORDER[item.priority] || "border-l-muted",
         isDragging && "opacity-40 cursor-grabbing"
       )}
     >
