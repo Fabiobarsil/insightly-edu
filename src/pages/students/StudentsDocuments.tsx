@@ -199,6 +199,9 @@ const StudentsDocuments = () => {
       queryClient.invalidateQueries({ queryKey: ["student-documents", id] });
       queryClient.invalidateQueries({ queryKey: ["student-attendance-history", id] });
       queryClient.invalidateQueries({ queryKey: ["secretaria-kanban"] });
+      queryClient.invalidateQueries({ queryKey: ["secretary-counters"] });
+      queryClient.invalidateQueries({ queryKey: ["secretary-actions-history"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-cards"] });
       setUploadingType(null);
       toast.success("Documento enviado! Aguardando análise.");
     },
