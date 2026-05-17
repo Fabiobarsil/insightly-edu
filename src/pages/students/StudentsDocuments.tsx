@@ -107,52 +107,90 @@ const StudentsDocuments = () => {
     },
   });
 
+  const normalizeType = (t: string) =>
+    (t || "").toString().trim().toLowerCase().replace(/\s+/g, "_");
+
+  const findRecord = (type: string) =>
+    (studentDocs as any[]).find((d) => normalizeType(d.document_type) === normalizeType(type)) || null;
+
+  const STATUS_LABEL: Record<string, string> = {
+    pendente: "● Pendente",
+    em_analise: "⏳ Em análise",
+    aprovado: "✔ Aprovado",
+    rejeitado: "✖ Rejeitado",
+  };
+
+  const STATUS_CLASS: Record<string, string> = {
+    pendente: "bg-muted text-muted-foreground",
+    em_analise: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+    aprovado: "bg-secondary/15 text-secondary",
+    rejeitado: "bg-destructive/10 text-destructive",
+  };
+
   const docsChecklist = REQUIRED_DOCS.map((req) => {
-    const found = (studentDocs as any[]).find((d) => d.document_type === req.type);
+    const found = findRecord(req.type);
+    const hasFile = !!(found?.file_path || found?.file_url);
+    let status: string = found?.status || "pendente";
+    // Documento sem arquivo nunca pode aparecer como aprovado
+    if (!hasFile && status === "aprovado") status = "pendente";
     return {
       type: req.type,
       label: req.label,
-      record: found || null,
-      status: found?.status === "aprovado" ? "aprovado" : "pendente",
+      record: found,
+      hasFile,
+      status,
     };
   });
 
-  const totalAprovados = docsChecklist.filter((d) => d.status === "aprovado").length;
-  const totalPendentes = docsChecklist.length - totalAprovados;
+  const totalEntregues = docsChecklist.filter((d) => d.hasFile).length;
+  const totalPendentes = docsChecklist.length - totalEntregues;
 
   // Upload
   const uploadDocMutation = useMutation({
     mutationFn: async ({ file, docType }: { file: File; docType: string }) => {
       if (!schoolId) throw new Error("Sem escola vinculada");
-      setUploadingType(docType);
+      const typeKey = normalizeType(docType);
+      setUploadingType(typeKey);
 
+      const { data: auth } = await supabase.auth.getUser();
+      const userId = auth?.user?.id || null;
+
+      const ext = (file.name.split(".").pop() || "bin")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "");
       const cleanFileName = file.name
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
         .replace(/\s+/g, "_")
         .replace(/[^a-zA-Z0-9._-]/g, "");
-      const filePath = `${schoolId}/${id}/${docType}_${Date.now()}_${cleanFileName}`;
+      const filePath = `${schoolId}/${id}/${typeKey}-${Date.now()}.${ext}`;
 
       const { error: upErr } = await supabase.storage
         .from("student-documents")
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, file, { upsert: true, contentType: file.type || undefined });
       if (upErr) throw upErr;
 
-      const existing = (studentDocs as any[]).find((d) => d.document_type === docType);
+      const existing = findRecord(typeKey);
+      const payload = {
+        file_path: filePath,
+        file_name: cleanFileName,
+        status: "em_analise",
+        document_type: typeKey,
+        uploaded_at: new Date().toISOString(),
+        uploaded_by: userId,
+      } as any;
+
       if (existing) {
         const { error } = await supabase
           .from("student_documents")
-          .update({ status: "aprovado", file_path: filePath, file_name: cleanFileName })
+          .update(payload)
           .eq("id", existing.id);
         if (error) throw error;
       } else {
         const { error } = await supabase.from("student_documents").insert({
           school_id: schoolId,
           student_id: id!,
-          document_type: docType,
-          status: "aprovado",
-          file_path: filePath,
-          file_name: cleanFileName,
+          ...payload,
         });
         if (error) throw error;
       }
@@ -162,7 +200,7 @@ const StudentsDocuments = () => {
       queryClient.invalidateQueries({ queryKey: ["student-attendance-history", id] });
       queryClient.invalidateQueries({ queryKey: ["secretaria-kanban"] });
       setUploadingType(null);
-      toast.success("Documento enviado!");
+      toast.success("Documento enviado! Aguardando análise.");
     },
     onError: (err: any) => {
       setUploadingType(null);
@@ -170,29 +208,20 @@ const StudentsDocuments = () => {
     },
   });
 
-  const toggleDocStatus = useMutation({
-    mutationFn: async (item: { type: string; record: any | null }) => {
-      const novoStatus = item.record?.status === "aprovado" ? "pendente" : "aprovado";
-      if (item.record) {
-        const { error } = await supabase
-          .from("student_documents")
-          .update({ status: novoStatus })
-          .eq("id", item.record.id);
-        if (error) throw error;
-      } else {
-        if (!schoolId) throw new Error("Sem escola vinculada");
-        const { error } = await supabase.from("student_documents").insert({
-          school_id: schoolId,
-          student_id: id!,
-          document_type: item.type,
-          status: novoStatus,
-        });
-        if (error) throw error;
+  const setDocStatus = useMutation({
+    mutationFn: async ({ item, status }: { item: { type: string; record: any | null; hasFile: boolean }; status: "aprovado" | "rejeitado" | "em_analise" | "pendente" }) => {
+      if (!item.record) throw new Error("É necessário enviar o arquivo antes.");
+      if ((status === "aprovado" || status === "rejeitado") && !item.hasFile) {
+        throw new Error("Documento sem arquivo não pode ser aprovado/rejeitado.");
       }
+      const { error } = await supabase
+        .from("student_documents")
+        .update({ status })
+        .eq("id", item.record.id);
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["student-documents", id] });
-      queryClient.invalidateQueries({ queryKey: ["student-attendance-history", id] });
       queryClient.invalidateQueries({ queryKey: ["secretaria-kanban"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao atualizar status"),
@@ -294,7 +323,7 @@ const StudentsDocuments = () => {
               <div className="text-right">
                 <div className="text-xs font-bold text-muted-foreground">Entregues</div>
                 <div className="text-lg font-bold text-secondary">
-                  {totalAprovados}/{docsChecklist.length}
+                  {totalEntregues}/{docsChecklist.length}
                 </div>
                 {totalPendentes > 0 && (
                   <div className="text-[10px] font-bold text-destructive flex items-center gap-1 justify-end mt-0.5">
@@ -319,9 +348,9 @@ const StudentsDocuments = () => {
             ) : (
               <div className="space-y-2">
                 {docsChecklist.map((item) => {
-                  const aprovado = item.status === "aprovado";
-                  const hasFile = !!item.record?.file_path;
+                  const hasFile = item.hasFile;
                   const isUploading = uploadingType === item.type;
+                  const statusKey = (item.status as keyof typeof STATUS_LABEL) ?? "pendente";
                   return (
                     <div
                       key={item.type}
@@ -329,7 +358,7 @@ const StudentsDocuments = () => {
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <i
-                          className={`ri-file-line text-lg ${aprovado ? "text-secondary" : "text-muted-foreground"}`}
+                          className={`ri-file-line text-lg ${item.status === "aprovado" ? "text-secondary" : "text-muted-foreground"}`}
                         />
                         <div className="min-w-0">
                           <div className="text-sm font-medium text-primary truncate">{item.label}</div>
@@ -340,20 +369,38 @@ const StudentsDocuments = () => {
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => toggleDocStatus.mutate(item)}
-                          disabled={toggleDocStatus.isPending}
+                        <span
                           className={cn(
-                            "px-2.5 py-1 rounded-full text-[10px] font-bold transition-colors disabled:opacity-60",
-                            aprovado
-                              ? "bg-secondary/15 text-secondary hover:bg-secondary/25"
-                              : "bg-destructive/10 text-destructive hover:bg-destructive/20",
+                            "px-2.5 py-1 rounded-full text-[10px] font-bold",
+                            STATUS_CLASS[statusKey] ?? STATUS_CLASS.pendente,
                           )}
-                          title="Alternar status"
                         >
-                          {aprovado ? "✔ Aprovado" : "● Pendente"}
-                        </button>
+                          {STATUS_LABEL[statusKey] ?? STATUS_LABEL.pendente}
+                        </span>
+
+                        {hasFile && item.status !== "aprovado" && (
+                          <button
+                            type="button"
+                            onClick={() => setDocStatus.mutate({ item, status: "aprovado" })}
+                            disabled={setDocStatus.isPending}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[10px] bg-secondary/15 text-secondary text-xs font-bold hover:bg-secondary/25 transition-colors disabled:opacity-60"
+                            title="Aprovar documento"
+                          >
+                            <Check className="h-3.5 w-3.5" /> Aprovar
+                          </button>
+                        )}
+
+                        {hasFile && item.status !== "rejeitado" && (
+                          <button
+                            type="button"
+                            onClick={() => setDocStatus.mutate({ item, status: "rejeitado" })}
+                            disabled={setDocStatus.isPending}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[10px] border border-destructive/30 text-destructive text-xs font-bold hover:bg-destructive/10 transition-colors disabled:opacity-60"
+                            title="Rejeitar documento"
+                          >
+                            Rejeitar
+                          </button>
+                        )}
 
                         <button
                           type="button"
