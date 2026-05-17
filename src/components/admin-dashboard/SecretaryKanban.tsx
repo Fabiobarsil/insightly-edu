@@ -346,17 +346,31 @@ const KanbanCard = ({ item, nextStatus, onAdvance, onClickCard }: CardProps) => 
       }}
       className={cn(
         "group/card relative bg-card border border-border/50 border-l-4 rounded-md px-3 py-2.5 shadow-sm hover:shadow-md hover:border-primary/40 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30",
-        PRIORITY_BORDER[item.priority] || "border-l-muted",
+        item.request_status === "concluido"
+          ? "bg-emerald-50/70 border-emerald-200 border-l-emerald-500 hover:border-emerald-300"
+          : PRIORITY_BORDER[item.priority] || "border-l-muted",
         isDragging && "opacity-40 cursor-grabbing"
       )}
     >
       {/* Linha 1: tipo + título do documento */}
-      <p className="text-sm font-semibold text-foreground leading-snug pr-12 flex items-start gap-1.5">
+      <p className="text-sm font-semibold text-foreground leading-snug pr-20 flex items-start gap-1.5">
         {item.document_type && (
-          <FileText className="h-3.5 w-3.5 shrink-0 mt-0.5 text-muted-foreground" />
+          <FileText
+            className={cn(
+              "h-3.5 w-3.5 shrink-0 mt-0.5",
+              item.request_status === "concluido" ? "text-emerald-600" : "text-muted-foreground"
+            )}
+          />
         )}
         <span className="line-clamp-2">{cardTitle(item)}</span>
       </p>
+
+      {item.request_status === "concluido" && (
+        <span className="absolute top-2 right-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-wide shadow-sm">
+          <CheckCircle2 className="h-3 w-3" />
+          Concluído
+        </span>
+      )}
 
       {/* Linha 2: aluno • turma */}
       {item.student_name && (
