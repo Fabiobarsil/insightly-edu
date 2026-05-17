@@ -215,6 +215,33 @@ export function useSecretariaKanban() {
     [mutation]
   );
 
+  // Realtime: invalida o kanban quando secretaria_requests ou student_documents mudam
+  useEffect(() => {
+    if (!schoolId) return;
+    const channel = supabase
+      .channel(`secretaria-kanban-${schoolId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "secretaria_requests", filter: `school_id=eq.${schoolId}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["secretaria-kanban", schoolId] });
+          queryClient.invalidateQueries({ queryKey: ["secretary-counters"] });
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "student_documents", filter: `school_id=eq.${schoolId}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["secretaria-kanban", schoolId] });
+          queryClient.invalidateQueries({ queryKey: ["secretary-counters"] });
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [schoolId, queryClient]);
+
   return {
     requests,
     loading: schoolLoading || (!!schoolId && isLoading),
