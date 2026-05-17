@@ -348,9 +348,9 @@ const StudentsDocuments = () => {
             ) : (
               <div className="space-y-2">
                 {docsChecklist.map((item) => {
-                  const aprovado = item.status === "aprovado";
-                  const hasFile = !!item.record?.file_path;
+                  const hasFile = item.hasFile;
                   const isUploading = uploadingType === item.type;
+                  const statusKey = (item.status as keyof typeof STATUS_LABEL) ?? "pendente";
                   return (
                     <div
                       key={item.type}
@@ -358,7 +358,7 @@ const StudentsDocuments = () => {
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <i
-                          className={`ri-file-line text-lg ${aprovado ? "text-secondary" : "text-muted-foreground"}`}
+                          className={`ri-file-line text-lg ${item.status === "aprovado" ? "text-secondary" : "text-muted-foreground"}`}
                         />
                         <div className="min-w-0">
                           <div className="text-sm font-medium text-primary truncate">{item.label}</div>
@@ -369,20 +369,38 @@ const StudentsDocuments = () => {
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => toggleDocStatus.mutate(item)}
-                          disabled={toggleDocStatus.isPending}
+                        <span
                           className={cn(
-                            "px-2.5 py-1 rounded-full text-[10px] font-bold transition-colors disabled:opacity-60",
-                            aprovado
-                              ? "bg-secondary/15 text-secondary hover:bg-secondary/25"
-                              : "bg-destructive/10 text-destructive hover:bg-destructive/20",
+                            "px-2.5 py-1 rounded-full text-[10px] font-bold",
+                            STATUS_CLASS[statusKey] ?? STATUS_CLASS.pendente,
                           )}
-                          title="Alternar status"
                         >
-                          {aprovado ? "✔ Aprovado" : "● Pendente"}
-                        </button>
+                          {STATUS_LABEL[statusKey] ?? STATUS_LABEL.pendente}
+                        </span>
+
+                        {hasFile && item.status !== "aprovado" && (
+                          <button
+                            type="button"
+                            onClick={() => setDocStatus.mutate({ item, status: "aprovado" })}
+                            disabled={setDocStatus.isPending}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[10px] bg-secondary/15 text-secondary text-xs font-bold hover:bg-secondary/25 transition-colors disabled:opacity-60"
+                            title="Aprovar documento"
+                          >
+                            <Check className="h-3.5 w-3.5" /> Aprovar
+                          </button>
+                        )}
+
+                        {hasFile && item.status !== "rejeitado" && (
+                          <button
+                            type="button"
+                            onClick={() => setDocStatus.mutate({ item, status: "rejeitado" })}
+                            disabled={setDocStatus.isPending}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[10px] border border-destructive/30 text-destructive text-xs font-bold hover:bg-destructive/10 transition-colors disabled:opacity-60"
+                            title="Rejeitar documento"
+                          >
+                            Rejeitar
+                          </button>
+                        )}
 
                         <button
                           type="button"
