@@ -323,7 +323,7 @@ const StudentsDocuments = () => {
               <div className="text-right">
                 <div className="text-xs font-bold text-muted-foreground">Entregues</div>
                 <div className="text-lg font-bold text-secondary">
-                  {totalAprovados}/{docsChecklist.length}
+                  {totalEntregues}/{docsChecklist.length}
                 </div>
                 {totalPendentes > 0 && (
                   <div className="text-[10px] font-bold text-destructive flex items-center gap-1 justify-end mt-0.5">
