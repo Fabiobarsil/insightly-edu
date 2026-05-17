@@ -219,7 +219,7 @@ export function useSecretariaKanban() {
   useEffect(() => {
     if (!schoolId) return;
     const channel = supabase
-      .channel(`secretaria-kanban-${schoolId}`)
+      .channel(`secretaria-kanban-${schoolId}-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "secretaria_requests", filter: `school_id=eq.${schoolId}` },
