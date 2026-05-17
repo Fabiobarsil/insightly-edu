@@ -223,9 +223,20 @@ const StudentsDocuments = () => {
         .eq("id", item.record.id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({ queryKey: ["student-documents", id] });
+      queryClient.invalidateQueries({ queryKey: ["student-attendance-history", id] });
       queryClient.invalidateQueries({ queryKey: ["secretaria-kanban"] });
+      queryClient.invalidateQueries({ queryKey: ["secretary-counters"] });
+      queryClient.invalidateQueries({ queryKey: ["secretary-actions-history"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-cards"] });
+      toast.success(
+        vars.status === "aprovado"
+          ? "Documento aprovado"
+          : vars.status === "rejeitado"
+          ? "Documento rejeitado — voltou para a fila"
+          : "Status atualizado"
+      );
     },
     onError: (err: any) => toast.error(err.message || "Erro ao atualizar status"),
   });
