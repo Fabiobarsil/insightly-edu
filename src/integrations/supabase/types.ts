@@ -1583,6 +1583,8 @@ export type Database = {
           status: string | null
           student_id: string
           updated_at: string | null
+          uploaded_at: string | null
+          uploaded_by: string | null
         }
         Insert: {
           created_at?: string | null
@@ -1595,6 +1597,8 @@ export type Database = {
           status?: string | null
           student_id: string
           updated_at?: string | null
+          uploaded_at?: string | null
+          uploaded_by?: string | null
         }
         Update: {
           created_at?: string | null
@@ -1607,6 +1611,8 @@ export type Database = {
           status?: string | null
           student_id?: string
           updated_at?: string | null
+          uploaded_at?: string | null
+          uploaded_by?: string | null
         }
         Relationships: []
       }
@@ -2915,6 +2921,10 @@ export type Database = {
     }
     Functions: {
       calculate_final_status: { Args: { dep_count: number }; Returns: string }
+      can_access_student_document: {
+        Args: { _school_id: string; _student_id: string }
+        Returns: boolean
+      }
       close_academic_year: { Args: { p_year: number }; Returns: number }
       close_academic_year_debug: {
         Args: { p_year: number }
