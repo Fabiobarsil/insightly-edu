@@ -15,6 +15,7 @@ import TeacherRegistrationTab from "@/components/settings/TeacherRegistrationTab
 import TemplatesTab from "@/components/settings/TemplatesTab";
 import SignaturesTab from "@/components/settings/SignaturesTab";
 import { fetchAddressByCEP } from "@/utils/cep";
+import { ShieldCheck, GitBranch, Cpu } from "lucide-react";
 
 const UF_LIST = [
   "AC",
