@@ -417,7 +417,7 @@ const AcceptInvite = () => {
         </div>
 
         <p className="text-xs text-center text-muted-foreground mt-4">
-          © 2026 CertusEdu™ Software proprietário do ecossistema Certus • Todos os direitos reservados
+          © 2026 CertusEdu™ v1.0.0 • Software proprietário do ecossistema Certus
         </p>
       </div>
     </div>
