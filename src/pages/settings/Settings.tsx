@@ -961,6 +961,64 @@ const Settings = () => {
           </Dialog>
         </>
       )}
+
+      {/* ========== GOVERNANÇA & CONFORMIDADE ========== */}
+      <section className="mt-10 pt-8 border-t border-border/40">
+        <div className="mb-5">
+          <h3 className="text-sm font-bold text-foreground tracking-tight">Governança & Conformidade</h3>
+          <p className="text-[12px] text-muted-foreground mt-0.5">
+            Princípios institucionais de segurança, evolução e tecnologia do CertusEdu.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            {
+              icon: ShieldCheck,
+              title: "LGPD & Segurança",
+              desc: "Proteção e tratamento responsável de dados escolares e informações sensíveis, seguindo princípios de privacidade, segurança e governança de acesso.",
+            },
+            {
+              icon: GitBranch,
+              title: "Versionamento do Sistema",
+              desc: "O CertusEdu mantém histórico de evolução e melhorias contínuas, promovendo rastreabilidade, estabilidade operacional e transparência das versões publicadas.",
+            },
+            {
+              icon: Cpu,
+              title: "Tecnologia Proprietária",
+              desc: "O CertusEdu é uma solução tecnológica proprietária do ecossistema Certus, desenvolvida com foco em inovação, inteligência operacional e melhoria contínua da gestão escolar.",
+            },
+          ].map((c) => (
+            <div
+              key={c.title}
+              className="bg-card border border-border/60 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-secondary/10 text-secondary mb-3">
+                <c.icon className="h-4 w-4" />
+              </div>
+              <h4 className="text-sm font-bold text-foreground mb-1.5">{c.title}</h4>
+              <p className="text-[12px] leading-relaxed text-muted-foreground">{c.desc}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-5 bg-card border border-border/60 rounded-xl px-5 py-3.5 shadow-sm">
+          <div className="flex flex-wrap items-center gap-x-8 gap-y-2 text-[11px]">
+            <div className="flex flex-col">
+              <span className="text-muted-foreground uppercase tracking-wide text-[10px]">Versão atual</span>
+              <span className="font-semibold text-foreground">v1.0.0</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-muted-foreground uppercase tracking-wide text-[10px]">Última atualização</span>
+              <span className="font-semibold text-foreground">21/05/2026</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-muted-foreground uppercase tracking-wide text-[10px]">Ecossistema</span>
+              <span className="font-semibold text-foreground">Certus</span>
+            </div>
+          </div>
+        </div>
+      </section>
     </AppLayout>
   );
 };
