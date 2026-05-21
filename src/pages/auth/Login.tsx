@@ -135,7 +135,7 @@ const Login = () => {
             </div>
           </div>
 
-          <p className="text-xs text-primary-foreground/45">© 2026 CertusEdu • Uma solução do ecossistema Certus</p>
+          <p className="text-xs text-primary-foreground/45">© 2026 CertusEdu™ v1.0.0 • Software proprietário do ecossistema Certus</p>
         </div>
       </aside>
 
