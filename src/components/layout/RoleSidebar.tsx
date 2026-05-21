@@ -125,7 +125,7 @@ const RoleSidebar = () => {
             <i className="ri-logout-box-r-line text-[17px]" />
             Sair
           </button>
-          <span className="text-[11px] text-sidebar-foreground/40 px-3">© 2026 CertusEdu</span>
+          <span className="text-[11px] text-sidebar-foreground/40 px-3 leading-snug">© 2026 CertusEdu™ v1.0.0<br />Software proprietário do ecossistema Certus</span>
         </div>
       </aside>
     </>
