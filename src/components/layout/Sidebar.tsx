@@ -68,7 +68,7 @@ const Sidebar = () => (
       ))}
     </nav>
 
-    <div className="p-4 border-t border-sidebar-border text-[13px] text-sidebar-foreground/45">© 2024 Certus Edu</div>
+    <div className="p-4 border-t border-sidebar-border text-[12px] text-sidebar-foreground/45 leading-snug">© 2026 CertusEdu™ v1.0.0<br />Software proprietário do ecossistema Certus</div>
   </aside>
 );
 
