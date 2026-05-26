@@ -130,11 +130,18 @@ const UpdatePassword = () => {
             <p className="text-sm text-muted-foreground">Escolha uma nova senha para acessar sua conta.</p>
           </div>
 
-          {!ready ? (
-            <p className="text-sm text-muted-foreground">
-              Validando link de recuperação... Se você abriu esta página fora do link recebido por email, solicite uma
-              nova recuperação.
-            </p>
+          {linkError ? (
+            <div className="space-y-3">
+              <p className="text-sm text-destructive">{linkError}</p>
+              <button
+                onClick={() => navigate("/forgot-password", { replace: true })}
+                className="w-full bg-secondary text-secondary-foreground py-2.5 rounded-xl font-bold text-sm hover:bg-secondary/90 transition-all"
+              >
+                Solicitar nova recuperação
+              </button>
+            </div>
+          ) : !ready ? (
+            <p className="text-sm text-muted-foreground">Validando link de recuperação...</p>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
