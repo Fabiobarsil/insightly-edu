@@ -10,6 +10,8 @@ import RoleRoute from "@/components/auth/RoleRoute";
 import Login from "./pages/auth/Login.tsx";
 import NoAccess from "./pages/auth/NoAccess.tsx";
 import AcceptInvite from "./pages/auth/AcceptInvite.tsx";
+import ForgotPassword from "./pages/auth/ForgotPassword.tsx";
+import UpdatePassword from "./pages/auth/UpdatePassword.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 import SuperadminDashboard from "./pages/dashboards/SuperadminDashboard.tsx";
@@ -145,6 +147,8 @@ const App = () => (
             <Route path="/sem-acesso" element={<NoAccess />} />
             <Route path="/aceitar-convite" element={<AcceptInvite />} />
             <Route path="/reset-password" element={<AcceptInvite />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/update-password" element={<UpdatePassword />} />
 
             <Route path="/" element={<RootRedirect />} />
 
