@@ -10,19 +10,86 @@ const UpdatePassword = () => {
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Supabase recovery flow places tokens in the URL hash; detectSessionInUrl handles it.
-    // We just confirm a session exists (recovery session) before allowing update.
-    const check = async () => {
-      const { data } = await supabase.auth.getSession();
-      setReady(!!data.session);
-    };
-    check();
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") setReady(true);
+    let cancelled = false;
+
+    // Subscribe FIRST so we don't miss PASSWORD_RECOVERY/SIGNED_IN events
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (cancelled) return;
+      if (event === "PASSWORD_RECOVERY" || (session && (event === "SIGNED_IN" || event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED"))) {
+        setReady(true);
+        setLinkError(null);
+      }
     });
-    return () => sub.subscription.unsubscribe();
+
+    const init = async () => {
+      // Parse hash params (recovery links from Supabase use the URL fragment)
+      const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : "";
+      const hashParams = new URLSearchParams(hash);
+      const search = new URLSearchParams(window.location.search);
+
+      const errorDesc = hashParams.get("error_description") || search.get("error_description");
+      if (errorDesc) {
+        setLinkError(decodeURIComponent(errorDesc.replace(/\+/g, " ")));
+        return;
+      }
+
+      const access_token = hashParams.get("access_token");
+      const refresh_token = hashParams.get("refresh_token");
+      const type = hashParams.get("type");
+
+      if (access_token && refresh_token) {
+        const { data, error } = await supabase.auth.setSession({ access_token, refresh_token });
+        if (!cancelled) {
+          if (error) setLinkError("Link inválido ou expirado. Solicite uma nova recuperação de senha.");
+          else if (data.session) setReady(true);
+          // Clean URL
+          window.history.replaceState(null, "", window.location.pathname);
+        }
+        return;
+      }
+
+      // PKCE/code flow fallback
+      const code = search.get("code");
+      if (code) {
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+        if (!cancelled) {
+          if (error) setLinkError("Link inválido ou expirado. Solicite uma nova recuperação de senha.");
+          else if (data.session) setReady(true);
+          window.history.replaceState(null, "", window.location.pathname);
+        }
+        return;
+      }
+
+      // No tokens in URL — check for existing recovery session
+      const { data } = await supabase.auth.getSession();
+      if (!cancelled && data.session) {
+        setReady(true);
+        return;
+      }
+
+      // Timeout fallback
+      setTimeout(() => {
+        if (!cancelled) {
+          setReady((r) => {
+            if (!r) setLinkError("Link inválido ou expirado. Solicite uma nova recuperação de senha.");
+            return r;
+          });
+        }
+      }, 4000);
+
+      // Suppress unused-var warning in production builds
+      void type;
+    };
+
+    init();
+
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
